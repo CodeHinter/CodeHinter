@@ -13,8 +13,8 @@ class Prepossess:
             split_code = re.findall(r'<s>(.*?)</s>', input)
             for code in split_code:
                 self.print_result(code)
-                # print("=====================================\n")
-                self.output.write("=====================================\n")
+                # print("\n")
+                self.output.write("\n")
 
 
     def print_result(self, code):
