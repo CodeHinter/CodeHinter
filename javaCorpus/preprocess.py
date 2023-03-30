@@ -13,8 +13,8 @@ class Prepossess:
             split_code = re.findall(r'<s>(.*?)</s>', input)
             for code in split_code:
                 self.print_result(code)
-                # print("\n")
-                self.output.write("\n")
+                # print("=====================================\n")
+                self.output.write("=\n")
 
 
     def print_result(self, code):
@@ -34,7 +34,7 @@ class Prepossess:
             return
         visited.add(id(node))
         # print(f"{indent}- {type(node).__name__}: {node}\n")
-        self.output.write(f"{indent}- {type(node).__name__}: {node}\n")
+        self.output.write(f"{indent}{type(node).__name__}\n")
 
         if node is not None:
             if hasattr(node, "body") and node.body is not None:
