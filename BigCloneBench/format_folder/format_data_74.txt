@@ -1,0 +1,3318 @@
+<s>class temp {    private FTPClient getFTPConnection(String strUser, String strPassword, String strServer, boolean binaryTransfer, String connectionNote) {
+        FTPClient ftp = new FTPClient();
+        try {
+            int reply;
+            ftp.connect(strServer);
+            ResourcePool.LogMessage(this, ResourcePool.INFO_MESSAGE, "Connected to " + strServer + ", " + connectionNote);
+            reply = ftp.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                ftp.disconnect();
+                ResourcePool.LogMessage(this, ResourcePool.ERROR_MESSAGE, "FTP server refused connection.");
+                return null;
+            }
+        } catch (IOException e) {
+            if (ftp.isConnected()) {
+                try {
+                    ftp.disconnect();
+                } catch (IOException f) {
+                    return null;
+                }
+            }
+            ResourcePool.LogMessage(this, ResourcePool.ERROR_MESSAGE, "FTP Could not connect to server.");
+            ResourcePool.LogException(e, this);
+            return null;
+        }
+        try {
+            if (!ftp.login(strUser, strPassword)) {
+                ftp.logout();
+                ResourcePool.LogMessage(this, ResourcePool.ERROR_MESSAGE, "FTP login failed.");
+                return null;
+            }
+            ResourcePool.LogMessage(this, ResourcePool.INFO_MESSAGE, "Remote system is " + ftp.getSystemName() + ", " + connectionNote);
+            if (binaryTransfer) {
+                ftp.setFileType(FTP.BINARY_FILE_TYPE);
+            } else {
+                ftp.setFileType(FTP.ASCII_FILE_TYPE);
+            }
+            ftp.enterLocalPassiveMode();
+        } catch (FTPConnectionClosedException e) {
+            ResourcePool.LogMessage(this, ResourcePool.ERROR_MESSAGE, "Server closed connection.");
+            ResourcePool.LogException(e, this);
+            return null;
+        } catch (IOException e) {
+            ResourcePool.LogException(e, this);
+            return null;
+        }
+        return ftp;
+    }
+} </s>
+<s>class temp {    public final int connectAndLogin(Uri u, boolean cwd) throws UnknownHostException, IOException, InterruptedException {
+        if (ftp.isLoggedIn()) {
+            if (cwd) {
+                String path = u.getPath();
+                if (path != null) ftp.setCurrentDir(path);
+            }
+            return WAS_IN;
+        }
+        int port = u.getPort();
+        if (port == -1) port = 21;
+        String host = u.getHost();
+        if (ftp.connect(host, port)) {
+            if (theUserPass == null || theUserPass.isNotSet()) theUserPass = new FTPCredentials(u.getUserInfo());
+            if (ftp.login(theUserPass.getUserName(), theUserPass.getPassword())) {
+                if (cwd) {
+                    String path = u.getPath();
+                    if (path != null) ftp.setCurrentDir(path);
+                }
+                return LOGGED_IN;
+            } else {
+                ftp.logout(true);
+                ftp.disconnect();
+                Log.w(TAG, "Invalid credentials.");
+                return NO_LOGIN;
+            }
+        }
+        return NO_CONNECT;
+    }
+} </s>
+<s>class temp {    public static void copyFile(File source, File dest) throws IOException {
+        FileChannel in = null, out = null;
+        try {
+            in = new FileInputStream(source).getChannel();
+            out = new FileOutputStream(dest).getChannel();
+            long size = in.size();
+            MappedByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, size);
+            out.write(buf);
+        } finally {
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
+    }
+} </s>
+<s>class temp {    private byte[] md5Digest(String pPassword) {
+        if (pPassword == null) {
+            throw new NullPointerException("input null text for hashing");
+        }
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(pPassword.getBytes());
+            return md.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Cannot find MD5 algorithm");
+        }
+    }
+} </s>
+<s>class temp {    public byte[] getClassBytes(String className, ClassLoader classLoader) {
+        URLClassLoader cl = new URLClassLoader(urls, classLoader);
+        String resource = className.replace('.', '/') + ".class";
+        InputStream is = null;
+        try {
+            URL url = cl.getResource(resource);
+            if (url == null) {
+                throw new RuntimeException("Class Resource not found for " + resource);
+            }
+            is = url.openStream();
+            byte[] classBytes = InputStreamTransform.readBytes(is);
+            return classBytes;
+        } catch (IOException e) {
+            throw new RuntimeException("IOException reading bytes for " + className, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error closing InputStream for " + className, e);
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void copyContent(long mailId1, long mailId2) throws Exception {
+        File file1 = new File(this.getMailDir(mailId1) + "/");
+        File file2 = new File(this.getMailDir(mailId2) + "/");
+        this.recursiveDir(file2);
+        if (file1.isDirectory()) {
+            File[] files = file1.listFiles();
+            if (files != null) {
+                for (int i = 0; i < files.length; i++) {
+                    if (files[i].isFile()) {
+                        File file2s = new File(file2.getAbsolutePath() + "/" + files[i].getName());
+                        if (!file2s.exists()) {
+                            file2s.createNewFile();
+                            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file2s));
+                            BufferedInputStream in = new BufferedInputStream(new FileInputStream(files[i]));
+                            int read;
+                            while ((read = in.read()) != -1) {
+                                out.write(read);
+                            }
+                            out.flush();
+                            if (in != null) {
+                                try {
+                                    in.close();
+                                } catch (IOException ex1) {
+                                    ex1.printStackTrace();
+                                }
+                            }
+                            if (out != null) {
+                                try {
+                                    out.close();
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void copyRes(long mailId1, long mailId2) throws Exception {
+        File file1 = new File(this.getResDir(mailId1));
+        File file2 = new File(this.getResDir(mailId2));
+        this.recursiveDir(file2);
+        if (file1.isDirectory()) {
+            File[] files = file1.listFiles();
+            if (files != null) {
+                for (int i = 0; i < files.length; i++) {
+                    if (files[i].isFile()) {
+                        File file2s = new File(file2.getAbsolutePath() + "/" + files[i].getName());
+                        if (!file2s.exists()) {
+                            file2s.createNewFile();
+                            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file2s));
+                            BufferedInputStream in = new BufferedInputStream(new FileInputStream(files[i]));
+                            int read;
+                            while ((read = in.read()) != -1) {
+                                out.write(read);
+                            }
+                            out.flush();
+                            if (in != null) {
+                                try {
+                                    in.close();
+                                } catch (IOException ex1) {
+                                    ex1.printStackTrace();
+                                }
+                            }
+                            if (out != null) {
+                                try {
+                                    out.close();
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void copyAffix(MailAffix affix, long mailId1, long mailId2) throws Exception {
+        File file = new File(this.getResDir(mailId1) + affix.getAttachAlias());
+        if (file.exists()) {
+            File file2 = new File(this.getResDir(mailId2) + affix.getAttachAlias());
+            if (!file2.exists()) {
+                file2.createNewFile();
+                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file2));
+                BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
+                int read;
+                while ((read = in.read()) != -1) {
+                    out.write(read);
+                }
+                out.flush();
+                in.close();
+                out.close();
+            }
+        } else {
+            log.debug(file.getAbsolutePath() + file.getName() + "     ڣ      ļ ʧ ܣ         ");
+        }
+    }
+} </s>
+<s>class temp {    public void generateListOfSubscriptions() {
+        try {
+            java.net.URL url = new java.net.URL(NewGenLibDesktopRoot.getInstance().getURLRoot() + "/NEWGEN_JR/ListOfSubscriptions.xml");
+            System.out.println(NewGenLibDesktopRoot.getRoot() + "/NEWGEN_JR/ListOfSubscriptions.xml");
+            net.sf.jasperreports.engine.design.JasperDesign jd = net.sf.jasperreports.engine.xml.JRXmlLoader.load(url.openStream());
+            System.out.println("in generate Report 30" + dtm.getRowCount());
+            net.sf.jasperreports.engine.JasperReport jr = net.sf.jasperreports.engine.JasperCompileManager.compileReport(jd);
+            System.out.println("in generate Report 32" + dtm.getRowCount());
+            java.util.Map param = new java.util.HashMap();
+            param.put("ReportTitle", "List of subscriptions");
+            Class.forName("org.postgresql.Driver");
+            System.out.println("in generate Report 37" + dtm.getRowCount());
+            net.sf.jasperreports.engine.JasperPrint jp = net.sf.jasperreports.engine.JasperFillManager.fillReport(jr, param, new net.sf.jasperreports.engine.data.JRTableModelDataSource(dtm));
+            System.out.println("in generate Report 39" + dtm.getRowCount());
+            java.sql.Timestamp currentTime = new java.sql.Timestamp(java.util.Calendar.getInstance().getTimeInMillis());
+            if (jp.getPages().size() != 0) net.sf.jasperreports.view.JasperViewer.viewReport(jp, false); else javax.swing.JOptionPane.showMessageDialog(reports.DeskTopFrame.getInstance(), "There are no records in the selected report option.");
+            System.out.println("in generate Report 43" + dtm.getRowCount());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public void convert(File src, File dest) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(src));
+        DcmParser p = pfact.newDcmParser(in);
+        Dataset ds = fact.newDataset();
+        p.setDcmHandler(ds.getDcmHandler());
+        try {
+            FileFormat format = p.detectFileFormat();
+            if (format != FileFormat.ACRNEMA_STREAM) {
+                System.out.println("\n" + src + ": not an ACRNEMA stream!");
+                return;
+            }
+            p.parseDcmFile(format, Tags.PixelData);
+            if (ds.contains(Tags.StudyInstanceUID) || ds.contains(Tags.SeriesInstanceUID) || ds.contains(Tags.SOPInstanceUID) || ds.contains(Tags.SOPClassUID)) {
+                System.out.println("\n" + src + ": contains UIDs!" + " => probable already DICOM - do not convert");
+                return;
+            }
+            boolean hasPixelData = p.getReadTag() == Tags.PixelData;
+            boolean inflate = hasPixelData && ds.getInt(Tags.BitsAllocated, 0) == 12;
+            int pxlen = p.getReadLength();
+            if (hasPixelData) {
+                if (inflate) {
+                    ds.putUS(Tags.BitsAllocated, 16);
+                    pxlen = pxlen * 4 / 3;
+                }
+                if (pxlen != (ds.getInt(Tags.BitsAllocated, 0) >>> 3) * ds.getInt(Tags.Rows, 0) * ds.getInt(Tags.Columns, 0) * ds.getInt(Tags.NumberOfFrames, 1) * ds.getInt(Tags.NumberOfSamples, 1)) {
+                    System.out.println("\n" + src + ": mismatch pixel data length!" + " => do not convert");
+                    return;
+                }
+            }
+            ds.putUI(Tags.StudyInstanceUID, uid(studyUID));
+            ds.putUI(Tags.SeriesInstanceUID, uid(seriesUID));
+            ds.putUI(Tags.SOPInstanceUID, uid(instUID));
+            ds.putUI(Tags.SOPClassUID, classUID);
+            if (!ds.contains(Tags.NumberOfSamples)) {
+                ds.putUS(Tags.NumberOfSamples, 1);
+            }
+            if (!ds.contains(Tags.PhotometricInterpretation)) {
+                ds.putCS(Tags.PhotometricInterpretation, "MONOCHROME2");
+            }
+            if (fmi) {
+                ds.setFileMetaInfo(fact.newFileMetaInfo(ds, UIDs.ImplicitVRLittleEndian));
+            }
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+            } finally {
+                ds.writeFile(out, encodeParam());
+                if (hasPixelData) {
+                    if (!skipGroupLen) {
+                        out.write(PXDATA_GROUPLEN);
+                        int grlen = pxlen + 8;
+                        out.write((byte) grlen);
+                        out.write((byte) (grlen >> 8));
+                        out.write((byte) (grlen >> 16));
+                        out.write((byte) (grlen >> 24));
+                    }
+                    out.write(PXDATA_TAG);
+                    out.write((byte) pxlen);
+                    out.write((byte) (pxlen >> 8));
+                    out.write((byte) (pxlen >> 16));
+                    out.write((byte) (pxlen >> 24));
+                }
+                if (inflate) {
+                    int b2, b3;
+                    for (; pxlen > 0; pxlen -= 3) {
+                        out.write(in.read());
+                        b2 = in.read();
+                        b3 = in.read();
+                        out.write(b2 & 0x0f);
+                        out.write(b2 >> 4 | ((b3 & 0x0f) << 4));
+                        out.write(b3 >> 4);
+                    }
+                } else {
+                    for (; pxlen > 0; --pxlen) {
+                        out.write(in.read());
+                    }
+                }
+                out.close();
+            }
+            System.out.print('.');
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    protected String md5sum(String toCompute) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(toCompute.getBytes());
+        java.math.BigInteger hash = new java.math.BigInteger(1, md.digest());
+        return hash.toString(16);
+    }
+} </s>
+<s>class temp {    @Test
+    public void unacceptableMimeTypeTest() throws IOException {
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost("http://localhost:8080/alfresco/sword/deposit/company_home");
+        File file = new File("/Library/Application Support/Apple/iChat Icons/Planets/Mars.gif");
+        FileEntity entity = new FileEntity(file, "text/xml");
+        entity.setChunked(true);
+        httppost.setEntity(entity);
+        Date date = new Date();
+        Long time = date.getTime();
+        httppost.addHeader("content-disposition", "filename=x" + time + "x.gif");
+        System.out.println("Executing request...." + httppost.getRequestLine());
+        HttpResponse response = httpclient.execute(httppost);
+        HttpEntity resEntity = response.getEntity();
+        if (resEntity != null) {
+            InputStream is = resEntity.getContent();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                if (!line.isEmpty()) System.out.println(line);
+            }
+        }
+        if (resEntity != null) {
+            resEntity.consumeContent();
+        }
+        httpclient.getConnectionManager().shutdown();
+    }
+} </s>
+<s>class temp {    private void announce(String trackerURL, byte[] hash, byte[] peerId, int port) {
+        try {
+            String strUrl = trackerURL + "?info_hash=" + URLEncoder.encode(new String(hash, Constants.BYTE_ENCODING), Constants.BYTE_ENCODING).replaceAll("\\+", "%20") + "&peer_id=" + URLEncoder.encode(new String(peerId, Constants.BYTE_ENCODING), Constants.BYTE_ENCODING).replaceAll("\\+", "%20") + "&port=" + port + "&uploaded=0&downloaded=0&left=0&numwant=50&no_peer_id=1&compact=1";
+            URL url = new URL(strUrl);
+            URLConnection con = url.openConnection();
+            con.connect();
+            con.getContent();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static String getKeyWithRightLength(final String key, int keyLength) {
+        if (keyLength > 0) {
+            if (key.length() == keyLength) {
+                return key;
+            } else {
+                MessageDigest md = null;
+                try {
+                    md = MessageDigest.getInstance("SHA-1");
+                } catch (NoSuchAlgorithmException e) {
+                    return "";
+                }
+                md.update(key.getBytes());
+                byte[] hash = md.digest();
+                if (keyLength > 20) {
+                    byte nhash[] = new byte[keyLength];
+                    for (int i = 0; i < keyLength; i++) {
+                        nhash[i] = hash[i % 20];
+                    }
+                    hash = nhash;
+                }
+                return new String(hash).substring(0, keyLength);
+            }
+        } else {
+            return key;
+        }
+    }
+} </s>
+<s>class temp {    public static String toMD5(String seed) {
+        MessageDigest md5 = null;
+        StringBuffer temp_sb = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            md5.update(seed.getBytes());
+            byte[] array = md5.digest();
+            temp_sb = new StringBuffer();
+            for (int i = 0; i < array.length; i++) {
+                int b = array[i] & 0xFF;
+                if (b < 0x10) temp_sb.append('0');
+                temp_sb.append(Integer.toHexString(b));
+            }
+        } catch (NoSuchAlgorithmException err) {
+            err.printStackTrace();
+        }
+        return temp_sb.toString();
+    }
+} </s>
+<s>class temp {    public static boolean encodeFileToFile(String infile, String outfile) {
+        boolean success = false;
+        java.io.InputStream in = null;
+        java.io.OutputStream out = null;
+        try {
+            in = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(infile)), Base64.ENCODE);
+            out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile));
+            byte[] buffer = new byte[65536];
+            int read = -1;
+            while ((read = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, read);
+            }
+            success = true;
+        } catch (java.io.IOException exc) {
+            exc.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (Exception exc) {
+            }
+            try {
+                out.close();
+            } catch (Exception exc) {
+            }
+        }
+        return success;
+    }
+} </s>
+<s>class temp {    public static boolean decodeFileToFile(String infile, String outfile) {
+        boolean success = false;
+        java.io.InputStream in = null;
+        java.io.OutputStream out = null;
+        try {
+            in = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(infile)), Base64.DECODE);
+            out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile));
+            byte[] buffer = new byte[65536];
+            int read = -1;
+            while ((read = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, read);
+            }
+            success = true;
+        } catch (java.io.IOException exc) {
+            exc.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (Exception exc) {
+            }
+            try {
+                out.close();
+            } catch (Exception exc) {
+            }
+        }
+        return success;
+    }
+} </s>
+<s>class temp {    public String execute(Map params, String body, RenderContext renderContext) throws MacroException {
+        loadData();
+        String from = (String) params.get("from");
+        if (body.length() > 0 && from != null) {
+            try {
+                URL url;
+                String serverUser = null;
+                String serverPassword = null;
+                url = new URL(semformsSettings.getZRapServerUrl() + "ZRAP_QueryProcessor.php?from=" + URLEncoder.encode(from, "utf-8") + "&query=" + URLEncoder.encode(body, "utf-8"));
+                if (url.getUserInfo() != null) {
+                    String[] userInfo = url.getUserInfo().split(":");
+                    if (userInfo.length == 2) {
+                        serverUser = userInfo[0];
+                        serverPassword = userInfo[1];
+                    }
+                }
+                URLConnection connection = null;
+                InputStreamReader bf;
+                if (serverUser != null && serverPassword != null) {
+                    connection = url.openConnection();
+                    String encoding = new sun.misc.BASE64Encoder().encode((serverUser + ":" + serverPassword).getBytes());
+                    connection.setRequestProperty("Authorization", "Basic " + encoding);
+                    bf = new InputStreamReader(connection.getInputStream());
+                } else {
+                    bf = new InputStreamReader(url.openStream());
+                }
+                BufferedReader bbf = new BufferedReader(bf);
+                String line = bbf.readLine();
+                String buffer = "";
+                while (line != null) {
+                    buffer += line;
+                    line = bbf.readLine();
+                }
+                return buffer;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "ERROR:" + e.getLocalizedMessage();
+            }
+        } else return "Please write an RDQL query in the macro as body and an url of the model as 'from' parameter";
+    }
+} </s>
+<s>class temp {    public void copy(String source, String target) throws IOException {
+        @Cleanup FileChannel sourceChannel = new FileInputStream(new File(source)).getChannel();
+        @Cleanup FileChannel targetChannel = new FileOutputStream(new File(target)).getChannel();
+        targetChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+    }
+} </s>
+<s>class temp {    @Override
+    public void run() {
+        Shell currentShell = Display.getCurrent().getActiveShell();
+        if (DMManager.getInstance().getOntology() == null) return;
+        DataRecordSet data = DMManager.getInstance().getOntology().getDataView().dataset();
+        InputDialog input = new InputDialog(currentShell, Resources.I18N.getString("vikamine.dtp.title"), Resources.I18N.getString("vikamine.dtp.export.tablename"), data.getRelationName(), null);
+        input.open();
+        String tablename = input.getValue();
+        if (tablename == null) return;
+        super.getProfile().connect();
+        IManagedConnection mc = super.getProfile().getManagedConnection("java.sql.Connection");
+        java.sql.Connection sql = (java.sql.Connection) mc.getConnection().getRawConnection();
+        try {
+            sql.setAutoCommit(false);
+            DatabaseMetaData dbmd = sql.getMetaData();
+            ResultSet tables = dbmd.getTables(null, null, tablename, new String[] { "TABLE" });
+            if (tables.next()) {
+                if (!MessageDialog.openConfirm(currentShell, Resources.I18N.getString("vikamine.dtp.title"), Resources.I18N.getString("vikamine.dtp.export.overwriteTable"))) return;
+                Statement statement = sql.createStatement();
+                statement.executeUpdate("DROP TABLE " + tablename);
+                statement.close();
+            }
+            String createTableQuery = null;
+            for (int i = 0; i < data.getNumAttributes(); i++) {
+                if (DMManager.getInstance().getOntology().isIDAttribute(data.getAttribute(i))) continue;
+                if (createTableQuery == null) createTableQuery = ""; else createTableQuery += ",";
+                createTableQuery += getColumnDefinition(data.getAttribute(i));
+            }
+            Statement statement = sql.createStatement();
+            statement.executeUpdate("CREATE TABLE " + tablename + "(" + createTableQuery + ")");
+            statement.close();
+            exportRecordSet(data, sql, tablename);
+            sql.commit();
+            sql.setAutoCommit(true);
+            MessageDialog.openInformation(currentShell, Resources.I18N.getString("vikamine.dtp.title"), Resources.I18N.getString("vikamine.dtp.export.successful"));
+        } catch (SQLException e) {
+            try {
+                sql.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+            MessageDialog.openError(currentShell, Resources.I18N.getString("vikamine.dtp.title"), Resources.I18N.getString("vikamine.dtp.export.failed"));
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public byte[] exportCommunityData(String communityId) throws RepositoryException, IOException {
+        Community community;
+        try {
+            community = getCommunityById(communityId);
+        } catch (CommunityNotFoundException e1) {
+            throw new GroupwareRuntimeException("Community to export not found");
+        }
+        String contentPath = JCRUtil.getNodeById(communityId, community.getWorkspace()).getPath();
+        try {
+            File zipOutFilename = File.createTempFile("exported-community", ".zip.tmp");
+            TemporaryFilesHandler.register(null, zipOutFilename);
+            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipOutFilename));
+            File file = File.createTempFile("exported-community", null);
+            TemporaryFilesHandler.register(null, file);
+            FileOutputStream fos = new FileOutputStream(file);
+            exportCommunitySystemView(community, contentPath, fos);
+            fos.close();
+            File propertiesFile = File.createTempFile("exported-community-properties", null);
+            TemporaryFilesHandler.register(null, propertiesFile);
+            FileOutputStream fosProperties = new FileOutputStream(propertiesFile);
+            fosProperties.write(("communityId=" + communityId).getBytes());
+            fosProperties.write(";".getBytes());
+            fosProperties.write(("externalId=" + community.getExternalId()).getBytes());
+            fosProperties.write(";".getBytes());
+            fosProperties.write(("title=" + I18NUtils.localize(community.getTitle())).getBytes());
+            fosProperties.write(";".getBytes());
+            fosProperties.write(("communityType=" + community.getType()).getBytes());
+            fosProperties.write(";".getBytes());
+            fosProperties.write(("communityName=" + community.getName()).getBytes());
+            fosProperties.close();
+            FileInputStream finProperties = new FileInputStream(propertiesFile);
+            byte[] bufferProperties = new byte[4096];
+            out.putNextEntry(new ZipEntry("properties"));
+            int readProperties = 0;
+            while ((readProperties = finProperties.read(bufferProperties)) > 0) {
+                out.write(bufferProperties, 0, readProperties);
+            }
+            finProperties.close();
+            FileInputStream fin = new FileInputStream(file);
+            byte[] buffer = new byte[4096];
+            out.putNextEntry(new ZipEntry("xmlData"));
+            int read = 0;
+            while ((read = fin.read(buffer)) > 0) {
+                out.write(buffer, 0, read);
+            }
+            fin.close();
+            out.close();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            FileInputStream fisZipped = new FileInputStream(zipOutFilename);
+            byte[] bufferOut = new byte[4096];
+            int readOut = 0;
+            while ((readOut = fisZipped.read(bufferOut)) > 0) {
+                baos.write(bufferOut, 0, readOut);
+            }
+            return baos.toByteArray();
+        } catch (Exception e) {
+            String errorMessage = "Error exporting backup data, for comunnity with id " + communityId;
+            log.error(errorMessage, e);
+            throw new CMSRuntimeException(errorMessage, e);
+        }
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    public static String MD5(String text) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md;
+        md = MessageDigest.getInstance("MD5");
+        byte[] md5hash = new byte[32];
+        md.update(text.getBytes("iso-8859-1"), 0, text.length());
+        md5hash = md.digest();
+        return convertToHex(md5hash);
+    }
+} </s>
+<s>class temp {    public void copyFile(String oldPathFile, String newPathFile) {
+        try {
+            int bytesum = 0;
+            int byteread = 0;
+            File oldfile = new File(oldPathFile);
+            if (oldfile.exists()) {
+                InputStream inStream = new FileInputStream(oldPathFile);
+                FileOutputStream fs = new FileOutputStream(newPathFile);
+                byte[] buffer = new byte[1444];
+                while ((byteread = inStream.read(buffer)) != -1) {
+                    bytesum += byteread;
+                    System.out.println(bytesum);
+                    fs.write(buffer, 0, byteread);
+                }
+                inStream.close();
+            }
+        } catch (Exception e) {
+            message = ("   Ƶ    ļ         ");
+        }
+    }
+} </s>
+<s>class temp {    public String encryptStringWithKey(String to_be_encrypted, String aKey) {
+        String encrypted_value = "";
+        char xdigit[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        MessageDigest messageDigest;
+        try {
+            messageDigest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException exc) {
+            globalErrorDictionary.takeValueForKey(("Security package does not contain appropriate algorithm"), ("Security package does not contain appropriate algorithm"));
+            log.error("Security package does not contain appropriate algorithm");
+            return encrypted_value;
+        }
+        if (to_be_encrypted != null) {
+            byte digest[];
+            byte fudge_constant[];
+            try {
+                fudge_constant = ("X#@!").getBytes("UTF8");
+            } catch (UnsupportedEncodingException uee) {
+                fudge_constant = ("X#@!").getBytes();
+            }
+            byte fudgetoo_part[] = { (byte) xdigit[(int) (MSiteConfig.myrand() % 16)], (byte) xdigit[(int) (MSiteConfig.myrand() % 16)], (byte) xdigit[(int) (MSiteConfig.myrand() % 16)], (byte) xdigit[(int) (MSiteConfig.myrand() % 16)] };
+            int i = 0;
+            if (aKey != null) {
+                try {
+                    fudgetoo_part = aKey.getBytes("UTF8");
+                } catch (UnsupportedEncodingException uee) {
+                    fudgetoo_part = aKey.getBytes();
+                }
+            }
+            messageDigest.update(fudge_constant);
+            try {
+                messageDigest.update(to_be_encrypted.getBytes("UTF8"));
+            } catch (UnsupportedEncodingException uee) {
+                messageDigest.update(to_be_encrypted.getBytes());
+            }
+            messageDigest.update(fudgetoo_part);
+            digest = messageDigest.digest();
+            encrypted_value = new String(fudgetoo_part);
+            for (i = 0; i < digest.length; i++) {
+                int mashed;
+                char temp[] = new char[2];
+                if (digest[i] < 0) {
+                    mashed = 127 + (-1 * digest[i]);
+                } else {
+                    mashed = digest[i];
+                }
+                temp[0] = xdigit[mashed / 16];
+                temp[1] = xdigit[mashed % 16];
+                encrypted_value = encrypted_value + (new String(temp));
+            }
+        }
+        return encrypted_value;
+    }
+} </s>
+<s>class temp {    protected void processAnnotationsJar(URL url) {
+        JarFile jarFile = null;
+        try {
+            URLConnection urlConn = url.openConnection();
+            JarURLConnection jarUrlConn;
+            if (!(urlConn instanceof JarURLConnection)) {
+                sm.getString("contextConfig.jarUrl", url);
+                return;
+            }
+            jarUrlConn = (JarURLConnection) urlConn;
+            jarUrlConn.setUseCaches(false);
+            jarFile = jarUrlConn.getJarFile();
+            Enumeration<JarEntry> jarEntries = jarFile.entries();
+            while (jarEntries.hasMoreElements()) {
+                JarEntry jarEntry = jarEntries.nextElement();
+                String entryName = jarEntry.getName();
+                if (entryName.endsWith(".class")) {
+                    InputStream is = null;
+                    try {
+                        is = jarFile.getInputStream(jarEntry);
+                        processAnnotationsStream(is);
+                    } catch (IOException e) {
+                        logger.error(sm.getString("contextConfig.inputStreamJar", entryName, url), e);
+                    } finally {
+                        if (is != null) {
+                            try {
+                                is.close();
+                            } catch (Throwable t) {
+                                ExceptionUtils.handleThrowable(t);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.error(sm.getString("contextConfig.jarFile", url), e);
+        } finally {
+            if (jarFile != null) {
+                try {
+                    jarFile.close();
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    protected void processAnnotationsJndi(URL url) {
+        try {
+            URLConnection urlConn = url.openConnection();
+            DirContextURLConnection dcUrlConn;
+            if (!(urlConn instanceof DirContextURLConnection)) {
+                sm.getString("contextConfig.jndiUrlNotDirContextConn", url);
+                return;
+            }
+            dcUrlConn = (DirContextURLConnection) urlConn;
+            dcUrlConn.setUseCaches(false);
+            String type = dcUrlConn.getHeaderField(ResourceAttributes.TYPE);
+            if (ResourceAttributes.COLLECTION_TYPE.equals(type)) {
+                Enumeration<String> dirs = dcUrlConn.list();
+                while (dirs.hasMoreElements()) {
+                    String dir = dirs.nextElement();
+                    URL dirUrl = new URL(url.toString() + '/' + dir);
+                    processAnnotationsJndi(dirUrl);
+                }
+            } else {
+                if (url.getPath().endsWith(".class")) {
+                    InputStream is = null;
+                    try {
+                        is = dcUrlConn.getInputStream();
+                        processAnnotationsStream(is);
+                    } catch (IOException e) {
+                        logger.error(sm.getString("contextConfig.inputStreamJndi", url), e);
+                    } finally {
+                        if (is != null) {
+                            try {
+                                is.close();
+                            } catch (Throwable t) {
+                                ExceptionUtils.handleThrowable(t);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.error(sm.getString("contextConfig.jndiUrl", url), e);
+        }
+    }
+} </s>
+<s>class temp {    public void update() {
+        if (!updatable) {
+            Main.fenetre().erreur(Fenetre.OLD_VERSION);
+            return;
+        }
+        try {
+            Main.fenetre().update();
+            Element remoteRoot = new SAXBuilder().build(xml).getRootElement();
+            addPackages = new HashMap<Integer, PackageVersion>();
+            Iterator<?> iterElem = remoteRoot.getChildren().iterator();
+            while (iterElem.hasNext()) {
+                PackageVersion pack = new PackageVersion((Element) iterElem.next());
+                addPackages.put(pack.id(), pack);
+            }
+            removePackages = new HashMap<Integer, PackageVersion>();
+            iterElem = root.getChildren("package").iterator();
+            while (iterElem.hasNext()) {
+                PackageVersion pack = new PackageVersion((Element) iterElem.next());
+                int id = pack.id();
+                if (!addPackages.containsKey(id)) {
+                    removePackages.put(id, pack);
+                } else if (addPackages.get(id).version().equals(pack.version())) {
+                    addPackages.remove(id);
+                } else {
+                    addPackages.get(id).ecrase();
+                }
+            }
+            Iterator<PackageVersion> iterPack = addPackages.values().iterator();
+            while (iterPack.hasNext()) {
+                install(iterPack.next());
+            }
+            iterPack = removePackages.values().iterator();
+            while (iterPack.hasNext()) {
+                remove(iterPack.next());
+            }
+            if (offline) {
+                Runtime.getRuntime().addShutdownHook(new AddPackage(xml, "versions.xml"));
+                Main.fenetre().erreur(Fenetre.UPDATE_TERMINE_RESTART);
+            } else {
+                File oldXML = new File("versions.xml");
+                oldXML.delete();
+                oldXML.createNewFile();
+                FileChannel out = new FileOutputStream(oldXML).getChannel();
+                FileChannel in = new FileInputStream(xml).getChannel();
+                in.transferTo(0, in.size(), out);
+                in.close();
+                out.close();
+                xml.delete();
+                if (restart) {
+                    Main.fenetre().erreur(Fenetre.UPDATE_TERMINE_RESTART);
+                } else {
+                    Main.updateVersion();
+                }
+            }
+        } catch (Exception e) {
+            Main.fenetre().erreur(Fenetre.ERREUR_UPDATE, e);
+        }
+    }
+} </s>
+<s>class temp {    private static String readStreamToString(InputStream is, boolean passInVelocity, String tplName, Map<String, Object> templateVarsMap) throws IOException {
+        StringWriter sw = new StringWriter();
+        IOUtils.copy(is, sw, "UTF-8");
+        if (passInVelocity) {
+            return tpl.formatStr(sw.toString(), templateVarsMap, tplName);
+        }
+        return sw.toString();
+    }
+} </s>
+<s>class temp {    public void convert(File src, File dest) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(src));
+        DcmParser p = pfact.newDcmParser(in);
+        Dataset ds = fact.newDataset();
+        p.setDcmHandler(ds.getDcmHandler());
+        try {
+            FileFormat format = p.detectFileFormat();
+            if (format != FileFormat.ACRNEMA_STREAM) {
+                System.out.println("\n" + src + ": not an ACRNEMA stream!");
+                return;
+            }
+            p.parseDcmFile(format, Tags.PixelData);
+            if (ds.contains(Tags.StudyInstanceUID) || ds.contains(Tags.SeriesInstanceUID) || ds.contains(Tags.SOPInstanceUID) || ds.contains(Tags.SOPClassUID)) {
+                System.out.println("\n" + src + ": contains UIDs!" + " => probable already DICOM - do not convert");
+                return;
+            }
+            boolean hasPixelData = p.getReadTag() == Tags.PixelData;
+            boolean inflate = hasPixelData && ds.getInt(Tags.BitsAllocated, 0) == 12;
+            int pxlen = p.getReadLength();
+            if (hasPixelData) {
+                if (inflate) {
+                    ds.putUS(Tags.BitsAllocated, 16);
+                    pxlen = pxlen * 4 / 3;
+                }
+                if (pxlen != (ds.getInt(Tags.BitsAllocated, 0) >>> 3) * ds.getInt(Tags.Rows, 0) * ds.getInt(Tags.Columns, 0) * ds.getInt(Tags.NumberOfFrames, 1) * ds.getInt(Tags.NumberOfSamples, 1)) {
+                    System.out.println("\n" + src + ": mismatch pixel data length!" + " => do not convert");
+                    return;
+                }
+            }
+            ds.putUI(Tags.StudyInstanceUID, uid(studyUID));
+            ds.putUI(Tags.SeriesInstanceUID, uid(seriesUID));
+            ds.putUI(Tags.SOPInstanceUID, uid(instUID));
+            ds.putUI(Tags.SOPClassUID, classUID);
+            if (!ds.contains(Tags.NumberOfSamples)) {
+                ds.putUS(Tags.NumberOfSamples, 1);
+            }
+            if (!ds.contains(Tags.PhotometricInterpretation)) {
+                ds.putCS(Tags.PhotometricInterpretation, "MONOCHROME2");
+            }
+            if (fmi) {
+                ds.setFileMetaInfo(fact.newFileMetaInfo(ds, UIDs.ImplicitVRLittleEndian));
+            }
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+            } finally {
+                ds.writeFile(out, encodeParam());
+                if (hasPixelData) {
+                    if (!skipGroupLen) {
+                        out.write(PXDATA_GROUPLEN);
+                        int grlen = pxlen + 8;
+                        out.write((byte) grlen);
+                        out.write((byte) (grlen >> 8));
+                        out.write((byte) (grlen >> 16));
+                        out.write((byte) (grlen >> 24));
+                    }
+                    out.write(PXDATA_TAG);
+                    out.write((byte) pxlen);
+                    out.write((byte) (pxlen >> 8));
+                    out.write((byte) (pxlen >> 16));
+                    out.write((byte) (pxlen >> 24));
+                }
+                if (inflate) {
+                    int b2, b3;
+                    for (; pxlen > 0; pxlen -= 3) {
+                        out.write(in.read());
+                        b2 = in.read();
+                        b3 = in.read();
+                        out.write(b2 & 0x0f);
+                        out.write(b2 >> 4 | ((b3 & 0x0f) << 4));
+                        out.write(b3 >> 4);
+                    }
+                } else {
+                    for (; pxlen > 0; --pxlen) {
+                        out.write(in.read());
+                    }
+                }
+                out.close();
+            }
+            System.out.print('.');
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    private StringBuffer hashPassword(StringBuffer password, String mode) {
+        MessageDigest m = null;
+        StringBuffer hash = new StringBuffer();
+        try {
+            m = MessageDigest.getInstance(mode);
+            m.update(password.toString().getBytes("UTF8"));
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        byte[] digest = m.digest();
+        for (int i = 0; i < digest.length; i++) {
+            String hex = Integer.toHexString(digest[i]);
+            if (hex.length() == 1) hex = "0" + hex;
+            hex = hex.substring(hex.length() - 2);
+            hash.append(hex);
+        }
+        return hash;
+    }
+} </s>
+<s>class temp {	public String getMD5(String password) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.update(password.getBytes());
+		byte byteData[] = md.digest();
+		StringBuffer sb = new StringBuffer();
+		for(int i = 0; i < byteData.length; i++) {
+			sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+		}
+		return sb.toString();
+	}
+} </s>
+<s>class temp {    private ScrollingGraphicalViewer createGraphicalViewer(final Composite parent) {
+        final ScrollingGraphicalViewer viewer = new ScrollingGraphicalViewer();
+        viewer.createControl(parent);
+        _root = new ScalableRootEditPart();
+        viewer.setRootEditPart(_root);
+        getEditDomain().addViewer(viewer);
+        getSite().setSelectionProvider(viewer);
+        viewer.setEditPartFactory(getEditPartFactory());
+        viewer.setContents(getEditorInput().getAdapter(ScannedMap.class));
+        return viewer;
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        try {
+            boolean readExp = Utils.getFlag('l', args);
+            final boolean writeExp = Utils.getFlag('s', args);
+            final String expFile = Utils.getOption('f', args);
+            if ((readExp || writeExp) && (expFile.length() == 0)) {
+                throw new Exception("A filename must be given with the -f option");
+            }
+            Experiment exp = null;
+            if (readExp) {
+                FileInputStream fi = new FileInputStream(expFile);
+                ObjectInputStream oi = new ObjectInputStream(new BufferedInputStream(fi));
+                exp = (Experiment) oi.readObject();
+                oi.close();
+            } else {
+                exp = new Experiment();
+            }
+            System.err.println("Initial Experiment:\n" + exp.toString());
+            final JFrame jf = new JFrame("Weka Experiment Setup");
+            jf.getContentPane().setLayout(new BorderLayout());
+            final SetupPanel sp = new SetupPanel();
+            jf.getContentPane().add(sp, BorderLayout.CENTER);
+            jf.addWindowListener(new WindowAdapter() {
+
+                public void windowClosing(WindowEvent e) {
+                    System.err.println("\nFinal Experiment:\n" + sp.m_Exp.toString());
+                    if (writeExp) {
+                        try {
+                            FileOutputStream fo = new FileOutputStream(expFile);
+                            ObjectOutputStream oo = new ObjectOutputStream(new BufferedOutputStream(fo));
+                            oo.writeObject(sp.m_Exp);
+                            oo.close();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            System.err.println("Couldn't write experiment to: " + expFile + '\n' + ex.getMessage());
+                        }
+                    }
+                    jf.dispose();
+                    System.exit(0);
+                }
+            });
+            jf.pack();
+            jf.setVisible(true);
+            System.err.println("Short nap");
+            Thread.currentThread().sleep(3000);
+            System.err.println("Done");
+            sp.setExperiment(exp);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.err.println(ex.getMessage());
+        }
+    }
+} </s>
+<s>class temp {    private String mkSid() {
+        String temp = toString();
+        MessageDigest messagedigest = null;
+        try {
+            messagedigest = MessageDigest.getInstance("SHA");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        messagedigest.update(temp.getBytes());
+        byte digest[] = messagedigest.digest();
+        String chk = "";
+        for (int i = 0; i < digest.length; i++) {
+            String s = Integer.toHexString(digest[i] & 0xFF);
+            chk += ((s.length() == 1) ? "0" + s : s);
+        }
+        return chk.toString();
+    }
+} </s>
+<s>class temp {        public File nextEntry() {
+            try {
+                while (hasNext()) {
+                    String name = waitingArchEntry.getName();
+                    name = name.substring(name.indexOf("/") + 1);
+                    File file = new File(targetDir.getAbsolutePath() + "/" + name);
+                    if (waitingArchEntry.isDirectory()) {
+                        file.mkdirs();
+                        waitingArchEntry = ais.getNextEntry();
+                    } else {
+                        OutputStream os = new FileOutputStream(file);
+                        try {
+                            IOUtils.copy(ais, os);
+                        } finally {
+                            IOUtils.closeQuietly(os);
+                        }
+                        return file;
+                    }
+                }
+            } catch (IOException e) {
+                return null;
+            }
+            return null;
+        }
+} </s>
+<s>class temp {    public static boolean saveMap(LWMap map, boolean saveAs, boolean export) {
+        Log.info("saveMap: " + map);
+        GUI.activateWaitCursor();
+        if (map == null) return false;
+        File file = map.getFile();
+        int response = -1;
+        if (map.getSaveFileModelVersion() == 0) {
+            final Object[] defaultOrderButtons = { VueResources.getString("saveaction.saveacopy"), VueResources.getString("saveaction.save") };
+            Object[] messageObject = { map.getLabel() };
+            response = VueUtil.option(VUE.getDialogParent(), VueResources.getFormatMessage(messageObject, "dialog.saveaction.message"), VueResources.getFormatMessage(messageObject, "dialog.saveaction.title"), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, defaultOrderButtons, VueResources.getString("saveaction.saveacopy"));
+        }
+        if (response == 0) {
+            saveAs = true;
+        }
+        if ((saveAs || file == null) && !export) {
+            file = ActionUtil.selectFile("Save Map", null);
+        } else if (export) {
+            file = ActionUtil.selectFile("Export Map", "export");
+        }
+        if (file == null) {
+            try {
+                return false;
+            } finally {
+                GUI.clearWaitCursor();
+            }
+        }
+        try {
+            Log.info("saveMap: target[" + file + "]");
+            final String name = file.getName().toLowerCase();
+            if (name.endsWith(".rli.xml")) {
+                new IMSResourceList().convert(map, file);
+            } else if (name.endsWith(".xml") || name.endsWith(".vue")) {
+                ActionUtil.marshallMap(file, map);
+            } else if (name.endsWith(".jpeg") || name.endsWith(".jpg")) ImageConversion.createActiveMapJpeg(file, VueResources.getDouble("imageExportFactor")); else if (name.endsWith(".png")) ImageConversion.createActiveMapPng(file, VueResources.getDouble("imageExportFactor")); else if (name.endsWith(".svg")) SVGConversion.createSVG(file); else if (name.endsWith(".pdf")) {
+                PresentationNotes.createMapAsPDF(file);
+            } else if (name.endsWith(".zip")) {
+                Vector resourceVector = new Vector();
+                Iterator i = map.getAllDescendents(LWComponent.ChildKind.PROPER).iterator();
+                while (i.hasNext()) {
+                    LWComponent component = (LWComponent) i.next();
+                    System.out.println("Component:" + component + " has resource:" + component.hasResource());
+                    if (component.hasResource() && (component.getResource() instanceof URLResource)) {
+                        URLResource resource = (URLResource) component.getResource();
+                        try {
+                            if (resource.isLocalFile()) {
+                                String spec = resource.getSpec();
+                                System.out.println(resource.getSpec());
+                                Vector row = new Vector();
+                                row.add(new Boolean(true));
+                                row.add(resource);
+                                row.add(new Long(file.length()));
+                                row.add("Ready");
+                                resourceVector.add(row);
+                            }
+                        } catch (Exception ex) {
+                            System.out.println("Publisher.setLocalResourceVector: Resource " + resource.getSpec() + ex);
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+                File savedCMap = PublishUtil.createZip(map, resourceVector);
+                InputStream istream = new BufferedInputStream(new FileInputStream(savedCMap));
+                OutputStream ostream = new BufferedOutputStream(new FileOutputStream(file));
+                int fileLength = (int) savedCMap.length();
+                byte bytes[] = new byte[fileLength];
+                try {
+                    while (istream.read(bytes, 0, fileLength) != -1) ostream.write(bytes, 0, fileLength);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    istream.close();
+                    ostream.close();
+                }
+            } else if (name.endsWith(".html")) {
+                HtmlOutputDialog hod = new HtmlOutputDialog();
+                hod.setVisible(true);
+                if (hod.getReturnVal() > 0) new ImageMap().createImageMap(file, hod.getScale(), hod.getFormat());
+            } else if (name.endsWith(".rdf")) {
+                edu.tufts.vue.rdf.RDFIndex index = new edu.tufts.vue.rdf.RDFIndex();
+                String selectionType = VueResources.getString("rdf.export.selection");
+                if (selectionType.equals("ALL")) {
+                    Iterator<LWMap> maps = VUE.getLeftTabbedPane().getAllMaps();
+                    while (maps.hasNext()) {
+                        index.index(maps.next());
+                    }
+                } else if (selectionType.equals("ACTIVE")) {
+                    index.index(VUE.getActiveMap());
+                } else {
+                    index.index(VUE.getActiveMap());
+                }
+                FileWriter writer = new FileWriter(file);
+                index.write(writer);
+                writer.close();
+            } else if (name.endsWith(VueUtil.VueArchiveExtension)) {
+                Archive.writeArchive(map, file);
+            } else {
+                Log.warn("Unknown save type for filename extension: " + name);
+                return false;
+            }
+            Log.debug("Save completed for " + file);
+            if (!VUE.isApplet()) {
+                VueFrame frame = (VueFrame) VUE.getMainWindow();
+                String title = VUE.getName() + ": " + name;
+                frame.setTitle(title);
+            }
+            if (name.endsWith(".vue")) {
+                RecentlyOpenedFilesManager rofm = RecentlyOpenedFilesManager.getInstance();
+                rofm.updateRecentlyOpenedFiles(file.getAbsolutePath());
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.error("Exception attempting to save file " + file + ": " + t);
+            Throwable e = t;
+            if (t.getCause() != null) e = t.getCause();
+            if (e instanceof java.io.FileNotFoundException) {
+                Log.error("Save Failed: " + e);
+            } else {
+                Log.error("Save failed for \"" + file + "\"; ", e);
+            }
+            if (e != t) Log.error("Exception attempting to save file " + file + ": " + e);
+            VueUtil.alert(String.format(Locale.getDefault(), VueResources.getString("saveaction.savemap.error") + "\"%s\";\n" + VueResources.getString("saveaction.targetfiel") + "\n\n" + VueResources.getString("saveaction.problem"), map.getLabel(), file, Util.formatLines(e.toString(), 80)), "Problem Saving Map");
+        } finally {
+            GUI.invokeAfterAWT(new Runnable() {
+
+                public void run() {
+                    GUI.clearWaitCursor();
+                }
+            });
+        }
+        return false;
+    }
+} </s>
+<s>class temp {    private void makeDailyBackup() throws CacheOperationException, ConfigurationException {
+        final int MAX_DAILY_BACKUPS = 5;
+        File cacheFolder = getBackupFolder();
+        cacheLog.debug("Making a daily backup of current Beehive archive...");
+        try {
+            File oldestDaily = new File(DAILY_BACKUP_PREFIX + "." + MAX_DAILY_BACKUPS);
+            if (oldestDaily.exists()) {
+                moveToWeeklyBackup(oldestDaily);
+            }
+            for (int index = MAX_DAILY_BACKUPS - 1; index > 0; index--) {
+                File daily = new File(cacheFolder, DAILY_BACKUP_PREFIX + "." + index);
+                File target = new File(cacheFolder, DAILY_BACKUP_PREFIX + "." + (index + 1));
+                if (!daily.exists()) {
+                    cacheLog.debug("Daily backup file ''{0}'' was not present. Skipping...", daily.getAbsolutePath());
+                    continue;
+                }
+                if (!daily.renameTo(target)) {
+                    sortBackups();
+                    throw new CacheOperationException("There was an error moving ''{0}'' to ''{1}''.", daily.getAbsolutePath(), target.getAbsolutePath());
+                } else {
+                    cacheLog.debug("Moved " + daily.getAbsolutePath() + " to " + target.getAbsolutePath());
+                }
+            }
+        } catch (SecurityException e) {
+            throw new ConfigurationException("Security Manager has denied read/write access to daily backup files in ''{0}'' : {1}" + e, cacheFolder.getAbsolutePath(), e.getMessage());
+        }
+        File beehiveArchive = getCachedArchive();
+        File tempBackupArchive = new File(cacheFolder, BEEHIVE_ARCHIVE_NAME + ".tmp");
+        BufferedInputStream archiveReader = null;
+        BufferedOutputStream tempBackupWriter = null;
+        try {
+            archiveReader = new BufferedInputStream(new FileInputStream(beehiveArchive));
+            tempBackupWriter = new BufferedOutputStream(new FileOutputStream(tempBackupArchive));
+            int len, bytecount = 0;
+            final int BUFFER_SIZE = 4096;
+            byte[] buffer = new byte[BUFFER_SIZE];
+            while ((len = archiveReader.read(buffer, 0, BUFFER_SIZE)) != -1) {
+                tempBackupWriter.write(buffer, 0, len);
+                bytecount += len;
+            }
+            tempBackupWriter.flush();
+            long originalFileSize = beehiveArchive.length();
+            if (originalFileSize != bytecount) {
+                throw new CacheOperationException("Original archive size was {0} bytes but only {1} were copied.", originalFileSize, bytecount);
+            }
+            cacheLog.debug("Finished copying ''{0}'' to ''{1}''.", beehiveArchive.getAbsolutePath(), tempBackupArchive.getAbsolutePath());
+        } catch (FileNotFoundException e) {
+            throw new CacheOperationException("Files required for copying a backup of Beehive archive could not be found, opened " + "or created : {1}", e, e.getMessage());
+        } catch (IOException e) {
+            throw new CacheOperationException("Error while making a copy of the Beehive archive : {0}", e, e.getMessage());
+        } finally {
+            if (archiveReader != null) {
+                try {
+                    archiveReader.close();
+                } catch (Throwable t) {
+                    cacheLog.warn("Failed to close stream to ''{0}'' : {1}", t, beehiveArchive.getAbsolutePath(), t.getMessage());
+                }
+            }
+            if (tempBackupWriter != null) {
+                try {
+                    tempBackupWriter.close();
+                } catch (Throwable t) {
+                    cacheLog.warn("Failed to close stream to ''{0}'' : {1}", t, tempBackupArchive.getAbsolutePath(), t.getMessage());
+                }
+            }
+        }
+        validateArchive(tempBackupArchive);
+        File newestDaily = getNewestDailyBackupFile();
+        try {
+            if (!tempBackupArchive.renameTo(newestDaily)) {
+                throw new CacheOperationException("Error moving ''{0}'' to ''{1}''.", tempBackupArchive.getAbsolutePath(), newestDaily.getAbsolutePath());
+            } else {
+                cacheLog.info("Backup complete. Saved in ''{0}''", newestDaily.getAbsolutePath());
+            }
+        } catch (SecurityException e) {
+            throw new ConfigurationException("Security Manager has denied write access to ''{0}'' : {1}", e, newestDaily.getAbsolutePath(), e.getMessage());
+        }
+    }
+} </s>
+<s>class temp {    private void compress(File target, Set<File> files) throws CacheOperationException, ConfigurationException {
+        ZipOutputStream zipOutput = null;
+        try {
+            zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(target)));
+            for (File file : files) {
+                BufferedInputStream fileInput = null;
+                File cachePathName = new File(cacheFolder, file.getPath());
+                try {
+                    if (!cachePathName.exists()) {
+                        throw new CacheOperationException("Expected to add file ''{0}'' to export archive ''{1}'' (Account : {2}) but it " + "has gone missing (cause unknown). This can indicate implementation or deployment " + "error. Aborting export operation as a safety precaution.", cachePathName.getPath(), target.getAbsolutePath(), account.getOid());
+                    }
+                    fileInput = new BufferedInputStream(new FileInputStream(cachePathName));
+                    ZipEntry entry = new ZipEntry(file.getPath());
+                    entry.setSize(cachePathName.length());
+                    entry.setTime(cachePathName.lastModified());
+                    zipOutput.putNextEntry(entry);
+                    cacheLog.debug("Added new export zip entry ''{0}''.", file.getPath());
+                    int count, total = 0;
+                    int buffer = 2048;
+                    byte[] data = new byte[buffer];
+                    while ((count = fileInput.read(data, 0, buffer)) != -1) {
+                        zipOutput.write(data, 0, count);
+                        total += count;
+                    }
+                    zipOutput.flush();
+                    if (total != cachePathName.length()) {
+                        throw new CacheOperationException("Only wrote {0} out of {1} bytes when archiving file ''{2}'' (Account : {3}). " + "This could have occured either due implementation error or file I/O error. " + "Aborting archive operation to prevent a potentially corrupt export archive to " + "be created.", total, cachePathName.length(), cachePathName.getPath(), account.getOid());
+                    } else {
+                        cacheLog.debug("Wrote {0} out of {1} bytes to zip entry ''{2}''", total, cachePathName.length(), file.getPath());
+                    }
+                } catch (SecurityException e) {
+                    throw new ConfigurationException("Security manager has denied r/w access when attempting to read file ''{0}'' and " + "write it to archive ''{1}'' (Account : {2}) : {3}", e, cachePathName.getPath(), target, account.getOid(), e.getMessage());
+                } catch (IllegalArgumentException e) {
+                    throw new CacheOperationException("Error creating ZIP archive for account ID = {0} : {1}", e, account.getOid(), e.getMessage());
+                } catch (FileNotFoundException e) {
+                    throw new CacheOperationException("Attempted to include file ''{0}'' in export archive but it has gone missing " + "(Account : {1}). Possible implementation error in local file cache. Aborting  " + "export operation as a precaution ({2})", e, cachePathName.getPath(), account.getOid(), e.getMessage());
+                } catch (ZipException e) {
+                    throw new CacheOperationException("Error writing export archive for account ID = {0} : {1}", e, account.getOid(), e.getMessage());
+                } catch (IOException e) {
+                    throw new CacheOperationException("I/O error while creating export archive for account ID = {0}. " + "Operation aborted ({1})", e, account.getOid(), e.getMessage());
+                } finally {
+                    if (zipOutput != null) {
+                        try {
+                            zipOutput.closeEntry();
+                        } catch (Throwable t) {
+                            cacheLog.warn("Unable to close zip entry for file ''{0}'' in export archive ''{1}'' " + "(Account : {2}) : {3}.", t, file.getPath(), target.getAbsolutePath(), account.getOid(), t.getMessage());
+                        }
+                    }
+                    if (fileInput != null) {
+                        try {
+                            fileInput.close();
+                        } catch (Throwable t) {
+                            cacheLog.warn("Failed to close input stream from file ''{0}'' being added " + "to export archive (Account : {1}) : {2}", t, cachePathName.getPath(), account.getOid(), t.getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new CacheOperationException("Unable to create target export archive ''{0}'' for account {1) : {2}", e, target, account.getOid(), e.getMessage());
+        } finally {
+            try {
+                if (zipOutput != null) {
+                    zipOutput.close();
+                }
+            } catch (Throwable t) {
+                cacheLog.warn("Failed to close the stream to export archive ''{0}'' : {1}.", t, target, t.getMessage());
+            }
+        }
+    }
+} </s>
+<s>class temp {    private Document getDocument(URL url) throws SAXException, IOException {
+        InputStream is;
+        try {
+            is = url.openStream();
+        } catch (IOException io) {
+            System.out.println("parameter error : The specified reading data is mistaken.");
+            System.out.println(" Request URL is " + sourceUri);
+            throw new IOException("\t" + io.toString());
+        }
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = null;
+        try {
+            builder = factory.newDocumentBuilder();
+        } catch (ParserConfigurationException pce) {
+            System.out.println("error : The error of DocumentBuilder instance generation");
+            throw new RuntimeException(pce.toString());
+        }
+        Document doc;
+        try {
+            doc = builder.parse(is);
+        } catch (Exception e) {
+            System.out.println("error : parse of reading data went wrong.");
+            System.out.println(" Request URL is " + sourceUri);
+            throw new RuntimeException(e.toString());
+        }
+        return doc;
+    }
+} </s>
+<s>class temp {    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (doAuth(request, response)) {
+            Connection conn = null;
+            try {
+                int UID = icsm.getIntChatSession(request).getUID();
+                conn = getJDBCConnection(icsm.getHeavyDatabaseConnectionPool(), request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                if (conn == null) return;
+                ResultSet rs = IntChatDatabaseOperations.executeQuery(conn, "SELECT id FROM ic_messagetypes WHERE templatename='" + IntChatConstants.MessageTemplates.IC_FILES + "' LIMIT 1");
+                if (rs.next()) {
+                    int fileTypeID = rs.getInt("id");
+                    String recipients = request.getHeader(IntChatConstants.HEADER_FILERECIPIENTS);
+                    rs.getStatement().close();
+                    rs = null;
+                    if (recipients != null) {
+                        HashMap<String, String> hm = Tools.parseMultiparamLine(request.getHeader("Content-Disposition"));
+                        String fileName = URLDecoder.decode(hm.get("filename"), IntChatServerDefaults.ENCODING);
+                        long fileLength = (request.getHeader("Content-Length") != null ? Long.parseLong(request.getHeader("Content-Length")) : -1);
+                        fileLength = (request.getHeader(IntChatConstants.HEADER_FILELENGTH) != null ? Long.parseLong(request.getHeader(IntChatConstants.HEADER_FILELENGTH)) : fileLength);
+                        long maxFileSize = RuntimeParameters.getIntValue(ParameterNames.MAX_FILE_SIZE) * 1048576;
+                        if (maxFileSize > 0 && fileLength > maxFileSize) {
+                            request.getInputStream().close();
+                            response.sendError(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+                            return;
+                        }
+                        long now = System.currentTimeMillis();
+                        long nextid = ic_messages_id_seq.nextval();
+                        IntChatServletInputStream in = new IntChatServletInputStream(request);
+                        IntChatMessage icm = null;
+                        conn.setAutoCommit(false);
+                        try {
+                            PreparedStatement ps = conn.prepareStatement("INSERT INTO ic_messages (id, tid, mhead, mbody, mdate, sid) VALUES (?, ?, ?, ?, ?, ?)");
+                            ps.setLong(1, nextid);
+                            ps.setInt(2, fileTypeID);
+                            ps.setString(3, fileName);
+                            ps.setString(4, Long.toString(fileLength));
+                            ps.setLong(5, now);
+                            ps.setInt(6, UID);
+                            ps.executeUpdate();
+                            ps.close();
+                            if (!insertBLOB(conn, in, fileLength, nextid, maxFileSize)) {
+                                conn.rollback();
+                                return;
+                            }
+                            icm = new IntChatMessage(false, fileTypeID, null, null);
+                            String[] id = recipients.split(",");
+                            int id1;
+                            for (int i = 0; i < id.length; i++) {
+                                id1 = Integer.parseInt(id[i].trim());
+                                IntChatDatabaseOperations.executeUpdate(conn, "INSERT INTO ic_recipients (mid, rid) VALUES ('" + nextid + "', '" + id1 + "')");
+                                icm.addTo(id1);
+                            }
+                            conn.commit();
+                        } catch (Exception e) {
+                            conn.rollback();
+                            throw e;
+                        } finally {
+                            conn.setAutoCommit(true);
+                        }
+                        if (icm != null) {
+                            icm.setID(nextid);
+                            icm.setDate(new Timestamp(now - TimeZone.getDefault().getOffset(now)));
+                            icm.setFrom(UID);
+                            icm.setHeadText(fileName);
+                            icm.setBodyText(Long.toString(fileLength));
+                            icsm.onClientSentMessage(icm);
+                        }
+                        response.setStatus(HttpServletResponse.SC_OK);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                }
+                if (rs != null) {
+                    rs.getStatement().close();
+                    rs = null;
+                }
+            } catch (RetryRequest rr) {
+                throw rr;
+            } catch (Exception e) {
+                Tools.makeErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+            } finally {
+                try {
+                    if (conn != null) icsm.getHeavyDatabaseConnectionPool().releaseConnection(conn);
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void doVersionCheck(View view) {
+        view.showWaitCursor();
+        try {
+            URL url = new URL(jEdit.getProperty("version-check.url"));
+            InputStream in = url.openStream();
+            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+            String line;
+            String develBuild = null;
+            String stableBuild = null;
+            while ((line = bin.readLine()) != null) {
+                if (line.startsWith(".build")) develBuild = line.substring(6).trim(); else if (line.startsWith(".stablebuild")) stableBuild = line.substring(12).trim();
+            }
+            bin.close();
+            if (develBuild != null && stableBuild != null) {
+                doVersionCheck(view, stableBuild, develBuild);
+            }
+        } catch (IOException e) {
+            String[] args = { jEdit.getProperty("version-check.url"), e.toString() };
+            GUIUtilities.error(view, "read-error", args);
+        }
+        view.hideWaitCursor();
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    public void testSystemPropertyConnector() throws Exception {
+        final String rootFolderPath = "test/ConnectorTest/fs/".toLowerCase();
+        final Connector connector = new SystemPropertyConnector();
+        final ContentResolver contentResolver = new UnionContentResolver();
+        final FSContentResolver fsContentResolver = new FSContentResolver();
+        fsContentResolver.setRootFolderPath(rootFolderPath);
+        contentResolver.addContentResolver(fsContentResolver);
+        contentResolver.addContentResolver(new ClasspathContentResolver());
+        connector.setContentResolver(contentResolver);
+        String resultString;
+        byte[] resultContent;
+        Object resultObject;
+        resultString = connector.getString("helloWorldPath");
+        assertNull(resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNull(resultContent);
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        System.setProperty("helloWorldPath", "org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNotNull(resultContent);
+        assertEquals("Hello World 2", new String(resultContent, "UTF-8"));
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        System.setProperty("helloWorldPath", "file:org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("file:org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNull(resultObject);
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        System.setProperty("helloWorldPath", "classpath:org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("classpath:org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNotNull(resultContent);
+        assertEquals("Hello World 2", new String(resultContent, "UTF-8"));
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        final InputStream helloWorldIS = new ByteArrayInputStream("Hello World 2 - Test".getBytes("UTF-8"));
+        FileUtils.forceMkdir(new File(rootFolderPath + "/org/settings4j/connector"));
+        final String helloWorldPath = rootFolderPath + "/org/settings4j/connector/HelloWorld2.txt";
+        final FileOutputStream fileOutputStream = new FileOutputStream(new File(helloWorldPath));
+        IOUtils.copy(helloWorldIS, fileOutputStream);
+        IOUtils.closeQuietly(helloWorldIS);
+        IOUtils.closeQuietly(fileOutputStream);
+        LOG.info("helloWorld2Path: " + helloWorldPath);
+        System.setProperty("helloWorldPath", "file:org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("file:org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNotNull(resultContent);
+        assertEquals("Hello World 2 - Test", new String(resultContent, "UTF-8"));
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        System.setProperty("helloWorldPath", "org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        resultContent = connector.getContent("helloWorldPath");
+        assertNotNull(resultContent);
+        assertEquals("Hello World 2 - Test", new String(resultContent, "UTF-8"));
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+        System.setProperty("helloWorldPath", "classpath:org/settings4j/connector/HelloWorld2.txt");
+        resultString = connector.getString("helloWorldPath");
+        assertNotNull(resultString);
+        assertEquals("classpath:org/settings4j/connector/HelloWorld2.txt", resultString);
+        resultContent = connector.getContent("helloWorldPath");
+        assertNotNull(resultContent);
+        assertEquals("Hello World 2", new String(resultContent, "UTF-8"));
+        resultObject = connector.getObject("helloWorldPath");
+        assertNull(resultObject);
+    }
+} </s>
+<s>class temp {    public static String encrypt(String text) throws NoSuchAlgorithmException {
+        MessageDigest md;
+        md = MessageDigest.getInstance("MD5");
+        byte[] md5hash = new byte[32];
+        try {
+            md.update(text.getBytes("iso-8859-1"), 0, text.length());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        md5hash = md.digest();
+        return convertToHex(md5hash);
+    }
+} </s>
+<s>class temp {    public static String[] putFECSplitFile(String uri, File file, int htl, boolean mode) {
+        FcpFECUtils fecutils = null;
+        Vector segmentHeaders = null;
+        Vector segmentFileMaps = new Vector();
+        Vector checkFileMaps = new Vector();
+        Vector segmentKeyMaps = new Vector();
+        Vector checkKeyMaps = new Vector();
+        int fileLength = (int) file.length();
+        String output = new String();
+        int maxThreads = frame1.frostSettings.getIntValue("splitfileUploadThreads");
+        Thread[] chunkThreads = null;
+        String[][] chunkResults = null;
+        Thread[] checkThreads = null;
+        String[][] checkResults = null;
+        int threadCount = 0;
+        String board = getBoard(file);
+        {
+            fecutils = new FcpFECUtils(frame1.frostSettings.getValue("nodeAddress"), frame1.frostSettings.getIntValue("nodePort"));
+            synchronized (fecutils.getClass()) {
+                try {
+                    segmentHeaders = fecutils.FECSegmentFile("OnionFEC_a_1_2", fileLength);
+                } catch (Exception e) {
+                }
+            }
+            int chunkCnt = 0;
+            int checkCnt = 0;
+            synchronized (fecutils.getClass()) {
+                try {
+                    Socket fcpSock;
+                    BufferedInputStream fcpIn;
+                    PrintStream fcpOut;
+                    for (int i = 0; i < segmentHeaders.size(); i++) {
+                        int blockCount = (int) ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).BlockCount;
+                        int blockNo = 0;
+                        fcpSock = new Socket(InetAddress.getByName(frame1.frostSettings.getValue("nodeAddress")), frame1.frostSettings.getIntValue("nodePort"));
+                        fcpSock.setSoTimeout(1800000);
+                        fcpOut = new PrintStream(fcpSock.getOutputStream());
+                        fcpIn = new BufferedInputStream(fcpSock.getInputStream());
+                        FileInputStream fileIn = new FileInputStream(file);
+                        File[] chunkFiles = new File[blockCount];
+                        {
+                            System.out.println("Processing segment " + i);
+                            fileIn.skip(((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).Offset);
+                            long segLength = ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).BlockCount * ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).BlockSize;
+                            System.out.println("segLength = " + Long.toHexString(segLength));
+                            String headerString = "SegmentHeader\n" + ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).reconstruct() + "EndMessage\n";
+                            String dataHeaderString = "\0\0\0\2FECEncodeSegment\nMetadataLength=" + Long.toHexString(headerString.length()) + "\nDataLength=" + Long.toHexString(headerString.length() + segLength) + "\nData\n" + headerString;
+                            System.out.print(dataHeaderString);
+                            fcpOut.print(dataHeaderString);
+                            long count = 0;
+                            while (count < segLength) {
+                                byte[] buffer = new byte[(int) ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).BlockSize];
+                                System.out.println(Long.toHexString(((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).Offset + count));
+                                int inbytes = fileIn.read(buffer);
+                                if (inbytes < 0) {
+                                    System.out.println("End of input file - no data");
+                                    for (int j = 0; j < buffer.length; j++) buffer[j] = 0;
+                                    inbytes = buffer.length;
+                                }
+                                if (inbytes < buffer.length) {
+                                    System.out.println("End of input file - not enough data");
+                                    for (int j = inbytes; j < buffer.length; j++) buffer[j] = 0;
+                                    inbytes = buffer.length;
+                                }
+                                if (inbytes > segLength - count) inbytes = (int) (segLength - count);
+                                fcpOut.write(buffer);
+                                File uploadMe = new File(frame1.keypool + String.valueOf(System.currentTimeMillis()) + "-" + chunkCnt + ".tmp");
+                                chunkFiles[blockNo] = uploadMe;
+                                uploadMe.deleteOnExit();
+                                FileOutputStream fileOut = new FileOutputStream(uploadMe);
+                                fileOut.write(buffer, 0, (int) inbytes);
+                                fileOut.close();
+                                count += inbytes;
+                                chunkCnt++;
+                                ;
+                                blockNo++;
+                                if (blockNo >= blockCount) break;
+                            }
+                            segmentFileMaps.add(chunkFiles);
+                            fcpOut.flush();
+                            fileIn.close();
+                        }
+                        int checkNo = 0;
+                        int checkBlockCount = (int) ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).CheckBlockCount;
+                        File[] checkFiles = new File[checkBlockCount];
+                        File uploadMe = null;
+                        FileOutputStream outFile = null;
+                        {
+                            String currentLine;
+                            long checkBlockSize = ((FcpFECUtilsSegmentHeader) segmentHeaders.get(i)).CheckBlockSize;
+                            int checkPtr = 0;
+                            int length = 0;
+                            do {
+                                boolean started = false;
+                                currentLine = fecutils.getLine(fcpIn).trim();
+                                if (currentLine.equals("DataChunk")) {
+                                    started = true;
+                                }
+                                if (currentLine.startsWith("Length=")) {
+                                    length = Integer.parseInt((currentLine.split("="))[1], 16);
+                                }
+                                if (currentLine.equals("Data")) {
+                                    int currentRead;
+                                    byte[] buffer = new byte[(int) length];
+                                    if (uploadMe == null) {
+                                        uploadMe = new File(frame1.keypool + String.valueOf(System.currentTimeMillis()) + "-chk-" + checkCnt + ".tmp");
+                                        uploadMe.deleteOnExit();
+                                        outFile = new FileOutputStream(uploadMe);
+                                    }
+                                    currentRead = fcpIn.read(buffer);
+                                    while (currentRead < length) {
+                                        currentRead += fcpIn.read(buffer, currentRead, length - currentRead);
+                                    }
+                                    outFile.write(buffer);
+                                    checkPtr += currentRead;
+                                    if (checkPtr == checkBlockSize) {
+                                        outFile.close();
+                                        checkFiles[checkNo] = uploadMe;
+                                        uploadMe = null;
+                                        checkNo++;
+                                        checkCnt++;
+                                        checkPtr = 0;
+                                    }
+                                }
+                            } while (currentLine.length() > 0);
+                            checkFileMaps.add(checkFiles);
+                        }
+                        fcpOut.close();
+                        fcpIn.close();
+                        fcpSock.close();
+                    }
+                } catch (Exception e) {
+                    System.out.println("putFECSplitFile NOT GOOD " + e.toString());
+                }
+            }
+            int chunkNo = 0;
+            int uploadedBytes = 0;
+            for (int i = 0; i < segmentFileMaps.size(); i++) {
+                File[] currentFileMap = (File[]) segmentFileMaps.get(i);
+                chunkThreads = new Thread[currentFileMap.length];
+                chunkResults = new String[currentFileMap.length][2];
+                threadCount = 0;
+                for (int j = 0; j < currentFileMap.length; j++) {
+                    if (DEBUG) System.out.println("Chunk: " + chunkNo);
+                    while (getActiveThreads(chunkThreads) >= maxThreads) mixed.wait(5000);
+                    chunkThreads[threadCount] = new putKeyThread("CHK@", currentFileMap[j], htl, chunkResults, threadCount, mode);
+                    chunkThreads[threadCount].start();
+                    threadCount++;
+                    uploadedBytes += currentFileMap[j].length();
+                    updateUploadTable(file, uploadedBytes, mode);
+                    mixed.wait(1000);
+                    chunkNo++;
+                }
+                while (getActiveThreads(chunkThreads) > 0) {
+                    if (DEBUG) System.out.println("Active Splitfile inserts remaining: " + getActiveThreads(chunkThreads));
+                    mixed.wait(3000);
+                }
+                segmentKeyMaps.add(chunkResults);
+            }
+            int checkNo = 0;
+            for (int i = 0; i < checkFileMaps.size(); i++) {
+                File[] currentFileMap = (File[]) checkFileMaps.get(i);
+                checkThreads = new Thread[currentFileMap.length];
+                checkResults = new String[currentFileMap.length][2];
+                threadCount = 0;
+                for (int j = 0; j < currentFileMap.length; j++) {
+                    if (DEBUG) System.out.println("Check: " + checkNo);
+                    while (getActiveThreads(checkThreads) >= maxThreads) mixed.wait(5000);
+                    checkThreads[threadCount] = new putKeyThread("CHK@", currentFileMap[j], htl, checkResults, threadCount, mode);
+                    checkThreads[threadCount].start();
+                    threadCount++;
+                    uploadedBytes += currentFileMap[j].length();
+                    updateUploadTable(file, uploadedBytes, mode);
+                    mixed.wait(1000);
+                    checkNo++;
+                }
+                while (getActiveThreads(checkThreads) > 0) {
+                    if (DEBUG) System.out.println("Active Checkblock inserts remaining: " + getActiveThreads(checkThreads));
+                    mixed.wait(3000);
+                }
+                checkKeyMaps.add(checkResults);
+            }
+            checkThreads = null;
+        }
+        String redirect = null;
+        {
+            synchronized (fecutils.getClass()) {
+                try {
+                    redirect = fecutils.FECMakeMetadata(segmentHeaders, segmentKeyMaps, checkKeyMaps, "Frost");
+                } catch (Exception e) {
+                    System.out.println("putFECSplitFile NOT GOOD " + e.toString());
+                }
+            }
+            String[] sortedRedirect = redirect.split("\n");
+            for (int z = 0; z < sortedRedirect.length; z++) System.out.println(sortedRedirect[z]);
+            int sortStart = -1;
+            int sortEnd = -1;
+            for (int line = 0; line < sortedRedirect.length; line++) {
+                if (sortedRedirect[line].equals("Document")) {
+                    sortStart = line + 1;
+                    break;
+                }
+            }
+            for (int line = sortStart; line < sortedRedirect.length; line++) {
+                if (sortedRedirect[line].equals("End")) {
+                    sortEnd = line;
+                    break;
+                }
+            }
+            System.out.println("sortStart " + sortStart + " sortEnd " + sortEnd);
+            if (sortStart < sortEnd) Arrays.sort(sortedRedirect, sortStart, sortEnd);
+            redirect = new String();
+            for (int line = 0; line < sortedRedirect.length; line++) redirect += sortedRedirect[line] + "\n";
+            System.out.println(redirect);
+        }
+        int tries = 0;
+        String[] result = { "Error", "Error" };
+        while (!result[0].equals("Success") && !result[0].equals("KeyCollision") && tries < 8) {
+            tries++;
+            try {
+                FcpConnection connection = new FcpConnection(frame1.frostSettings.getValue("nodeAddress"), frame1.frostSettings.getValue("nodePort"));
+                output = connection.putKeyFromFile(uri, null, redirect.getBytes(), htl, mode);
+            } catch (FcpToolsException e) {
+                if (DEBUG) System.out.println("FcpToolsException " + e);
+                frame1.displayWarning(e.toString());
+            } catch (UnknownHostException e) {
+                if (DEBUG) System.out.println("UnknownHostException");
+                frame1.displayWarning(e.toString());
+            } catch (IOException e) {
+                if (DEBUG) System.out.println("IOException");
+                frame1.displayWarning(e.toString());
+            }
+            result = result(output);
+            mixed.wait(3000);
+            if (DEBUG) System.out.println("*****" + result[0] + " " + result[1] + " ");
+        }
+        if ((result[0].equals("Success") || result[0].equals("KeyCollision")) && mode) {
+            try {
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTimeZone(TimeZone.getTimeZone("GMT"));
+                String dirdate = cal.get(Calendar.YEAR) + ".";
+                dirdate += cal.get(Calendar.MONTH) + 1 + ".";
+                dirdate += cal.get(Calendar.DATE);
+                String fileSeparator = System.getProperty("file.separator");
+                String destination = frame1.keypool + board + fileSeparator + dirdate + fileSeparator;
+                FcpConnection connection = new FcpConnection(frame1.frostSettings.getValue("nodeAddress"), frame1.frostSettings.getValue("nodePort"));
+                String contentKey = result(connection.putKeyFromFile(uri, null, redirect.getBytes(), htl, false))[1];
+                String prefix = new String("freenet:");
+                if (contentKey.startsWith(prefix)) contentKey = contentKey.substring(prefix.length());
+                FileAccess.writeFile("Already uploaded today", destination + contentKey + ".lck");
+            } catch (Exception e) {
+            }
+        }
+        return result;
+    }
+} </s>
+<s>class temp {    public static GCalendar getNewestCalendar(Calendar startDate) throws IOException {
+        GCalendar hoge = null;
+        try {
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpClient http = new DefaultHttpClient();
+            HttpGet method = new HttpGet("http://localhost:8080/GoogleCalendar/select");
+            HttpResponse response = http.execute(method);
+            String jsonstr = response.getEntity().toString();
+            System.out.println("jsonstr = " + jsonstr);
+            hoge = JSON.decode(jsonstr, GCalendar.class);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return hoge;
+    }
+} </s>
+<s>class temp {    private void nioBuild() {
+        try {
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(1024 * 4);
+            final FileChannel out = new FileOutputStream(dest).getChannel();
+            for (File part : parts) {
+                setState(part.getName(), BUILDING);
+                FileChannel in = new FileInputStream(part).getChannel();
+                while (in.read(buffer) > 0) {
+                    buffer.flip();
+                    written += out.write(buffer);
+                    buffer.clear();
+                }
+                in.close();
+            }
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static String md5(String texto) {
+        String resultado;
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(texto.getBytes());
+            BigInteger hash = new BigInteger(1, md5.digest());
+            resultado = hash.toString(16);
+            if (resultado.length() < 32) {
+                char chars[] = new char[32 - resultado.length()];
+                Arrays.fill(chars, '0');
+                resultado = new String(chars) + resultado;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            resultado = e.toString();
+        }
+        return resultado;
+    }
+} </s>
+<s>class temp {    public static void compressFile(File orig) throws IOException {
+        File file = new File(INPUT + orig.toString());
+        File target = new File(OUTPUT + orig.toString().replaceAll(".xml", ".xml.gz"));
+        System.out.println("    Compressing \"" + file.getName() + "\" into \"" + target + "\"");
+        long l = file.length();
+        FileInputStream fileinputstream = new FileInputStream(file);
+        GZIPOutputStream gzipoutputstream = new GZIPOutputStream(new FileOutputStream(target));
+        byte abyte0[] = new byte[1024];
+        int i;
+        while ((i = fileinputstream.read(abyte0)) != -1) gzipoutputstream.write(abyte0, 0, i);
+        fileinputstream.close();
+        gzipoutputstream.close();
+        long l1 = target.length();
+        System.out.println("    Initial size: " + l + "; Compressed size: " + l1 + ".");
+        System.out.println("    Done.");
+        System.out.println();
+    }
+} </s>
+<s>class temp {    public static void decompressFile(File orig) throws IOException {
+        File file = new File(INPUT + orig.toString());
+        File target = new File(OUTPUT + orig.toString().replaceAll(".xml.gz", ".xml"));
+        System.out.println("    Decompressing \"" + file.getName() + "\" into \"" + target + "\"");
+        long l = file.length();
+        GZIPInputStream gzipinputstream = new GZIPInputStream(new FileInputStream(file));
+        FileOutputStream fileoutputstream = new FileOutputStream(target);
+        byte abyte0[] = new byte[1024];
+        int i;
+        while ((i = gzipinputstream.read(abyte0)) != -1) fileoutputstream.write(abyte0, 0, i);
+        fileoutputstream.close();
+        gzipinputstream.close();
+        long l1 = target.length();
+        System.out.println("    Initial size: " + l + "; Decompressed size: " + l1 + ".");
+        System.out.println("    Done.");
+        System.out.println();
+    }
+} </s>
+<s>class temp {    private void getRandomGUID(boolean secure) {
+        MessageDigest md5 = null;
+        StringBuffer sbValueBeforeMD5 = new StringBuffer();
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Error: " + e);
+        }
+        try {
+            long time = System.currentTimeMillis();
+            long rand = 0;
+            if (secure) {
+                rand = mySecureRand.nextLong();
+            } else {
+                rand = myRand.nextLong();
+            }
+            sbValueBeforeMD5.append(s_id);
+            sbValueBeforeMD5.append(":");
+            sbValueBeforeMD5.append(Long.toString(time));
+            sbValueBeforeMD5.append(":");
+            sbValueBeforeMD5.append(Long.toString(rand));
+            valueBeforeMD5 = sbValueBeforeMD5.toString();
+            md5.update(valueBeforeMD5.getBytes());
+            byte[] array = md5.digest();
+            StringBuffer sb = new StringBuffer();
+            for (int j = 0; j < array.length; ++j) {
+                int b = array[j] & 0xFF;
+                if (b < 0x10) sb.append('0');
+                sb.append(Integer.toHexString(b));
+            }
+            valueAfterMD5 = sb.toString();
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+        }
+    }
+} </s>
+<s>class temp {    public ByteArrayOutputStream download(final String contentUuid) throws WebServiceClientException {
+        try {
+            URL url = new URL(getPath("/download/" + contentUuid));
+            URLConnection connection = url.openConnection();
+            InputStream inputStream = connection.getInputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            int c;
+            while ((c = inputStream.read()) != -1) {
+                outputStream.write(c);
+            }
+            inputStream.close();
+            return outputStream;
+        } catch (Exception ex) {
+            throw new WebServiceClientException("Could not download content from web service.", ex);
+        }
+    }
+} </s>
+<s>class temp {    public void download(String contentUuid, File path) throws WebServiceClientException {
+        try {
+            URL url = new URL(getPath("/download/" + contentUuid));
+            URLConnection connection = url.openConnection();
+            InputStream inputStream = connection.getInputStream();
+            OutputStream output = new FileOutputStream(path);
+            IoUtils.copyBytes(inputStream, output);
+            IoUtils.close(inputStream);
+            IoUtils.close(output);
+        } catch (IOException ioex) {
+            throw new WebServiceClientException("Could not download or saving content to path [" + path.getAbsolutePath() + "]", ioex);
+        } catch (Exception ex) {
+            throw new WebServiceClientException("Could not download content from web service.", ex);
+        }
+    }
+} </s>
+<s>class temp {    private void serveRedir(OutputStream os, IRequest req) throws IOException {
+        String urlString = req.getParameter("url");
+        URL url = new URL(urlString);
+        URLConnection con = url.openConnection();
+        InputStream is = new BufferedInputStream(con.getInputStream());
+        String ct = con.getContentType();
+        int cl = con.getContentLength();
+        String jsLink = "<script language=\"JavaScript1.2\" src=\"/tddt.js\" type='text/javascript'></script>\n";
+        int i;
+        String head = getHead("HTTP/1.0 200 OK", "Content-Type: " + ct + "\nContent-Length: -1");
+        os.write(head.getBytes());
+        if (ct != null && ct.indexOf("html") != -1) {
+            os.write(jsLink.getBytes());
+            NetUtils.saveChangeLink(url, os);
+        } else {
+            int len;
+            byte[] b = new byte[1024];
+            while ((len = is.read(b)) >= 0) {
+                os.write(b, 0, len);
+            }
+        }
+        os.flush();
+    }
+} </s>
+<s>class temp {    public void convert(File src, File dest) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(src));
+        DcmParser p = pfact.newDcmParser(in);
+        Dataset ds = fact.newDataset();
+        p.setDcmHandler(ds.getDcmHandler());
+        try {
+            FileFormat format = p.detectFileFormat();
+            if (format != FileFormat.ACRNEMA_STREAM) {
+                System.out.println("\n" + src + ": not an ACRNEMA stream!");
+                return;
+            }
+            p.parseDcmFile(format, Tags.PixelData);
+            if (ds.contains(Tags.StudyInstanceUID) || ds.contains(Tags.SeriesInstanceUID) || ds.contains(Tags.SOPInstanceUID) || ds.contains(Tags.SOPClassUID)) {
+                System.out.println("\n" + src + ": contains UIDs!" + " => probable already DICOM - do not convert");
+                return;
+            }
+            boolean hasPixelData = p.getReadTag() == Tags.PixelData;
+            boolean inflate = hasPixelData && ds.getInt(Tags.BitsAllocated, 0) == 12;
+            int pxlen = p.getReadLength();
+            if (hasPixelData) {
+                if (inflate) {
+                    ds.putUS(Tags.BitsAllocated, 16);
+                    pxlen = pxlen * 4 / 3;
+                }
+                if (pxlen != (ds.getInt(Tags.BitsAllocated, 0) >>> 3) * ds.getInt(Tags.Rows, 0) * ds.getInt(Tags.Columns, 0) * ds.getInt(Tags.NumberOfFrames, 1) * ds.getInt(Tags.NumberOfSamples, 1)) {
+                    System.out.println("\n" + src + ": mismatch pixel data length!" + " => do not convert");
+                    return;
+                }
+            }
+            ds.putUI(Tags.StudyInstanceUID, uid(studyUID));
+            ds.putUI(Tags.SeriesInstanceUID, uid(seriesUID));
+            ds.putUI(Tags.SOPInstanceUID, uid(instUID));
+            ds.putUI(Tags.SOPClassUID, classUID);
+            if (!ds.contains(Tags.NumberOfSamples)) {
+                ds.putUS(Tags.NumberOfSamples, 1);
+            }
+            if (!ds.contains(Tags.PhotometricInterpretation)) {
+                ds.putCS(Tags.PhotometricInterpretation, "MONOCHROME2");
+            }
+            if (fmi) {
+                ds.setFileMetaInfo(fact.newFileMetaInfo(ds, UIDs.ImplicitVRLittleEndian));
+            }
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+            } finally {
+                ds.writeFile(out, encodeParam());
+                if (hasPixelData) {
+                    if (!skipGroupLen) {
+                        out.write(PXDATA_GROUPLEN);
+                        int grlen = pxlen + 8;
+                        out.write((byte) grlen);
+                        out.write((byte) (grlen >> 8));
+                        out.write((byte) (grlen >> 16));
+                        out.write((byte) (grlen >> 24));
+                    }
+                    out.write(PXDATA_TAG);
+                    out.write((byte) pxlen);
+                    out.write((byte) (pxlen >> 8));
+                    out.write((byte) (pxlen >> 16));
+                    out.write((byte) (pxlen >> 24));
+                }
+                if (inflate) {
+                    int b2, b3;
+                    for (; pxlen > 0; pxlen -= 3) {
+                        out.write(in.read());
+                        b2 = in.read();
+                        b3 = in.read();
+                        out.write(b2 & 0x0f);
+                        out.write(b2 >> 4 | ((b3 & 0x0f) << 4));
+                        out.write(b3 >> 4);
+                    }
+                } else {
+                    for (; pxlen > 0; --pxlen) {
+                        out.write(in.read());
+                    }
+                }
+                out.close();
+            }
+            System.out.print('.');
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    public static String md5(String str) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("md5(String) - start");
+        }
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(str.getBytes());
+            byte[] b = md.digest();
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < b.length; i++) {
+                int v = (int) b[i];
+                v = v < 0 ? 0x100 + v : v;
+                String cc = Integer.toHexString(v);
+                if (cc.length() == 1) sb.append('0');
+                sb.append(cc);
+            }
+            String returnString = sb.toString();
+            if (logger.isDebugEnabled()) {
+                logger.debug("md5(String) - end");
+            }
+            return returnString;
+        } catch (Exception e) {
+            logger.warn("md5(String) - exception ignored", e);
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("md5(String) - end");
+        }
+        return "";
+    }
+} </s>
+<s>class temp {    void copyFileAscii(String src, String dest) {
+        try {
+            File inputFile = new File(src);
+            File outputFile = new File(dest);
+            FileReader in = new FileReader(inputFile);
+            FileWriter out = new FileWriter(outputFile);
+            int c;
+            while ((c = in.read()) != -1) out.write(c);
+            in.close();
+            out.close();
+        } catch (Exception ex) {
+            System.err.println(ex.toString());
+        }
+    }
+} </s>
+<s>class temp {    static void copy(String src, String dest) throws IOException {
+        File ifp = new File(src);
+        File ofp = new File(dest);
+        if (ifp.exists() == false) {
+            throw new IOException("file '" + src + "' does not exist");
+        }
+        FileInputStream fis = new FileInputStream(ifp);
+        FileOutputStream fos = new FileOutputStream(ofp);
+        byte[] b = new byte[1024];
+        while (fis.read(b) > 0) fos.write(b);
+        fis.close();
+        fos.close();
+    }
+} </s>
+<s>class temp {    private static byte[] gerarHash(String frase) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(frase.getBytes());
+            return md.digest();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public static String MD5(String text) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md;
+        md = MessageDigest.getInstance("MD5");
+        byte[] md5hash = new byte[32];
+        md.update(text.getBytes("iso-8859-1"), 0, text.length());
+        md5hash = md.digest();
+        return convertToHex(md5hash);
+    }
+} </s>
+<s>class temp {    public static File createGzip(File inputFile) {
+        File targetFile = new File(inputFile.getParentFile(), inputFile.getName() + ".gz");
+        if (targetFile.exists()) {
+            log.warn("The target file '" + targetFile + "' already exists. Will overwrite");
+        }
+        FileInputStream in = null;
+        GZIPOutputStream out = null;
+        try {
+            int read = 0;
+            byte[] data = new byte[BUFFER_SIZE];
+            in = new FileInputStream(inputFile);
+            out = new GZIPOutputStream(new FileOutputStream(targetFile));
+            while ((read = in.read(data, 0, BUFFER_SIZE)) != -1) {
+                out.write(data, 0, read);
+            }
+            in.close();
+            out.close();
+            boolean deleteSuccess = inputFile.delete();
+            if (!deleteSuccess) {
+                log.warn("Could not delete file '" + inputFile + "'");
+            }
+            log.info("Successfully created gzip file '" + targetFile + "'.");
+        } catch (Exception e) {
+            log.error("Exception while creating GZIP.", e);
+        } finally {
+            StreamUtil.tryCloseStream(in);
+            StreamUtil.tryCloseStream(out);
+        }
+        return targetFile;
+    }
+} </s>
+<s>class temp {    public static void createTar(File directoryToPack, File targetTarFile) throws IOException {
+        if (directoryToPack == null) {
+            throw new NullPointerException("The parameter 'directoryToPack' must not be null");
+        }
+        if (targetTarFile == null) {
+            throw new NullPointerException("The parameter 'targetTarFile' must not be null");
+        }
+        if (!directoryToPack.exists() || !directoryToPack.isDirectory()) {
+            throw new IllegalArgumentException("The target file '" + directoryToPack + "' does not exist or is not a directory.");
+        }
+        if (targetTarFile.exists()) {
+            log.warn("The target file '" + targetTarFile + "' already exists. Will overwrite");
+        }
+        log.debug("Creating tar from all files in directory '" + directoryToPack + "'");
+        byte buffer[] = new byte[BUFFER_SIZE];
+        FileOutputStream targetOutput = new FileOutputStream(targetTarFile);
+        TarOutputStream targetOutputTar = new TarOutputStream(targetOutput);
+        try {
+            List<File> fileList = collectFiles(directoryToPack);
+            for (Iterator<File> iter = fileList.iterator(); iter.hasNext(); ) {
+                File file = iter.next();
+                if (file == null || !file.exists() || file.isDirectory()) {
+                    log.info("The file '" + file + "' is ignored - is a directory or non-existent");
+                    continue;
+                }
+                if (file.equals(targetTarFile)) {
+                    log.debug("Skipping file: '" + file + "' - is the tar file itself");
+                    continue;
+                }
+                log.debug("Adding to archive: file='" + file + "', archive='" + targetTarFile + "'");
+                String filePathInTar = getFilePathInTar(file, directoryToPack);
+                log.debug("File path in tar: '" + filePathInTar + "' (file=" + file + ")");
+                TarEntry tarAdd = new TarEntry(file);
+                tarAdd.setModTime(file.lastModified());
+                tarAdd.setName(filePathInTar);
+                targetOutputTar.putNextEntry(tarAdd);
+                if (file.isFile()) {
+                    FileInputStream in = new FileInputStream(file);
+                    try {
+                        while (true) {
+                            int nRead = in.read(buffer, 0, buffer.length);
+                            if (nRead <= 0) break;
+                            targetOutputTar.write(buffer, 0, nRead);
+                        }
+                    } finally {
+                        StreamUtil.tryCloseStream(in);
+                    }
+                }
+                targetOutputTar.closeEntry();
+            }
+        } finally {
+            StreamUtil.tryCloseStream(targetOutputTar);
+            StreamUtil.tryCloseStream(targetOutput);
+        }
+        log.info("Tar Archive created successfully '" + targetTarFile + "'");
+    }
+} </s>
+<s>class temp {    public static void copyFile(File sourceFile, File destFile) throws IOException {
+        log.info("Copying file '" + sourceFile + "' to '" + destFile + "'");
+        if (!sourceFile.isFile()) {
+            throw new IllegalArgumentException("The sourceFile '" + sourceFile + "' does not exist or is not a normal file.");
+        }
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            long numberOfBytes = destination.transferFrom(source, 0, source.size());
+            log.debug("Transferred " + numberOfBytes + " bytes from '" + sourceFile + "' to '" + destFile + "'.");
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public int read(String name) {
+        status = STATUS_OK;
+        try {
+            name = name.trim().toLowerCase();
+            if ((name.indexOf("file:") >= 0) || (name.indexOf(":/") > 0)) {
+                URL url = new URL(name);
+                in = new BufferedInputStream(url.openStream());
+            } else {
+                in = new BufferedInputStream(new FileInputStream(name));
+            }
+            status = read(in);
+        } catch (IOException e) {
+            status = STATUS_OPEN_ERROR;
+        }
+        return status;
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        String str = "vbnjm7pexhlmof3kapi_key76bbc056cf516a844af25a763b2b8426auth_tokenff8080812374bd3f0123b60363a5230acomment_text你frob118edb4cb78b439207c2329b76395f9fmethodyupoo.photos.comments.addphoto_idff80808123922c950123b6066c946a3f";
+        MessageDigest md = null;
+        String s = new String("你");
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+        md.reset();
+        try {
+            md.update(str.getBytes("UTF-8"));
+            System.out.println(new BigInteger(1, md.digest()).toString(16));
+            System.out.println(new BigInteger(1, s.getBytes("UTF-8")).toString(16));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static String encrypt(String password, String algorithm, byte[] salt) {
+        StringBuffer buffer = new StringBuffer();
+        MessageDigest digest = null;
+        int size = 0;
+        if ("CRYPT".equalsIgnoreCase(algorithm)) {
+            throw new InternalError("Not implemented");
+        } else if ("SHA".equalsIgnoreCase(algorithm) || "SSHA".equalsIgnoreCase(algorithm)) {
+            size = 20;
+            if (salt != null && salt.length > 0) {
+                buffer.append("{SSHA}");
+            } else {
+                buffer.append("{SHA}");
+            }
+            try {
+                digest = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        } else if ("MD5".equalsIgnoreCase(algorithm) || "SMD5".equalsIgnoreCase(algorithm)) {
+            size = 16;
+            if (salt != null && salt.length > 0) {
+                buffer.append("{SMD5}");
+            } else {
+                buffer.append("{MD5}");
+            }
+            try {
+                digest = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        }
+        int outSize = size;
+        digest.reset();
+        digest.update(password.getBytes());
+        if (salt != null && salt.length > 0) {
+            digest.update(salt);
+            outSize += salt.length;
+        }
+        byte[] out = new byte[outSize];
+        System.arraycopy(digest.digest(), 0, out, 0, size);
+        if (salt != null && salt.length > 0) {
+            System.arraycopy(salt, 0, out, size, salt.length);
+        }
+        buffer.append(Base64.encode(out));
+        return buffer.toString();
+    }
+} </s>
+<s>class temp {    public static boolean verify(String password, String encryptedPassword) {
+        MessageDigest digest = null;
+        int size = 0;
+        String base64 = null;
+        if (encryptedPassword.regionMatches(true, 0, "{CRYPT}", 0, 7)) {
+            throw new InternalError("Not implemented");
+        } else if (encryptedPassword.regionMatches(true, 0, "{SHA}", 0, 5)) {
+            size = 20;
+            base64 = encryptedPassword.substring(5);
+            try {
+                digest = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        } else if (encryptedPassword.regionMatches(true, 0, "{SSHA}", 0, 6)) {
+            size = 20;
+            base64 = encryptedPassword.substring(6);
+            try {
+                digest = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        } else if (encryptedPassword.regionMatches(true, 0, "{MD5}", 0, 5)) {
+            size = 16;
+            base64 = encryptedPassword.substring(5);
+            try {
+                digest = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        } else if (encryptedPassword.regionMatches(true, 0, "{SMD5}", 0, 6)) {
+            size = 16;
+            base64 = encryptedPassword.substring(6);
+            try {
+                digest = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new InternalError("Invalid algorithm");
+            }
+        } else {
+            return false;
+        }
+        byte[] data = Base64.decode(base64.toCharArray());
+        byte[] orig = new byte[size];
+        System.arraycopy(data, 0, orig, 0, size);
+        digest.reset();
+        digest.update(password.getBytes());
+        if (data.length > size) {
+            digest.update(data, size, data.length - size);
+        }
+        return MessageDigest.isEqual(digest.digest(), orig);
+    }
+} </s>
+<s>class temp {    public void run() {
+        FTPClient ftp = null;
+        try {
+            StarkHhDownloaderEtcProperties etcProperties = new StarkHhDownloaderEtcProperties(getUri());
+            StarkHhDownloaderVarProperties varProperties = new StarkHhDownloaderVarProperties(getUri());
+            ftp = new FTPClient();
+            int reply;
+            ftp.connect(etcProperties.getHostname());
+            log("Connecting to ftp server at " + etcProperties.getHostname() + ".");
+            log("Server replied with '" + ftp.getReplyString() + "'.");
+            reply = ftp.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                throw UserException.newOk("FTP server refused connection.");
+            }
+            log("Connected to server, now logging in.");
+            ftp.login(etcProperties.getUsername(), etcProperties.getPassword());
+            log("Server replied with '" + ftp.getReplyString() + "'.");
+            List<String> directories = etcProperties.getDirectories();
+            for (int i = 0; i < directories.size(); i++) {
+                log("Checking the directory '" + directories.get(i) + "'.");
+                boolean found = false;
+                FTPFile[] filesArray = ftp.listFiles(directories.get(i));
+                List<FTPFile> files = Arrays.asList(filesArray);
+                Collections.sort(files, new Comparator<FTPFile>() {
+
+                    public int compare(FTPFile file1, FTPFile file2) {
+                        if (file2.getTimestamp().getTime().equals(file1.getTimestamp().getTime())) {
+                            return file2.getName().compareTo(file1.getName());
+                        } else {
+                            return file1.getTimestamp().getTime().compareTo(file2.getTimestamp().getTime());
+                        }
+                    }
+                });
+                for (FTPFile file : files) {
+                    if (file.getType() == FTPFile.FILE_TYPE && (varProperties.getLastImportDate(i) == null ? true : (file.getTimestamp().getTime().equals(varProperties.getLastImportDate(i).getDate()) ? file.getName().compareTo(varProperties.getLastImportName(i)) < 0 : file.getTimestamp().getTime().after(varProperties.getLastImportDate(i).getDate())))) {
+                        String fileName = directories.get(i) + "\\" + file.getName();
+                        if (file.getSize() == 0) {
+                            log("Ignoring '" + fileName + "'because it has zero length");
+                        } else {
+                            log("Attempting to download '" + fileName + "'.");
+                            InputStream is = ftp.retrieveFileStream(fileName);
+                            if (is == null) {
+                                reply = ftp.getReplyCode();
+                                throw UserException.newOk("Can't download the file '" + file.getName() + "', server says: " + reply + ".");
+                            }
+                            log("File stream obtained successfully.");
+                            hhImporter = new HhDataImportProcess(getContract().getId(), new Long(0), is, fileName + ".df2", file.getSize());
+                            hhImporter.run();
+                            List<VFMessage> messages = hhImporter.getMessages();
+                            hhImporter = null;
+                            if (messages.size() > 0) {
+                                for (VFMessage message : messages) {
+                                    log(message.getDescription());
+                                }
+                                throw UserException.newInvalidParameter("Problem loading file.");
+                            }
+                        }
+                        if (!ftp.completePendingCommand()) {
+                            throw UserException.newOk("Couldn't complete ftp transaction: " + ftp.getReplyString());
+                        }
+                        varProperties.setLastImportDate(i, new MonadDate(file.getTimestamp().getTime()));
+                        varProperties.setLastImportName(i, file.getName());
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    log("No new files found.");
+                }
+            }
+        } catch (UserException e) {
+            try {
+                log(e.getVFMessage().getDescription());
+            } catch (ProgrammerException e1) {
+                throw new RuntimeException(e1);
+            } catch (UserException e1) {
+                throw new RuntimeException(e1);
+            }
+        } catch (IOException e) {
+            try {
+                log(e.getMessage());
+            } catch (ProgrammerException e1) {
+                throw new RuntimeException(e1);
+            } catch (UserException e1) {
+                throw new RuntimeException(e1);
+            }
+        } catch (Throwable e) {
+            try {
+                log("Exception: " + e.getClass().getName() + " Message: " + e.getMessage());
+            } catch (ProgrammerException e1) {
+                throw new RuntimeException(e1);
+            } catch (UserException e1) {
+                throw new RuntimeException(e1);
+            }
+            ChellowLogger.getLogger().logp(Level.SEVERE, "ContextListener", "contextInitialized", "Can't initialize context.", e);
+        } finally {
+            if (ftp != null && ftp.isConnected()) {
+                try {
+                    ftp.logout();
+                    ftp.disconnect();
+                    log("Logged out.");
+                } catch (IOException ioe) {
+                } catch (ProgrammerException e) {
+                } catch (UserException e) {
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public String calculateProjectMD5(String scenarioName) throws Exception {
+        Scenario s = ScenariosManager.getInstance().getScenario(scenarioName);
+        s.loadParametersAndValues();
+        String scenarioMD5 = calculateScenarioMD5(s);
+        Map<ProjectComponent, String> map = getProjectMD5(new ProjectComponent[] { ProjectComponent.resources, ProjectComponent.classes, ProjectComponent.suts, ProjectComponent.libs });
+        map.put(ProjectComponent.currentScenario, scenarioMD5);
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        Iterator<String> iter = map.values().iterator();
+        while (iter.hasNext()) {
+            md.update(iter.next().getBytes());
+        }
+        byte[] hash = md.digest();
+        BigInteger result = new BigInteger(hash);
+        String rc = result.toString(16);
+        return rc;
+    }
+} </s>
+<s>class temp {    private static String calculateScenarioMD5(Scenario scenario) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        Vector<JTest> allTests = scenario.getTests();
+        for (JTest t : allTests) {
+            String name = t.getTestName() + t.getTestId();
+            String parameters = "";
+            if (t instanceof RunnerTest) {
+                parameters = ((RunnerTest) t).getPropertiesAsString();
+            }
+            md.update(name.getBytes());
+            md.update(parameters.getBytes());
+        }
+        byte[] hash = md.digest();
+        BigInteger result = new BigInteger(hash);
+        String rc = result.toString(16);
+        return rc;
+    }
+} </s>
+<s>class temp {    @Override
+    public boolean copyFile(String srcRootPath, String srcDir, String srcFileName, String destRootPath, String destDir, String destFileName) {
+        File srcPath = new File(srcRootPath + separator() + Database.getDomainName() + separator() + srcDir);
+        if (!srcPath.exists()) {
+            try {
+                srcPath.mkdirs();
+            } catch (Exception e) {
+                logger.error("Can't create directory...:" + srcPath);
+                return false;
+            }
+        }
+        File destPath = new File(destRootPath + separator() + Database.getDomainName() + separator() + destDir);
+        if (!destPath.exists()) {
+            try {
+                destPath.mkdirs();
+            } catch (Exception e) {
+                logger.error("Can't create directory...:" + destPath);
+                return false;
+            }
+        }
+        File from = new File(srcPath + separator() + srcFileName);
+        File to = new File(destPath + separator() + destFileName);
+        boolean res = true;
+        FileChannel srcChannel = null;
+        FileChannel destChannel = null;
+        try {
+            srcChannel = new FileInputStream(from).getChannel();
+            destChannel = new FileOutputStream(to).getChannel();
+            destChannel.transferFrom(srcChannel, 0, srcChannel.size());
+        } catch (Exception ex) {
+            logger.error("Exception", ex);
+            res = false;
+        } finally {
+            if (destChannel != null) {
+                try {
+                    destChannel.close();
+                } catch (IOException ex) {
+                    logger.error("Exception", ex);
+                    res = false;
+                }
+            }
+            if (srcChannel != null) {
+                try {
+                    srcChannel.close();
+                } catch (IOException ex) {
+                    logger.error("Exception", ex);
+                    res = false;
+                }
+            }
+        }
+        return res;
+    }
+} </s>
+<s>class temp {    protected void copyFile(File from, File to) throws IOException {
+        to.getParentFile().mkdirs();
+        InputStream in = new FileInputStream(from);
+        try {
+            OutputStream out = new FileOutputStream(to);
+            try {
+                byte[] buf = new byte[1024];
+                int readLength;
+                while ((readLength = in.read(buf)) > 0) {
+                    out.write(buf, 0, readLength);
+                }
+            } finally {
+                out.close();
+            }
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    protected InputStream acquireInputStream(String filename) throws IOException {
+        Validate.notEmpty(filename);
+        File f = new File(filename);
+        if (f.exists()) {
+            this.originalFilename = f.getName();
+            return new FileInputStream(f);
+        }
+        URL url = getClass().getClassLoader().getResource(filename);
+        if (url == null) {
+            if (!filename.startsWith("/")) {
+                url = getClass().getClassLoader().getResource("/" + filename);
+                if (url == null) {
+                    throw new IllegalArgumentException("File [" + filename + "] not found in classpath via " + getClass().getClassLoader().getClass());
+                }
+            }
+        }
+        this.originalFilename = filename;
+        return url.openStream();
+    }
+} </s>
+<s>class temp {    public static void copy(File source, File dest) throws IOException {
+        FileChannel in = null, out = null;
+        try {
+            in = new FileInputStream(source).getChannel();
+            out = new FileOutputStream(dest).getChannel();
+            long size = in.size();
+            MappedByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, size);
+            out.write(buf);
+        } finally {
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
+    }
+} </s>
+<s>class temp {    public String jsFunction_send(String postData) {
+        URL url = null;
+        try {
+            if (_uri.startsWith("http")) {
+                url = new URL(_uri);
+            } else {
+                url = new URL("file://./" + _uri);
+            }
+        } catch (MalformedURLException e) {
+            IdeLog.logError(ScriptingPlugin.getDefault(), Messages.WebRequest_Error, e);
+            return StringUtils.EMPTY;
+        }
+        try {
+            URLConnection conn = url.openConnection();
+            OutputStreamWriter wr = null;
+            if (this._method.equals("post")) {
+                conn.setDoOutput(true);
+                wr = new OutputStreamWriter(conn.getOutputStream());
+                wr.write(postData);
+                wr.flush();
+            }
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuffer sb = new StringBuffer();
+            String line;
+            while ((line = rd.readLine()) != null) {
+                sb.append(line + "\r\n");
+            }
+            if (wr != null) {
+                wr.close();
+            }
+            rd.close();
+            String result = sb.toString();
+            return result;
+        } catch (Exception e) {
+            IdeLog.logError(ScriptingPlugin.getDefault(), Messages.WebRequest_Error, e);
+            return StringUtils.EMPTY;
+        }
+    }
+} </s>
+<s>class temp {    public void xtest1() throws Exception {
+        InputStream input = new FileInputStream("C:/Documentos/j931_01.pdf");
+        InputStream tmp = new ITextManager().cut(input, 3, 8);
+        FileOutputStream output = new FileOutputStream("C:/temp/split.pdf");
+        IOUtils.copy(tmp, output);
+        input.close();
+        tmp.close();
+        output.close();
+    }
+} </s>
+<s>class temp {    public void xtest2() throws Exception {
+        InputStream input1 = new FileInputStream("C:/Documentos/j931_01.pdf");
+        InputStream input2 = new FileInputStream("C:/Documentos/j931_02.pdf");
+        InputStream tmp = new ITextManager().merge(new InputStream[] { input1, input2 });
+        FileOutputStream output = new FileOutputStream("C:/temp/split.pdf");
+        IOUtils.copy(tmp, output);
+        input1.close();
+        input2.close();
+        tmp.close();
+        output.close();
+    }
+} </s>
+<s>class temp {    public void xtest7() throws Exception {
+        System.out.println("Lowagie");
+        FileInputStream inputStream = new FileInputStream("C:/Temp/arquivo.pdf");
+        PDFBoxManager manager = new PDFBoxManager();
+        InputStream[] images = manager.toImage(inputStream, "jpeg");
+        int count = 0;
+        for (InputStream image : images) {
+            FileOutputStream outputStream = new FileOutputStream("C:/Temp/arquivo_" + count + ".jpg");
+            IOUtils.copy(image, outputStream);
+            count++;
+            outputStream.close();
+        }
+        inputStream.close();
+    }
+} </s>
+<s>class temp {    public void xtest11() throws Exception {
+        PDFManager manager = new ITextManager();
+        InputStream pdf = new FileInputStream("/tmp/UML2.pdf");
+        InputStream page1 = manager.cut(pdf, 1, 1);
+        OutputStream outputStream = new FileOutputStream("/tmp/page.pdf");
+        IOUtils.copy(page1, outputStream);
+        outputStream.close();
+        pdf.close();
+    }
+} </s>
+<s>class temp {    public void xtest12() throws Exception {
+        PDFManager manager = new ITextManager();
+        InputStream pdf = new FileInputStream("/tmp/090237098008f637.pdf");
+        InputStream page1 = manager.cut(pdf, 36, 36);
+        OutputStream outputStream = new FileOutputStream("/tmp/090237098008f637-1.pdf");
+        IOUtils.copy(page1, outputStream);
+        outputStream.close();
+        pdf.close();
+    }
+} </s>
+<s>class temp {    public static String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(password.getBytes("UTF-8"));
+            byte[] bytes = md.digest();
+            String result = encodeBase64(bytes);
+            return result.trim();
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new IllegalStateException(nsae.getMessage());
+        } catch (UnsupportedEncodingException uee) {
+            throw new IllegalStateException(uee.getMessage());
+        }
+    }
+} </s>
+<s>class temp {    public static String hashPasswordForOldMD5(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(password.getBytes("UTF-8"));
+            byte messageDigest[] = md.digest();
+            StringBuffer hexString = new StringBuffer();
+            for (int i = 0; i < messageDigest.length; i++) {
+                String hex = Integer.toHexString(0xFF & messageDigest[i]);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new IllegalStateException(nsae.getMessage());
+        } catch (UnsupportedEncodingException uee) {
+            throw new IllegalStateException(uee.getMessage());
+        }
+    }
+} </s>
+<s>class temp {    private static void copySmallFile(final File sourceFile, final File targetFile) throws PtException {
+        LOG.debug("Copying SMALL file '" + sourceFile.getAbsolutePath() + "' to " + "'" + targetFile.getAbsolutePath() + "'.");
+        FileChannel inChannel = null;
+        FileChannel outChannel = null;
+        try {
+            inChannel = new FileInputStream(sourceFile).getChannel();
+            outChannel = new FileOutputStream(targetFile).getChannel();
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } catch (IOException e) {
+            throw new PtException("Could not copy file from '" + sourceFile.getAbsolutePath() + "' to " + "'" + targetFile.getAbsolutePath() + "'!", e);
+        } finally {
+            PtCloseUtil.close(inChannel, outChannel);
+        }
+    }
+} </s>
+<s>class temp {    public static JSONObject doJSONQuery(String urlstr) throws IOException, MalformedURLException, JSONException, SolrException {
+        URL url = new URL(urlstr);
+        HttpURLConnection con = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            StringBuffer buffer = new StringBuffer();
+            String str;
+            while ((str = in.readLine()) != null) {
+                buffer.append(str + "\n");
+            }
+            in.close();
+            JSONObject response = new JSONObject(buffer.toString());
+            return response;
+        } catch (IOException e) {
+            if (con != null) {
+                try {
+                    int statusCode = con.getResponseCode();
+                    if (statusCode >= 400) {
+                        throw (new SolrSelectUtils()).new SolrException(statusCode);
+                    }
+                } catch (IOException exc) {
+                }
+            }
+            throw (e);
+        }
+    }
+} </s>
+<s>class temp {    private int testAccesspoint(String s) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(s);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Content-Type", "text/xml");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.connect();
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode >= 500) {
+                return 100;
+            } else {
+                return 0;
+            }
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void doVersionCheck(View view) {
+        view.showWaitCursor();
+        try {
+            URL url = new URL(jEdit.getProperty("version-check.url"));
+            InputStream in = url.openStream();
+            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+            String line;
+            String version = null;
+            String build = null;
+            while ((line = bin.readLine()) != null) {
+                if (line.startsWith(".version")) version = line.substring(8).trim(); else if (line.startsWith(".build")) build = line.substring(6).trim();
+            }
+            bin.close();
+            if (version != null && build != null) {
+                if (jEdit.getBuild().compareTo(build) < 0) newVersionAvailable(view, version, url); else {
+                    GUIUtilities.message(view, "version-check" + ".up-to-date", new String[0]);
+                }
+            }
+        } catch (IOException e) {
+            String[] args = { jEdit.getProperty("version-check.url"), e.toString() };
+            GUIUtilities.error(view, "read-error", args);
+        }
+        view.hideWaitCursor();
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    public static void copyFile(File src, File dest) {
+        try {
+            FileInputStream in = new FileInputStream(src);
+            FileOutputStream out = new FileOutputStream(dest);
+            int c;
+            while ((c = in.read()) != -1) out.write(c);
+            in.close();
+            out.close();
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+} </s>
+<s>class temp {    private File unzipArchive(File zipArchive, File outDir, String nameInZipArchive) throws IOException {
+        File mainFile = null;
+        ZipEntry entry = null;
+        ZipInputStream zis = new ZipInputStream(new FileInputStream((zipArchive)));
+        FileOutputStream fos = null;
+        byte buffer[] = new byte[4096];
+        int bytesRead;
+        while ((entry = zis.getNextEntry()) != null) {
+            File outFile = new File(outDir, entry.getName());
+            if (entry.getName().equals(nameInZipArchive)) mainFile = outFile;
+            fos = new FileOutputStream(outFile);
+            while ((bytesRead = zis.read(buffer)) != -1) fos.write(buffer, 0, bytesRead);
+            fos.close();
+        }
+        zis.close();
+        return mainFile;
+    }
+} </s>
+<s>class temp {    public GifImage(URL url) throws IOException {
+        fromUrl = url;
+        InputStream is = null;
+        try {
+            is = url.openStream();
+            process(is);
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void convert(File src, File dest) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(src));
+        DcmParser p = pfact.newDcmParser(in);
+        Dataset ds = fact.newDataset();
+        p.setDcmHandler(ds.getDcmHandler());
+        try {
+            FileFormat format = p.detectFileFormat();
+            if (format != FileFormat.ACRNEMA_STREAM) {
+                System.out.println("\n" + src + ": not an ACRNEMA stream!");
+                return;
+            }
+            p.parseDcmFile(format, Tags.PixelData);
+            if (ds.contains(Tags.StudyInstanceUID) || ds.contains(Tags.SeriesInstanceUID) || ds.contains(Tags.SOPInstanceUID) || ds.contains(Tags.SOPClassUID)) {
+                System.out.println("\n" + src + ": contains UIDs!" + " => probable already DICOM - do not convert");
+                return;
+            }
+            boolean hasPixelData = p.getReadTag() == Tags.PixelData;
+            boolean inflate = hasPixelData && ds.getInt(Tags.BitsAllocated, 0) == 12;
+            int pxlen = p.getReadLength();
+            if (hasPixelData) {
+                if (inflate) {
+                    ds.putUS(Tags.BitsAllocated, 16);
+                    pxlen = pxlen * 4 / 3;
+                }
+                if (pxlen != (ds.getInt(Tags.BitsAllocated, 0) >>> 3) * ds.getInt(Tags.Rows, 0) * ds.getInt(Tags.Columns, 0) * ds.getInt(Tags.NumberOfFrames, 1) * ds.getInt(Tags.NumberOfSamples, 1)) {
+                    System.out.println("\n" + src + ": mismatch pixel data length!" + " => do not convert");
+                    return;
+                }
+            }
+            ds.putUI(Tags.StudyInstanceUID, uid(studyUID));
+            ds.putUI(Tags.SeriesInstanceUID, uid(seriesUID));
+            ds.putUI(Tags.SOPInstanceUID, uid(instUID));
+            ds.putUI(Tags.SOPClassUID, classUID);
+            if (!ds.contains(Tags.NumberOfSamples)) {
+                ds.putUS(Tags.NumberOfSamples, 1);
+            }
+            if (!ds.contains(Tags.PhotometricInterpretation)) {
+                ds.putCS(Tags.PhotometricInterpretation, "MONOCHROME2");
+            }
+            if (fmi) {
+                ds.setFileMetaInfo(fact.newFileMetaInfo(ds, UIDs.ImplicitVRLittleEndian));
+            }
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+            } finally {
+                ds.writeFile(out, encodeParam());
+                if (hasPixelData) {
+                    if (!skipGroupLen) {
+                        out.write(PXDATA_GROUPLEN);
+                        int grlen = pxlen + 8;
+                        out.write((byte) grlen);
+                        out.write((byte) (grlen >> 8));
+                        out.write((byte) (grlen >> 16));
+                        out.write((byte) (grlen >> 24));
+                    }
+                    out.write(PXDATA_TAG);
+                    out.write((byte) pxlen);
+                    out.write((byte) (pxlen >> 8));
+                    out.write((byte) (pxlen >> 16));
+                    out.write((byte) (pxlen >> 24));
+                }
+                if (inflate) {
+                    int b2, b3;
+                    for (; pxlen > 0; pxlen -= 3) {
+                        out.write(in.read());
+                        b2 = in.read();
+                        b3 = in.read();
+                        out.write(b2 & 0x0f);
+                        out.write(b2 >> 4 | ((b3 & 0x0f) << 4));
+                        out.write(b3 >> 4);
+                    }
+                } else {
+                    for (; pxlen > 0; --pxlen) {
+                        out.write(in.read());
+                    }
+                }
+                out.close();
+            }
+            System.out.print('.');
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    protected void EncodeRoute() throws EncodeFailedException, IOException {
+        File storefile = getNode().getCodec().PackStore(null, ReturnStore);
+        DownRoute.EncodeData(storefile);
+        File data = getNode().getCodec().PackRemoteDownload(this);
+        data = PigData.EncodeData(data);
+        FileOutputStream fos = new FileOutputStream(PiggybackRouteFile, true);
+        FileChannel foc = fos.getChannel();
+        FileInputStream fis = new FileInputStream(data);
+        FileChannel fic = fis.getChannel();
+        fic.transferTo(0, fic.size(), foc);
+        foc.close();
+        fic.close();
+        UpRoute.EncodeData(PiggybackRouteFile);
+    }
+} </s>
+<s>class temp {    private void copyFile(File source) throws IOException {
+        File backup = new File(source.getCanonicalPath() + ".backup");
+        if (!backup.exists()) {
+            FileChannel srcChannel = new FileInputStream(source).getChannel();
+            backup.createNewFile();
+            FileChannel dstChannel = new FileOutputStream(backup).getChannel();
+            dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+            srcChannel.close();
+            dstChannel.close();
+        }
+    }
+} </s>
+<s>class temp {    public static Bitmap loadBitmap(String url) {
+        try {
+            final HttpClient httpClient = getHttpClient();
+            final HttpResponse resp = httpClient.execute(new HttpGet(url));
+            final HttpEntity entity = resp.getEntity();
+            final int statusCode = resp.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK || entity == null) {
+                return null;
+            }
+            final byte[] respBytes = EntityUtils.toByteArray(entity);
+            BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+            decodeOptions.inSampleSize = 1;
+            return BitmapFactory.decodeByteArray(respBytes, 0, respBytes.length, decodeOptions);
+        } catch (Exception e) {
+            Log.w(TAG, "Problem while loading image: " + e.toString(), e);
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    private static Object readFileOrUrl(String path, boolean convertToString) throws IOException {
+        URL url = null;
+        if (path.indexOf(':') >= 2) {
+            try {
+                url = new URL(path);
+            } catch (MalformedURLException ex) {
+            }
+        }
+        InputStream is = null;
+        int capacityHint = 0;
+        if (url == null) {
+            File file = new File(path);
+            capacityHint = (int) file.length();
+            try {
+                is = new FileInputStream(file);
+            } catch (IOException ex) {
+                Context.reportError(getMessage("msg.couldnt.open", path));
+                throw ex;
+            }
+        } else {
+            try {
+                URLConnection uc = url.openConnection();
+                is = uc.getInputStream();
+                capacityHint = uc.getContentLength();
+                if (capacityHint > (1 << 20)) {
+                    capacityHint = -1;
+                }
+            } catch (IOException ex) {
+                Context.reportError(getMessage("msg.couldnt.open.url", url.toString(), ex.toString()));
+                throw ex;
+            }
+        }
+        if (capacityHint <= 0) {
+            capacityHint = 4096;
+        }
+        byte[] data;
+        try {
+            try {
+                is = new BufferedInputStream(is);
+                data = Kit.readStream(is, capacityHint);
+            } finally {
+                is.close();
+            }
+        } catch (IOException ex) {
+            Context.reportError(ex.toString());
+            throw ex;
+        }
+        Object result;
+        if (convertToString) {
+            result = new String(data);
+        } else {
+            result = data;
+        }
+        return result;
+    }
+} </s>
+<s>class temp {    public static String loadWebsiteHtmlCode(String url, String useragent) {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpGet getMethod = new HttpGet(url);
+        String htmlCode = "";
+        if (useragent != null) {
+            getMethod.setHeader("user-agent", useragent);
+        }
+        try {
+            HttpResponse resp = httpClient.execute(getMethod);
+            int statusCode = resp.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                logger.debug("Method failed!" + statusCode);
+            }
+            htmlCode = EntityUtils.toString(resp.getEntity());
+        } catch (Exception e) {
+            logger.debug("Fatal protocol violation: " + e.getMessage());
+            logger.trace(e);
+        }
+        return htmlCode;
+    }
+} </s>
+<s>class temp {    public static String MD5(String plainTxt) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(plainTxt.getBytes());
+            byte[] b = md.digest();
+            int i = 0;
+            StringBuffer buffer = new StringBuffer();
+            for (int offset = 0; offset < b.length; offset++) {
+                i = b[offset];
+                if (i < 0) {
+                    i += 256;
+                }
+                if (i < 16) {
+                    buffer.append("0");
+                }
+                buffer.append(Integer.toHexString(i));
+            }
+            return buffer.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return "ERROR";
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File in, File out) {
+        try {
+            FileChannel sourceChannel = new FileInputStream(in).getChannel();
+            FileChannel destinationChannel = new FileOutputStream(out).getChannel();
+            sourceChannel.transferTo(0, sourceChannel.size(), destinationChannel);
+            sourceChannel.close();
+            destinationChannel.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public RepositoryHandler(String[] args) {
+        if (args.length < 2) return;
+        System.out.println("param 1: " + args[0] + "\r\n");
+        System.out.println("param 2: " + args[1] + "\r\n");
+        try {
+            URL url = new URL(args[0]);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setFollowRedirects(true);
+            connection.connect();
+            BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
+            FileOutputStream out = new FileOutputStream(args[1]);
+            int c = -1;
+            while ((c = in.read()) >= 0) {
+                out.write(c);
+            }
+            out.close();
+            in.close();
+        } catch (Exception e) {
+            System.err.println("Error: " + e + "\r\n");
+        }
+    }
+} </s>

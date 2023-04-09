@@ -1,0 +1,3541 @@
+<s>class temp {    public static void copyfile(String src, String dst) throws IOException {
+        dst = new File(dst).getAbsolutePath();
+        new File(new File(dst).getParent()).mkdirs();
+        FileChannel srcChannel = new FileInputStream(src).getChannel();
+        FileChannel dstChannel = new FileOutputStream(dst).getChannel();
+        dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+        srcChannel.close();
+        dstChannel.close();
+    }
+} </s>
+<s>class temp {    private static InputStream openNamedResource(String name) throws java.io.IOException {
+        InputStream in = null;
+        boolean result = false;
+        boolean httpURL = true;
+        URL propsURL = null;
+        try {
+            propsURL = new URL(name);
+        } catch (MalformedURLException ex) {
+            httpURL = false;
+            propsURL = null;
+        }
+        if (propsURL == null) {
+            propsURL = UserProperties.class.getResource(name);
+        }
+        if (propsURL != null) {
+            URLConnection urlConn = propsURL.openConnection();
+            if (httpURL) {
+                String hdrVal = urlConn.getHeaderField(0);
+                if (hdrVal != null) {
+                    String code = HTTPUtilities.getResultCode(hdrVal);
+                    if (code != null) {
+                        if (!code.equals("200")) {
+                            throw new java.io.IOException("status code = " + code);
+                        }
+                    }
+                }
+            }
+            in = urlConn.getInputStream();
+        }
+        return in;
+    }
+} </s>
+<s>class temp {        public static final String enctrypt(String password) {
+            MessageDigest md = null;
+            byte[] byteHash = null;
+            StringBuffer resultString = new StringBuffer();
+            try {
+                md = MessageDigest.getInstance("SHA1");
+            } catch (NoSuchAlgorithmException e) {
+                System.out.println("NoSuchAlgorithmException caught!");
+                throw new RuntimeException("NoSuchAlgorithmException SHA1");
+            }
+            md.reset();
+            md.update(password.getBytes());
+            byteHash = md.digest();
+            for (int i = 0; i < byteHash.length; i++) {
+                resultString.append(Integer.toHexString(0xFF & byteHash[i]));
+            }
+            return (resultString.toString());
+        }
+} </s>
+<s>class temp {    protected String getManualDownloadURL() {
+        if (_newestVersionString.indexOf("weekly") > 0) {
+            return "http://www.cs.rice.edu/~javaplt/drjavarice/weekly/";
+        }
+        final String DRJAVA_FILES_PAGE = "http://sourceforge.net/project/showfiles.php?group_id=44253";
+        final String LINK_PREFIX = "<a href=\"/project/showfiles.php?group_id=44253";
+        final String LINK_SUFFIX = "\">";
+        BufferedReader br = null;
+        try {
+            URL url = new URL(DRJAVA_FILES_PAGE);
+            InputStream urls = url.openStream();
+            InputStreamReader is = new InputStreamReader(urls);
+            br = new BufferedReader(is);
+            String line;
+            int pos;
+            while ((line = br.readLine()) != null) {
+                if ((pos = line.indexOf(_newestVersionString)) >= 0) {
+                    int prePos = line.indexOf(LINK_PREFIX);
+                    if ((prePos >= 0) && (prePos < pos)) {
+                        int suffixPos = line.indexOf(LINK_SUFFIX, prePos);
+                        if ((suffixPos >= 0) && (suffixPos + LINK_SUFFIX.length() == pos)) {
+                            String versionLink = edu.rice.cs.plt.text.TextUtil.xmlUnescape(line.substring(prePos + LINK_PREFIX.length(), suffixPos));
+                            return DRJAVA_FILES_PAGE + versionLink;
+                        }
+                    }
+                }
+            }
+            ;
+        } catch (IOException e) {
+            return DRJAVA_FILES_PAGE;
+        } finally {
+            try {
+                if (br != null) br.close();
+            } catch (IOException e) {
+            }
+        }
+        return DRJAVA_FILES_PAGE;
+    }
+} </s>
+<s>class temp {    public void init(final javax.swing.text.Document doc) {
+        this.doc = doc;
+        String dtdLocation = null;
+        String schemaLocation = null;
+        SyntaxDocument mDoc = (SyntaxDocument) doc;
+        Object mDtd = mDoc.getProperty(XPontusConstantsIF.PARSER_DATA_DTD_COMPLETION_INFO);
+        Object mXsd = mDoc.getProperty(XPontusConstantsIF.PARSER_DATA_SCHEMA_COMPLETION_INFO);
+        if (mDtd != null) {
+            dtdLocation = mDtd.toString();
+        }
+        if (mXsd != null) {
+            schemaLocation = mXsd.toString();
+        }
+        Object o = doc.getProperty("BUILTIN_COMPLETION");
+        if (o != null) {
+            if (o.equals("HTML")) {
+                dtdLocation = getClass().getResource("xhtml.dtd").toExternalForm();
+            }
+        }
+        try {
+            if (dtdLocation != null) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Using dtd to build completion database");
+                }
+                setCompletionParser(new DTDCompletionParser());
+                URL url = new java.net.URL(dtdLocation);
+                Reader dtdReader = new InputStreamReader(url.openStream());
+                updateAssistInfo(null, dtdLocation, dtdReader);
+            } else if (schemaLocation != null) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Using schema  to build completion database");
+                }
+                setCompletionParser(new XSDCompletionParser());
+                URL url = new java.net.URL(schemaLocation);
+                Reader dtdReader = new InputStreamReader(url.openStream());
+                updateAssistInfo(null, schemaLocation, dtdReader);
+            }
+        } catch (Exception err) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(err.getMessage(), err);
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File in, File out) throws IOException {
+        if (in.getCanonicalPath().equals(out.getCanonicalPath())) {
+            return;
+        }
+        FileChannel inChannel = new FileInputStream(in).getChannel();
+        FileChannel outChannel = new FileOutputStream(out).getChannel();
+        try {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            if (inChannel != null) {
+                inChannel.close();
+            }
+            if (outChannel != null) {
+                outChannel.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void deploy(String baseDir, boolean clean) throws IOException {
+        try {
+            ftp.connect(hostname, port);
+            log.debug("Connected to: " + hostname + ":" + port);
+            ftp.login(username, password);
+            int reply = ftp.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                throw new IOException("Error logging onto ftp server. FTPClient returned code: " + reply);
+            }
+            log.debug("Logged in");
+            ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
+            if (clean) {
+                deleteDir(remoteDir);
+            }
+            storeFolder(baseDir, remoteDir);
+        } finally {
+            ftp.disconnect();
+        }
+    }
+} </s>
+<s>class temp {                        public Constructor run() throws Exception {
+                            String path = "META-INF/services/" + ComponentApplicationContext.class.getName();
+                            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+                            final Enumeration<URL> urls;
+                            if (loader == null) {
+                                urls = ComponentApplicationContext.class.getClassLoader().getResources(path);
+                            } else {
+                                urls = loader.getResources(path);
+                            }
+                            while (urls.hasMoreElements()) {
+                                URL url = urls.nextElement();
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                                try {
+                                    String className = null;
+                                    while ((className = reader.readLine()) != null) {
+                                        final String name = className.trim();
+                                        if (!name.startsWith("#") && !name.startsWith(";") && !name.startsWith("//")) {
+                                            final Class<?> cls;
+                                            if (loader == null) {
+                                                cls = Class.forName(name);
+                                            } else {
+                                                cls = Class.forName(name, true, loader);
+                                            }
+                                            int m = cls.getModifiers();
+                                            if (ComponentApplicationContext.class.isAssignableFrom(cls) && !Modifier.isAbstract(m) && !Modifier.isInterface(m)) {
+                                                Constructor constructor = cls.getDeclaredConstructor();
+                                                if (!Modifier.isPublic(constructor.getModifiers())) {
+                                                    constructor.setAccessible(true);
+                                                }
+                                                return constructor;
+                                            } else {
+                                                throw new ClassCastException(cls.getName());
+                                            }
+                                        }
+                                    }
+                                } finally {
+                                    reader.close();
+                                }
+                            }
+                            throw new ComponentApplicationException("No " + "ComponentApplicationContext implementation " + "found.");
+                        }
+} </s>
+<s>class temp {    public void readData() throws IOException {
+        i = 0;
+        j = 0;
+        URL url = getClass().getResource("resources/Chrom_623_620.dat");
+        InputStream is = url.openStream();
+        InputStreamReader isr = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(isr);
+        s = br.readLine();
+        StringTokenizer st = new StringTokenizer(s);
+        s = br.readLine();
+        st = new StringTokenizer(s);
+        chrom_x[i][j] = Double.parseDouble(st.nextToken());
+        temp_prev = chrom_x[i][j];
+        chrom_y[i][j] = Double.parseDouble(st.nextToken());
+        gridmin = chrom_x[i][j];
+        gridmax = chrom_x[i][j];
+        sext1[i][j] = Double.parseDouble(st.nextToken());
+        sext2[i][j] = Double.parseDouble(st.nextToken());
+        sext3[i][j] = Double.parseDouble(st.nextToken());
+        sext4[i][j] = Double.parseDouble(st.nextToken());
+        j++;
+        while ((s = br.readLine()) != null) {
+            st = new StringTokenizer(s);
+            temp_new = Double.parseDouble(st.nextToken());
+            if (temp_new != temp_prev) {
+                temp_prev = temp_new;
+                i++;
+                j = 0;
+            }
+            chrom_x[i][j] = temp_new;
+            chrom_y[i][j] = Double.parseDouble(st.nextToken());
+            sext1[i][j] = Double.parseDouble(st.nextToken());
+            sext2[i][j] = Double.parseDouble(st.nextToken());
+            sext3[i][j] = Double.parseDouble(st.nextToken());
+            sext4[i][j] = Double.parseDouble(st.nextToken());
+            imax = i;
+            jmax = j;
+            j++;
+            if (chrom_x[i][j] <= gridmin) gridmin = chrom_x[i][j];
+            if (chrom_x[i][j] >= gridmax) gridmax = chrom_x[i][j];
+        }
+    }
+} </s>
+<s>class temp {    private void sendData(HttpServletResponse response, MediaBean mediaBean) throws IOException {
+        if (logger.isInfoEnabled()) logger.info("sendData[" + mediaBean + "]");
+        response.setContentLength(mediaBean.getContentLength());
+        response.setContentType(mediaBean.getContentType());
+        response.addHeader("Last-Modified", mediaBean.getLastMod());
+        response.addHeader("Cache-Control", "must-revalidate");
+        response.addHeader("content-disposition", "attachment, filename=" + (new Date()).getTime() + "_" + mediaBean.getFileName());
+        byte[] content = mediaBean.getContent();
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            os = response.getOutputStream();
+            is = new ByteArrayInputStream(content);
+            IOUtils.copy(is, os);
+        } catch (IOException e) {
+            logger.error(e, e);
+        } finally {
+            if (is != null) try {
+                is.close();
+            } catch (IOException e) {
+            }
+            if (os != null) try {
+                os.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        long time = System.currentTimeMillis();
+        String text = request.getParameter("text");
+        String parsedQueryString = request.getQueryString();
+        if (text == null) {
+            String[] fonts = new File(ctx.getRealPath("/WEB-INF/fonts/")).list();
+            text = "accepted params: text,font,size,color,background,nocache,aa,break";
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+            out.println("<html>");
+            out.println("<body>");
+            out.println("<p>");
+            out.println("Usage: " + request.getServletPath() + "?params[]<BR>");
+            out.println("Acceptable Params are: <UL>");
+            out.println("<LI><B>text</B><BR>");
+            out.println("The body of the image");
+            out.println("<LI><B>font</B><BR>");
+            out.println("Available Fonts (in folder '/WEB-INF/fonts/') <UL>");
+            for (int i = 0; i < fonts.length; i++) {
+                if (!"CVS".equals(fonts[i])) {
+                    out.println("<LI>" + fonts[i]);
+                }
+            }
+            out.println("</UL>");
+            out.println("<LI><B>size</B><BR>");
+            out.println("An integer, i.e. size=100");
+            out.println("<LI><B>color</B><BR>");
+            out.println("in rgb, i.e. color=255,0,0");
+            out.println("<LI><B>background</B><BR>");
+            out.println("in rgb, i.e. background=0,0,255");
+            out.println("transparent, i.e. background=''");
+            out.println("<LI><B>aa</B><BR>");
+            out.println("antialias (does not seem to work), aa=true");
+            out.println("<LI><B>nocache</B><BR>");
+            out.println("if nocache is set, we will write out the image file every hit.  Otherwise, will write it the first time and then read the file");
+            out.println("<LI><B>break</B><BR>");
+            out.println("An integer greater than 0 (zero), i.e. break=20");
+            out.println("</UL>");
+            out.println("</UL>");
+            out.println("Example:<BR>");
+            out.println("&lt;img border=1  src=\"" + request.getServletPath() + "?font=arial.ttf&text=testing&color=255,0,0&size=100\"&gt;<BR>");
+            out.println("<img border=1 src='" + request.getServletPath() + "?font=arial.ttf&text=testing&color=255,0,0&size=100'><BR>");
+            out.println("</body>");
+            out.println("</html>");
+            return;
+        }
+        String myFile = (request.getQueryString() == null) ? "empty" : PublicEncryptionFactory.digestString(parsedQueryString).replace('\\', '_').replace('/', '_');
+        myFile = Config.getStringProperty("PATH_TO_TITLE_IMAGES") + myFile + ".png";
+        File file = new File(ctx.getRealPath(myFile));
+        if (!file.exists() || (request.getParameter("nocache") != null)) {
+            StringTokenizer st = null;
+            Iterator i = hm.entrySet().iterator();
+            while (i.hasNext()) {
+                Map.Entry entry = (Map.Entry) i.next();
+                String key = (String) entry.getKey();
+                if (parsedQueryString.indexOf(key) > -1) {
+                    String val = (String) entry.getValue();
+                    parsedQueryString = UtilMethods.replace(parsedQueryString, key, val);
+                }
+            }
+            st = new StringTokenizer(parsedQueryString, "&");
+            while (st.hasMoreTokens()) {
+                try {
+                    String x = st.nextToken();
+                    String key = x.split("=")[0];
+                    String val = x.split("=")[1];
+                    if ("text".equals(key)) {
+                        text = val;
+                    }
+                } catch (Exception e) {
+                }
+            }
+            text = URLDecoder.decode(text, "UTF-8");
+            Logger.debug(this.getClass(), "building title image:" + file.getAbsolutePath());
+            file.createNewFile();
+            try {
+                String font_file = "/WEB-INF/fonts/arial.ttf";
+                if (request.getParameter("font") != null) {
+                    font_file = "/WEB-INF/fonts/" + request.getParameter("font");
+                }
+                font_file = ctx.getRealPath(font_file);
+                float size = 20.0f;
+                if (request.getParameter("size") != null) {
+                    size = Float.parseFloat(request.getParameter("size"));
+                }
+                Color background = Color.white;
+                if (request.getParameter("background") != null) {
+                    if (request.getParameter("background").equals("transparent")) try {
+                        background = new Color(Color.TRANSLUCENT);
+                    } catch (Exception e) {
+                    } else try {
+                        st = new StringTokenizer(request.getParameter("background"), ",");
+                        int x = Integer.parseInt(st.nextToken());
+                        int y = Integer.parseInt(st.nextToken());
+                        int z = Integer.parseInt(st.nextToken());
+                        background = new Color(x, y, z);
+                    } catch (Exception e) {
+                    }
+                }
+                Color color = Color.black;
+                if (request.getParameter("color") != null) {
+                    try {
+                        st = new StringTokenizer(request.getParameter("color"), ",");
+                        int x = Integer.parseInt(st.nextToken());
+                        int y = Integer.parseInt(st.nextToken());
+                        int z = Integer.parseInt(st.nextToken());
+                        color = new Color(x, y, z);
+                    } catch (Exception e) {
+                        Logger.info(this, e.getMessage());
+                    }
+                }
+                int intBreak = 0;
+                if (request.getParameter("break") != null) {
+                    try {
+                        intBreak = Integer.parseInt(request.getParameter("break"));
+                    } catch (Exception e) {
+                    }
+                }
+                java.util.ArrayList<String> lines = null;
+                if (intBreak > 0) {
+                    lines = new java.util.ArrayList<String>(10);
+                    lines.ensureCapacity(10);
+                    int start = 0;
+                    String line = null;
+                    int offSet;
+                    for (; ; ) {
+                        try {
+                            for (; isWhitespace(text.charAt(start)); ++start) ;
+                            if (isWhitespace(text.charAt(start + intBreak - 1))) {
+                                lines.add(text.substring(start, start + intBreak));
+                                start += intBreak;
+                            } else {
+                                for (offSet = -1; !isWhitespace(text.charAt(start + intBreak + offSet)); ++offSet) ;
+                                lines.add(text.substring(start, start + intBreak + offSet));
+                                start += intBreak + offSet;
+                            }
+                        } catch (Exception e) {
+                            if (text.length() > start) lines.add(leftTrim(text.substring(start)));
+                            break;
+                        }
+                    }
+                } else {
+                    java.util.StringTokenizer tokens = new java.util.StringTokenizer(text, "|");
+                    if (tokens.hasMoreTokens()) {
+                        lines = new java.util.ArrayList<String>(10);
+                        lines.ensureCapacity(10);
+                        for (; tokens.hasMoreTokens(); ) lines.add(leftTrim(tokens.nextToken()));
+                    }
+                }
+                Font font = Font.createFont(Font.TRUETYPE_FONT, new FileInputStream(font_file));
+                font = font.deriveFont(size);
+                BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2 = buffer.createGraphics();
+                if (request.getParameter("aa") != null) {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                } else {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+                }
+                FontRenderContext fc = g2.getFontRenderContext();
+                Rectangle2D fontBounds = null;
+                Rectangle2D textLayoutBounds = null;
+                TextLayout tl = null;
+                boolean useTextLayout = false;
+                useTextLayout = Boolean.parseBoolean(request.getParameter("textLayout"));
+                int width = 0;
+                int height = 0;
+                int offSet = 0;
+                if (1 < lines.size()) {
+                    int heightMultiplier = 0;
+                    int maxWidth = 0;
+                    for (; heightMultiplier < lines.size(); ++heightMultiplier) {
+                        fontBounds = font.getStringBounds(lines.get(heightMultiplier), fc);
+                        tl = new TextLayout(lines.get(heightMultiplier), font, fc);
+                        textLayoutBounds = tl.getBounds();
+                        if (maxWidth < Math.ceil(fontBounds.getWidth())) maxWidth = (int) Math.ceil(fontBounds.getWidth());
+                    }
+                    width = maxWidth;
+                    int boundHeigh = (int) Math.ceil((!useTextLayout ? fontBounds.getHeight() : textLayoutBounds.getHeight()));
+                    height = boundHeigh * lines.size();
+                    offSet = ((int) (boundHeigh * 0.2)) * (lines.size() - 1);
+                } else {
+                    fontBounds = font.getStringBounds(text, fc);
+                    tl = new TextLayout(text, font, fc);
+                    textLayoutBounds = tl.getBounds();
+                    width = (int) fontBounds.getWidth();
+                    height = (int) Math.ceil((!useTextLayout ? fontBounds.getHeight() : textLayoutBounds.getHeight()));
+                }
+                buffer = new BufferedImage(width, height - offSet, BufferedImage.TYPE_INT_ARGB);
+                g2 = buffer.createGraphics();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setFont(font);
+                g2.setColor(background);
+                if (!background.equals(new Color(Color.TRANSLUCENT))) g2.fillRect(0, 0, width, height);
+                g2.setColor(color);
+                if (1 < lines.size()) {
+                    for (int numLine = 0; numLine < lines.size(); ++numLine) {
+                        int y = (int) Math.ceil((!useTextLayout ? fontBounds.getY() : textLayoutBounds.getY()));
+                        g2.drawString(lines.get(numLine), 0, -y * (numLine + 1));
+                    }
+                } else {
+                    int y = (int) Math.ceil((!useTextLayout ? fontBounds.getY() : textLayoutBounds.getY()));
+                    g2.drawString(text, 0, -y);
+                }
+                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+                ImageIO.write(buffer, "png", out);
+                out.close();
+            } catch (Exception ex) {
+                Logger.info(this, ex.toString());
+            }
+        }
+        response.setContentType("image/png");
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+        OutputStream os = response.getOutputStream();
+        byte[] buf = new byte[4096];
+        int i = 0;
+        while ((i = bis.read(buf)) != -1) {
+            os.write(buf, 0, i);
+        }
+        os.close();
+        bis.close();
+        Logger.debug(this.getClass(), "time to build title: " + (System.currentTimeMillis() - time) + "ms");
+        return;
+    }
+} </s>
+<s>class temp {    public static String crypt(String str) {
+        if (str == null || str.length() == 0) {
+            throw new IllegalArgumentException("String to encript cannot be null or zero length");
+        }
+        StringBuffer hexString = new StringBuffer();
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(str.getBytes());
+            byte[] hash = md.digest();
+            for (int i = 0; i < hash.length; i++) {
+                if ((0xff & hash[i]) < 0x10) {
+                    hexString.append("0" + Integer.toHexString((0xFF & hash[i])));
+                } else {
+                    hexString.append(Integer.toHexString(0xFF & hash[i]));
+                }
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new ForumException("" + e);
+        }
+        return hexString.toString();
+    }
+} </s>
+<s>class temp {    public String getDefaultPaletteXML() {
+        URL url = getClass().getResource("xml/palettes.xml");
+        StringBuffer contents = new StringBuffer();
+        try {
+            InputStream inputStream = url.openStream();
+            int i;
+            while (true) {
+                i = inputStream.read();
+                if (i == -1) break;
+                char c = (char) i;
+                contents.append(c);
+            }
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return contents.toString();
+    }
+} </s>
+<s>class temp {    public static Image getPluginImage(Object plugin, String name) {
+        try {
+            URL url = getPluginImageURL(plugin, name);
+            InputStream is = url.openStream();
+            Image image;
+            try {
+                image = getImage(is);
+            } finally {
+                is.close();
+            }
+            return image;
+        } catch (Throwable e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public static CMLUnitList createUnitList(URL url) throws IOException, CMLException {
+        Document dictDoc = null;
+        InputStream in = null;
+        try {
+            in = url.openStream();
+            dictDoc = new CMLBuilder().build(in);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            throw new CMLException("NULL " + e.getMessage() + S_SLASH + e.getCause() + " in " + url);
+        } catch (ValidityException e) {
+            throw new CMLException(S_EMPTY + e.getMessage() + S_SLASH + e.getCause() + " in " + url);
+        } catch (ParsingException e) {
+            e.printStackTrace();
+            throw new CMLException(e, " in " + url);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        CMLUnitList dt = null;
+        if (dictDoc != null) {
+            Element root = dictDoc.getRootElement();
+            if (root instanceof CMLUnitList) {
+                dt = new CMLUnitList((CMLUnitList) root);
+            } else {
+            }
+        }
+        if (dt != null) {
+            dt.indexEntries();
+        }
+        return dt;
+    }
+} </s>
+<s>class temp {    public static HttpResponse createUrlResponse(final URL url, final TcpConnection connection) throws IOException, NullPointerException {
+        String fullPath = url.toString();
+        URLConnection conn = url.openConnection();
+        InputStream in = conn.getInputStream();
+        final long length = conn.getContentLength();
+        if (connection.isDebugEnabled()) connection.logDebug("Sending " + fullPath + " to " + connection.getRemoteAddress() + " (length: " + length + ").");
+        return createInputStreamResponse(in, conn.getContentType(), length, connection);
+    }
+} </s>
+<s>class temp {    public static Channel getChannelFromSite(String siteURL) throws LinkNotFoundException, MalformedURLException, SAXException, IOException {
+        String channelURL = "";
+        siteURL = siteURL.trim();
+        if (!siteURL.startsWith("http://")) {
+            siteURL = "http://" + siteURL;
+        }
+        URL url = new URL(siteURL);
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String[] lines = new String[3];
+        for (int i = 0; i < lines.length; i++) {
+            if ((lines[i] = in.readLine()) == null) {
+                lines[i] = "";
+                break;
+            }
+        }
+        if (lines[0].contains("xml version")) {
+            if (lines[0].contains("rss") || lines[1].contains("rss")) {
+                channelURL = siteURL;
+            }
+            if (lines[0].contains("Atom") || lines[1].contains("Atom") || lines[2].contains("Atom")) {
+                channelURL = siteURL;
+            }
+        }
+        in.close();
+        in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String iconURL = null;
+        String inputLine;
+        if ("".equals(channelURL)) {
+            boolean isIconURLFound = false;
+            boolean isChannelURLFound = false;
+            while ((inputLine = in.readLine()) != null) {
+                if (inputLine.contains("type=\"image/x-icon\"") || inputLine.toLowerCase().contains("rel=\"shortcut icon\"")) {
+                    String tmp = new String(inputLine);
+                    String[] smallLines = inputLine.replace(">", ">\n").split("\n");
+                    for (String smallLine : smallLines) {
+                        if (smallLine.contains("type=\"image/x-icon\"") || smallLine.toLowerCase().contains("rel=\"shortcut icon\"")) {
+                            tmp = smallLine;
+                            break;
+                        }
+                    }
+                    isIconURLFound = true;
+                    iconURL = tmp.replaceAll("^.*href=\"", "");
+                    iconURL = iconURL.replaceAll("\".*", "");
+                    tmp = null;
+                    String originalSiteURL = new String(siteURL);
+                    siteURL = getHome(siteURL);
+                    if (iconURL.charAt(0) == '/') {
+                        if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                            iconURL = siteURL + iconURL.substring(1);
+                        } else {
+                            iconURL = siteURL + iconURL;
+                        }
+                    } else if (!iconURL.startsWith("http://")) {
+                        if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                            iconURL = siteURL + iconURL;
+                        } else {
+                            iconURL = siteURL + "/" + iconURL;
+                        }
+                    }
+                    siteURL = originalSiteURL;
+                    if (isChannelURLFound && isIconURLFound) {
+                        break;
+                    }
+                }
+                if ((inputLine.contains("type=\"application/rss+xml\"") || inputLine.contains("type=\"application/atom+xml\"")) && !isChannelURLFound) {
+                    if (!inputLine.contains("href=")) {
+                        while ((inputLine = in.readLine()) != null) {
+                            if (inputLine.contains("href=")) {
+                                break;
+                            }
+                        }
+                    }
+                    inputLine = inputLine.replace(">", ">\n");
+                    String[] smallLines = inputLine.split("\n");
+                    for (String smallLine : smallLines) {
+                        if (smallLine.contains("type=\"application/rss+xml\"") || smallLine.contains("type=\"application/atom+xml\"")) {
+                            inputLine = smallLine;
+                            break;
+                        }
+                    }
+                    channelURL = inputLine.replaceAll("^.*href=\"", "");
+                    channelURL = channelURL.replaceAll("\".*", "");
+                    if (channelURL.charAt(0) == '/') {
+                        if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                            channelURL = siteURL + channelURL.substring(1);
+                        } else {
+                            channelURL = siteURL + channelURL;
+                        }
+                    } else if (!channelURL.startsWith("http://")) {
+                        if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                            channelURL = siteURL + channelURL;
+                        } else {
+                            channelURL = siteURL + "/" + channelURL;
+                        }
+                    }
+                    isChannelURLFound = true;
+                    if (isChannelURLFound && isIconURLFound) {
+                        break;
+                    }
+                }
+                if (inputLine.contains("</head>".toLowerCase())) {
+                    break;
+                }
+            }
+            in.close();
+            if ("".equals(channelURL)) {
+                throw new LinkNotFoundException();
+            }
+        }
+        channel = getChannelFromXML(channelURL.trim());
+        if (iconURL == null || "".equals(iconURL.trim())) {
+            iconURL = "favicon.ico";
+            if (siteURL.equalsIgnoreCase(channel.getChannelURL())) {
+                siteURL = channel.getLink();
+            }
+            siteURL = getHome(siteURL);
+            if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                iconURL = siteURL + iconURL;
+            } else {
+                iconURL = siteURL + "/" + iconURL;
+            }
+        }
+        try {
+            String iconFileName = getHome(channel.getLink());
+            if (iconFileName.startsWith("http://")) {
+                iconFileName = iconFileName.substring(7);
+            }
+            iconFileName = iconFileName.replaceAll("\\W", " ").trim().replace(" ", "_").concat(".ico");
+            String iconPath = JReader.getConfig().getShortcutIconsDir() + File.separator + iconFileName;
+            InputStream inIcon = new URL(iconURL).openStream();
+            OutputStream outIcon = new FileOutputStream(iconPath);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = inIcon.read(buf)) > 0) {
+                outIcon.write(buf, 0, len);
+            }
+            inIcon.close();
+            outIcon.close();
+            channel.setIconPath(iconPath);
+        } catch (Exception e) {
+        }
+        return channel;
+    }
+} </s>
+<s>class temp {    public static Channel getChannelFromXML(String channelURL) throws SAXException, IOException {
+        channel = new Channel(channelURL);
+        downloadedItems = new LinkedList<Item>();
+        URL url = new URL(channelURL);
+        XMLReader xr = XMLReaderFactory.createXMLReader();
+        ChannelFactory handler = new ChannelFactory();
+        xr.setContentHandler(handler);
+        xr.setErrorHandler(handler);
+        xr.parse(new InputSource(url.openStream()));
+        channel.setUnreadItemsCount(downloadedItems.size());
+        return channel;
+    }
+} </s>
+<s>class temp {    public static String extractIconPath(String siteURL) throws IOException {
+        siteURL = siteURL.trim();
+        if (!siteURL.startsWith("http://")) {
+            siteURL = "http://" + siteURL;
+        }
+        URL url = new URL(siteURL);
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String iconURL = null;
+        String iconPath = null;
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            if (inputLine.contains("type=\"image/x-icon\"") || inputLine.toLowerCase().contains("rel=\"shortcut icon\"")) {
+                String tmp = new String(inputLine);
+                String[] smallLines = inputLine.replace(">", ">\n").split("\n");
+                for (String smallLine : smallLines) {
+                    if (smallLine.contains("type=\"image/x-icon\"") || smallLine.toLowerCase().contains("rel=\"shortcut icon\"")) {
+                        tmp = smallLine;
+                        break;
+                    }
+                }
+                iconURL = tmp.replaceAll("^.*href=\"", "");
+                iconURL = iconURL.replaceAll("\".*", "");
+                tmp = null;
+                String originalSiteURL = new String(siteURL);
+                siteURL = getHome(siteURL);
+                if (iconURL.charAt(0) == '/') {
+                    if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                        iconURL = siteURL + iconURL.substring(1);
+                    } else {
+                        iconURL = siteURL + iconURL;
+                    }
+                } else if (!iconURL.startsWith("http://")) {
+                    if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                        iconURL = siteURL + iconURL;
+                    } else {
+                        iconURL = siteURL + "/" + iconURL;
+                    }
+                }
+                siteURL = originalSiteURL;
+                break;
+            }
+            if (inputLine.contains("</head>".toLowerCase())) {
+                break;
+            }
+        }
+        in.close();
+        siteURL = getHome(siteURL);
+        if (iconURL == null || "".equals(iconURL.trim())) {
+            iconURL = "favicon.ico";
+            if (siteURL.charAt(siteURL.length() - 1) == '/') {
+                iconURL = siteURL + iconURL;
+            } else {
+                iconURL = siteURL + "/" + iconURL;
+            }
+        }
+        try {
+            String iconFileName = siteURL;
+            if (iconFileName.startsWith("http://")) {
+                iconFileName = iconFileName.substring(7);
+            }
+            iconFileName = iconFileName.replaceAll("\\W", " ").trim().replace(" ", "_").concat(".ico");
+            iconPath = JReader.getConfig().getShortcutIconsDir() + File.separator + iconFileName;
+            InputStream inIcon = new URL(iconURL).openStream();
+            OutputStream outIcon = new FileOutputStream(iconPath);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = inIcon.read(buf)) > 0) {
+                outIcon.write(buf, 0, len);
+            }
+            inIcon.close();
+            outIcon.close();
+        } catch (Exception e) {
+        }
+        return iconPath;
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        String logFileName = args[0];
+        int extractLineEvery = new Integer(args[1]).intValue();
+        String filterToken = "P0";
+        if (args.length > 2) {
+            filterToken = args[2];
+        }
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(logFileName));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(new File(logFileName + ".trim")));
+            String readLine;
+            int x = 0;
+            while ((readLine = br.readLine()) != null) {
+                if ((x++ % extractLineEvery == 0) && readLine.startsWith(filterToken)) {
+                    bw.write(readLine + "\n");
+                }
+            }
+            bw.flush();
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        res.setContentType("text/plain");
+        PrintWriter out = res.getWriter();
+        String requestNumber = req.getParameter("reqno");
+        int parseNumber = Integer.parseInt(requestNumber);
+        Connection con = null;
+        try {
+            Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+            con = DriverManager.getConnection("jdbc:derby:/DerbyDB/AssetDB");
+            con.setAutoCommit(false);
+            String inet = req.getRemoteAddr();
+            Statement stmt = con.createStatement();
+            String sql = "UPDATE REQUEST_DETAILS SET viewed = '1', checked_by = '" + inet + "' WHERE QUERY = ?";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, parseNumber);
+            pst.executeUpdate();
+            con.commit();
+            String nextJSP = "/queryRemoved.jsp";
+            RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(nextJSP);
+            dispatcher.forward(req, res);
+        } catch (Exception e) {
+            try {
+                con.rollback();
+            } catch (SQLException ignored) {
+            }
+            out.println("Failed");
+        } finally {
+            try {
+                if (con != null) con.close();
+            } catch (SQLException ignored) {
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void saveURL(URL url, Writer writer) throws IOException {
+        BufferedInputStream in = new BufferedInputStream(url.openStream());
+        for (int c = in.read(); c != -1; c = in.read()) {
+            writer.write(c);
+        }
+    }
+} </s>
+<s>class temp {    public void saveToPackage() {
+        boolean inPackage = false;
+        String className = IconEditor.className;
+        if (!checkPackage()) {
+            JOptionPane.showMessageDialog(this, "No package selected. Aborting.", "Package not selected!", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        File iconFile = new File(getPackageFile().getParent() + File.separator + classIcon);
+        File prevIconFile = new File(prevPackagePath + File.separator + classIcon);
+        if ((IconEditor.getClassIcon() == null) || !prevIconFile.exists()) {
+            IconEditor.setClassIcon("default.gif");
+        } else if (prevIconFile.exists() && (prevIconFile.compareTo(iconFile) != 0)) {
+            FileFuncs.copyImageFile(prevIconFile, iconFile);
+        }
+        ci = new ClassImport(getPackageFile(), packageClassNamesList, packageClassList);
+        for (int i = 0; i < packageClassList.size(); i++) {
+            if (IconEditor.className.equalsIgnoreCase(packageClassList.get(i).getName())) {
+                inPackage = true;
+                classX = 0 - classX;
+                classY = 0 - classY;
+                shapeList.shift(classX, classY);
+                packageClassList.get(i).setBoundingbox(boundingbox);
+                packageClassList.get(i).setDescription(IconEditor.classDescription);
+                if (IconEditor.getClassIcon() == null) {
+                    packageClassList.get(i).setIconName("default.gif");
+                } else {
+                    packageClassList.get(i).setIconName(IconEditor.getClassIcon());
+                }
+                packageClassList.get(i).setIsRelation(IconEditor.classIsRelation);
+                packageClassList.get(i).setName(IconEditor.className);
+                packageClassList.get(i).setPorts(ports);
+                packageClassList.get(i).shiftPorts(classX, classY);
+                packageClassList.get(i).setShapeList(shapeList);
+                if (dbrClassFields != null && dbrClassFields.getRowCount() > 0) {
+                    fields.clear();
+                    for (int j = 0; j < dbrClassFields.getRowCount(); j++) {
+                        String fieldName = dbrClassFields.getValueAt(j, iNAME);
+                        String fieldType = dbrClassFields.getValueAt(j, iTYPE);
+                        String fieldValue = dbrClassFields.getValueAt(j, iVALUE);
+                        ClassField field = new ClassField(fieldName, fieldType, fieldValue);
+                        fields.add(field);
+                    }
+                }
+                packageClassList.get(i).setFields(fields);
+                packageClassList.add(packageClassList.get(i));
+                packageClassList.remove(i);
+                break;
+            }
+        }
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(getPackageFile()));
+            String str;
+            StringBuffer content = new StringBuffer();
+            while ((str = in.readLine()) != null) {
+                if (inPackage && str.trim().startsWith("<class")) {
+                    break;
+                } else if (!inPackage) {
+                    if (str.equalsIgnoreCase("</package>")) break;
+                    content.append(str + "\n");
+                } else if (inPackage) content.append(str + "\n");
+            }
+            if (!inPackage) {
+                content.append(getShapesInXML(false));
+            } else {
+                for (int i = 0; i < packageClassList.size(); i++) {
+                    classX = 0;
+                    classY = 0;
+                    makeClass(packageClassList.get(i));
+                    content.append(getShapesInXML(false));
+                }
+            }
+            content.append("</package>");
+            in.close();
+            File javaFile = new File(getPackageFile().getParent() + File.separator + className + ".java");
+            File prevJavaFile = new File(prevPackagePath + File.separator + className + ".java");
+            int overwriteFile = JOptionPane.YES_OPTION;
+            if (javaFile.exists()) {
+                overwriteFile = JOptionPane.showConfirmDialog(null, "Java class already exists. Overwrite?");
+            }
+            if (overwriteFile != JOptionPane.CANCEL_OPTION) {
+                FileOutputStream out = new FileOutputStream(new File(getPackageFile().getAbsolutePath()));
+                out.write(content.toString().getBytes());
+                out.flush();
+                out.close();
+                if (overwriteFile == JOptionPane.YES_OPTION) {
+                    String fileText = null;
+                    if (prevJavaFile.exists()) {
+                        fileText = FileFuncs.getFileContents(prevJavaFile);
+                    } else {
+                        fileText = "class " + className + " {";
+                        fileText += "\n    /*@ specification " + className + " {\n";
+                        for (int i = 0; i < dbrClassFields.getRowCount(); i++) {
+                            String fieldName = dbrClassFields.getValueAt(i, iNAME);
+                            String fieldType = dbrClassFields.getValueAt(i, iTYPE);
+                            if (fieldType != null) {
+                                fileText += "    " + fieldType + " " + fieldName + ";\n";
+                            }
+                        }
+                        fileText += "    }@*/\n \n}";
+                    }
+                    FileFuncs.writeFile(javaFile, fileText);
+                }
+                JOptionPane.showMessageDialog(null, "Saved to package: " + getPackageFile().getName(), "Saved", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    private void startScript(wabclient.Attributes prop) throws SAXException {
+        dialog.beginScript();
+        String url = prop.getValue("src");
+        if (url.length() > 0) {
+            try {
+                BufferedReader r = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
+                String buffer;
+                while (true) {
+                    buffer = r.readLine();
+                    if (buffer == null) break;
+                    dialog.script += buffer + "\n";
+                }
+                r.close();
+                dialog.endScript();
+            } catch (IOException ioe) {
+                System.err.println("[IOError] " + ioe.getMessage());
+                System.exit(0);
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copy(File in, File out) throws IOException {
+        if (in.exists() && in != null && out != null) {
+            if (!out.exists()) {
+                if (in.isDirectory()) {
+                    out.mkdirs();
+                } else {
+                    out.createNewFile();
+                }
+            }
+            String source = in.isDirectory() ? "directory" : "file";
+            String target = out.isDirectory() ? "directory" : "file";
+            if (!source.equals(target)) {
+                throw new IOException("Can't duplicate " + source + " as " + target);
+            } else {
+                if (source.equals("directory")) {
+                    File[] files = in.listFiles();
+                    for (File file : files) {
+                        copy(file, new File(out, file.getName()));
+                    }
+                } else {
+                    FileChannel inCh = new FileInputStream(in).getChannel();
+                    FileChannel outCh = new FileOutputStream(out).getChannel();
+                    inCh.transferTo(0, inCh.size(), outCh);
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static final void copyFile(File argSource, File argDestination) throws IOException {
+        FileChannel srcChannel = new FileInputStream(argSource).getChannel();
+        FileChannel dstChannel = new FileOutputStream(argDestination).getChannel();
+        try {
+            dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+        } finally {
+            srcChannel.close();
+            dstChannel.close();
+        }
+    }
+} </s>
+<s>class temp {    public static String toMd5(String s) {
+        String res = "";
+        try {
+            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+            res = toHexString(messageDigest);
+        } catch (NoSuchAlgorithmException e) {
+        }
+        return res;
+    }
+} </s>
+<s>class temp {    public HttpURLConnection openConnection() throws IOException {
+        URL url = new URL("http", host, request);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod(method);
+        connection.setRequestProperty("Host", host);
+        for (Map.Entry<String, List<String>> entry : mapOfHeaders.entrySet()) {
+            for (String value : entry.getValue()) {
+                connection.addRequestProperty(entry.getKey(), value);
+            }
+        }
+        return connection;
+    }
+} </s>
+<s>class temp {    public QueryOutput run() throws Exception {
+        boolean success = false;
+        QueryOutput output = null;
+        if (correlator != null || inMemMaster != null || customMatcher != null) {
+            List<Object[]> rows = inMemMaster == null ? (correlator == null ? customMatcher.onCycleEnd() : correlator.onCycleEnd()) : inMemMaster.onCycleEnd();
+            if (rows.isEmpty()) {
+                success = true;
+                return null;
+            }
+            output = new DirectQueryOutput(rows);
+        } else {
+            connection = queryContext.createConnection();
+            try {
+                connection.setAutoCommit(false);
+                connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                thePreparedStatement = connection.prepareStatement(thePreparedStatementSQL);
+                RowStatusHelper.setStatusValues(statusAndPositions, thePreparedStatement, queryContext.getRunCount());
+                long newResultIdsAfter = lastRowIdInsertedNow;
+                int rows = thePreparedStatement.executeUpdate();
+                if (rows <= 0) {
+                    success = true;
+                    return null;
+                }
+                lastRowIdInsertedNow = getLastRowIdInResultTable(newResultIdsAfter, rows);
+                output = new DBQueryOutput(newResultIdsAfter, lastRowIdInsertedNow, rows, timeKeeper.getTimeMsecs());
+                success = true;
+            } finally {
+                if (connection != null) {
+                    if (success) {
+                        connection.commit();
+                    } else {
+                        connection.rollback();
+                    }
+                }
+            }
+        }
+        return output;
+    }
+} </s>
+<s>class temp {    private String sha1(String s) {
+        String encrypt = s;
+        try {
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            sha.update(s.getBytes());
+            byte[] digest = sha.digest();
+            final StringBuffer buffer = new StringBuffer();
+            for (int i = 0; i < digest.length; ++i) {
+                final byte b = digest[i];
+                final int value = (b & 0x7F) + (b < 0 ? 128 : 0);
+                buffer.append(value < 16 ? "0" : "");
+                buffer.append(Integer.toHexString(value));
+            }
+            encrypt = buffer.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return encrypt;
+    }
+} </s>
+<s>class temp {    private void copyFile(File in, File out) throws Exception {
+        FileChannel sourceChannel = new FileInputStream(in).getChannel();
+        FileChannel destinationChannel = new FileOutputStream(out).getChannel();
+        sourceChannel.transferTo(0, sourceChannel.size(), destinationChannel);
+        sourceChannel.close();
+        destinationChannel.close();
+    }
+} </s>
+<s>class temp {    private String fetchContent() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+        StringBuffer buf = new StringBuffer();
+        String str;
+        while ((str = reader.readLine()) != null) {
+            buf.append(str);
+        }
+        return buf.toString();
+    }
+} </s>
+<s>class temp {    private void copyFile(final String sourceFileName, final File path) throws IOException {
+        final File source = new File(sourceFileName);
+        final File destination = new File(path, source.getName());
+        FileChannel srcChannel = null;
+        FileChannel dstChannel = null;
+        try {
+            srcChannel = new FileInputStream(source).getChannel();
+            dstChannel = new FileOutputStream(destination).getChannel();
+            dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+        } finally {
+            try {
+                if (dstChannel != null) {
+                    dstChannel.close();
+                }
+            } catch (Exception exception) {
+            }
+            try {
+                if (srcChannel != null) {
+                    srcChannel.close();
+                }
+            } catch (Exception exception) {
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        CookieManager cm = new CookieManager();
+        try {
+            URL url = new URL("http://www.hccp.org/test/cookieTest.jsp");
+            URLConnection conn = url.openConnection();
+            conn.connect();
+            cm.storeCookies(conn);
+            System.out.println(cm);
+            cm.setCookies(url.openConnection());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public void delete(String name) throws FidoDatabaseException {
+        try {
+            Connection conn = null;
+            Statement stmt = null;
+            try {
+                conn = fido.util.FidoDataSource.getConnection();
+                conn.setAutoCommit(false);
+                stmt = conn.createStatement();
+                AttributeTable attribute = new AttributeTable();
+                attribute.deleteAllForType(stmt, name);
+                String sql = "delete from AttributeCategories " + "where CategoryName = '" + name + "'";
+                stmt.executeUpdate(sql);
+                conn.commit();
+            } catch (SQLException e) {
+                if (conn != null) conn.rollback();
+                throw e;
+            } finally {
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            }
+        } catch (SQLException e) {
+            throw new FidoDatabaseException(e);
+        }
+    }
+} </s>
+<s>class temp {    public static String stringOfUrl(String addr) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        URL url = new URL(addr);
+        IOUtils.copy(url.openStream(), output);
+        return output.toString();
+    }
+} </s>
+<s>class temp {    public static boolean encodeFileToFile(String infile, String outfile) {
+        boolean success = false;
+        java.io.InputStream in = null;
+        java.io.OutputStream out = null;
+        try {
+            in = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(infile)), Base64.ENCODE);
+            out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile));
+            byte[] buffer = new byte[65536];
+            int read = -1;
+            while ((read = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, read);
+            }
+            success = true;
+        } catch (java.io.IOException exc) {
+            exc.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (Exception exc) {
+            }
+            try {
+                out.close();
+            } catch (Exception exc) {
+            }
+        }
+        return success;
+    }
+} </s>
+<s>class temp {    public static boolean decodeFileToFile(String infile, String outfile) {
+        boolean success = false;
+        java.io.InputStream in = null;
+        java.io.OutputStream out = null;
+        try {
+            in = new Base64.InputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(infile)), Base64.DECODE);
+            out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile));
+            byte[] buffer = new byte[65536];
+            int read = -1;
+            while ((read = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, read);
+            }
+            success = true;
+        } catch (java.io.IOException exc) {
+            exc.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (Exception exc) {
+            }
+            try {
+                out.close();
+            } catch (Exception exc) {
+            }
+        }
+        return success;
+    }
+} </s>
+<s>class temp {    public ChatClient registerPlayer(int playerId, String playerLogin) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.reset();
+        md.update(playerLogin.getBytes("UTF-8"), 0, playerLogin.length());
+        byte[] accountToken = md.digest();
+        byte[] token = generateToken(accountToken);
+        ChatClient chatClient = new ChatClient(playerId, token);
+        players.put(playerId, chatClient);
+        return chatClient;
+    }
+} </s>
+<s>class temp {    public static double[][] getCurrency() throws IOException {
+        URL url = new URL("http://hk.finance.yahoo.com/currency");
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "big5"));
+        double currency[][] = new double[11][11];
+        while (true) {
+            String line = in.readLine();
+            String reg = "<td\\s((align=\"right\"\\sclass=\"yfnc_tabledata1\")" + "|(class=\"yfnc_tabledata1\"\\salign=\"right\"))>" + "([\\d|\\.]+)</td>";
+            Matcher m = Pattern.compile(reg).matcher(line);
+            int i = 0, j = 0;
+            boolean isfound = false;
+            while (m.find()) {
+                isfound = true;
+                currency[i][j] = Double.parseDouble(m.group(4));
+                if (j == 10) {
+                    j = 0;
+                    i++;
+                } else j++;
+            }
+            if (isfound) break;
+        }
+        return currency;
+    }
+} </s>
+<s>class temp {    public boolean crear() {
+        int result = 0;
+        String sql = "insert into jugadorxdivxronda" + "(jugadorxDivision_idJugadorxDivision, ronda_numeroRonda, resultado, idPareoRival, color, flotante, puntajeRonda, idPareo) " + "values (?, ?, ?, ?, ?, ?, ?, ?)";
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            populatePreparedStatement(unjxdxr);
+            result = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (result > 0);
+    }
+} </s>
+<s>class temp {    public boolean actualizarDatosFinal(int idJugadorDiv, int idRonda, jugadorxDivxRonda unjxdxr) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET resultado = ?, puntajeRonda = ? " + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            populatePreparedStatementActFinal(unjxdxr);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean actualizarDatosPrevia(int idJugadorDiv, int idRonda, int idPareoRival, int color, int flotante) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET idPareoRival = " + idPareoRival + " , color = " + color + " , flotante = " + flotante + " " + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean limpiarContrincantexRonda(jugadorxDivxRonda unjxdxr) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET idPareoRival = 0 " + " WHERE idJugxDivxRnd = " + unjxdxr.getIdJugxDivxRnd();
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean ponerFlotantexRonda(int idJugadorDiv, int idRonda, int dato) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET flotante = " + dato + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean ponerRivalxRonda(int idJugadorDiv, int idRonda, int dato) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET idPareoRival = " + dato + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean ponerColorxRonda(int idJugadorDiv, int idRonda, int dato) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET color = " + dato + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public boolean actualizarIdPartida(int idJugadorDiv, int idRonda, int idPartida) {
+        int intResult = 0;
+        String sql = "UPDATE jugadorxdivxronda " + " SET idPartida = " + idPartida + " WHERE jugadorxDivision_idJugadorxDivision = " + idJugadorDiv + " AND ronda_numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public String hash(String plainTextPassword) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(digestAlgorithm);
+            digest.update(plainTextPassword.getBytes(charset));
+            byte[] rawHash = digest.digest();
+            return new String(Hex.encodeHex(rawHash));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+} </s>
+<s>class temp {    private String doSearch(String query) {
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("http://boss.yahooapis.com/ysearch/web/v1/").append(query).append("?appid=wGsFV_DV34EwXnC.2Bt_Ql8Kcir_HmrxMzWUF2fv64CA8ha7e4zgudqXFA8K_J4-&format=xml&filter=-porn");
+        try {
+            URL url = new URL(queryBuilder.toString());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            String line;
+            StringBuffer buffer = new StringBuffer();
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            reader.close();
+            return safeParseXml(buffer.toString());
+        } catch (MalformedURLException e) {
+            log.error("The used url is not right : " + queryBuilder.toString(), e);
+            return "The used url is not right.";
+        } catch (IOException e) {
+            log.error("Problem obtaining search results, connection maybe?", e);
+            return "Problem obtaining search results, connection maybe?";
+        }
+    }
+} </s>
+<s>class temp {    public static String encryptString(String str) {
+        StringBuffer sb = new StringBuffer();
+        int i;
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(str.getBytes());
+            byte[] md5Bytes = md5.digest();
+            for (i = 0; i < md5Bytes.length; i++) {
+                sb.append(md5Bytes[i]);
+            }
+        } catch (Exception e) {
+        }
+        return sb.toString();
+    }
+} </s>
+<s>class temp {    public static void appendFile(String namePrefix, File baseDir, File file, ZipOutputStream zipOut) throws IOException {
+        Assert.Arg.notNull(baseDir, "baseDir");
+        Assert.Arg.notNull(file, "file");
+        Assert.Arg.notNull(zipOut, "zipOut");
+        if (namePrefix == null) namePrefix = "";
+        String path = FileSystemUtils.getRelativePath(baseDir, file);
+        ZipEntry zipEntry = new ZipEntry(namePrefix + path);
+        zipOut.putNextEntry(zipEntry);
+        InputStream fileInput = FileUtils.openInputStream(file);
+        try {
+            org.apache.commons.io.IOUtils.copyLarge(fileInput, zipOut);
+        } finally {
+            fileInput.close();
+        }
+    }
+} </s>
+<s>class temp {        public void readEntry(String name, InputStream input) throws Exception {
+            File file = new File(this.directory, name);
+            OutputStream output = new BufferedOutputStream(FileUtils.openOutputStream(file));
+            try {
+                org.apache.commons.io.IOUtils.copy(input, output);
+            } finally {
+                output.close();
+            }
+        }
+} </s>
+<s>class temp {    public static Document parseDocument(Object toParse, boolean isFile, List<ErrorMessage> errorMessages) {
+        Document document = null;
+        try {
+            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+            docBuilderFactory.setValidating(true);
+            docBuilderFactory.setNamespaceAware(true);
+            docBuilderFactory.setAttribute("http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://www.w3.org/2001/XMLSchema");
+            docBuilderFactory.setAttribute("http://java.sun.com/xml/jaxp/properties/schemaSource", "BPMN20.xsd");
+            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+            BPMNModelParsingErrors pErrors = new BPMNModelParsingErrors();
+            docBuilder.setErrorHandler(pErrors);
+            docBuilder.setEntityResolver(new BPMNModelEntityResolver());
+            if (isFile) {
+                String filepath = toParse.toString();
+                File f = new File(filepath);
+                if (!f.exists()) {
+                    URL url = BPMNModelUtils.class.getResource(filepath);
+                    if (url == null) {
+                        if (filepath.startsWith("http") || filepath.startsWith("ftp")) {
+                            url = new URL(filepath);
+                        }
+                    }
+                    if (url != null) {
+                        document = docBuilder.parse(url.openStream());
+                    }
+                } else {
+                    if (filepath.endsWith(".gz")) {
+                        document = docBuilder.parse(new GZIPInputStream(new FileInputStream(f)));
+                    } else {
+                        document = docBuilder.parse(new FileInputStream(f));
+                    }
+                }
+            } else {
+                if (toParse instanceof String) {
+                    document = docBuilder.parse(new InputSource(new StringReader(toParse.toString())));
+                } else if (toParse instanceof InputStream) {
+                    document = docBuilder.parse((InputStream) toParse);
+                }
+            }
+            errorMessages.addAll(pErrors.getErrorMessages());
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return document;
+    }
+} </s>
+<s>class temp {    public static String createMD5(String str) {
+        String sig = null;
+        String strSalt = str + sSalt;
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(strSalt.getBytes(), 0, strSalt.length());
+            byte byteData[] = md5.digest();
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < byteData.length; i++) {
+                sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            sig = sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Can not use md5 algorithm");
+        }
+        return sig;
+    }
+} </s>
+<s>class temp {    @Override
+    public String fetchElectronicEdition(Publication pub) {
+        final String url = baseURL + pub.getKey() + ".html";
+        logger.info("fetching pub ee from local cache at: " + url);
+        HttpMethod method = null;
+        String responseBody = "";
+        method = new GetMethod(url);
+        method.setFollowRedirects(true);
+        try {
+            if (StringUtils.isNotBlank(method.getURI().getScheme())) {
+                InputStream is = null;
+                StringWriter writer = new StringWriter();
+                try {
+                    client.executeMethod(method);
+                    Header contentType = method.getResponseHeader("Content-Type");
+                    if (contentType != null && StringUtils.isNotBlank(contentType.getValue()) && contentType.getValue().indexOf("text/html") >= 0) {
+                        is = method.getResponseBodyAsStream();
+                        IOUtils.copy(is, writer);
+                        responseBody = writer.toString();
+                    } else {
+                        logger.info("ignoring non-text/html response from page: " + url + " content-type:" + contentType);
+                    }
+                } catch (HttpException he) {
+                    logger.error("Http error connecting to '" + url + "'");
+                    logger.error(he.getMessage());
+                } catch (IOException ioe) {
+                    logger.error("Unable to connect to '" + url + "'");
+                } finally {
+                    IOUtils.closeQuietly(is);
+                    IOUtils.closeQuietly(writer);
+                }
+            }
+        } catch (URIException e) {
+            logger.error(e);
+        } finally {
+            method.releaseConnection();
+        }
+        return responseBody;
+    }
+} </s>
+<s>class temp {    public final void loadAllData(final String ticker, final File output, final CSVFormat outputFormat, final Date from, final Date to) {
+        try {
+            final URL url = buildURL(ticker, from, to);
+            final InputStream is = url.openStream();
+            final ReadCSV csv = new ReadCSV(is, true, CSVFormat.ENGLISH);
+            final PrintWriter tw = new PrintWriter(new FileWriter(output));
+            tw.println("date,time,open price,high price,low price," + "close price,volume,adjusted price");
+            while (csv.next() && !shouldStop()) {
+                final Date date = csv.getDate("date");
+                final double adjClose = csv.getDouble("adj close");
+                final double open = csv.getDouble("open");
+                final double close = csv.getDouble("close");
+                final double high = csv.getDouble("high");
+                final double low = csv.getDouble("low");
+                final double volume = csv.getDouble("volume");
+                final NumberFormat df = NumberFormat.getInstance();
+                df.setGroupingUsed(false);
+                final StringBuilder line = new StringBuilder();
+                line.append(NumericDateUtil.date2Long(date));
+                line.append(outputFormat.getSeparator());
+                line.append(NumericDateUtil.time2Int(date));
+                line.append(outputFormat.getSeparator());
+                line.append(outputFormat.format(open, this.precision));
+                line.append(outputFormat.getSeparator());
+                line.append(outputFormat.format(high, this.precision));
+                line.append(outputFormat.getSeparator());
+                line.append(outputFormat.format(low, this.precision));
+                line.append(outputFormat.getSeparator());
+                line.append(outputFormat.format(close, this.precision));
+                line.append(outputFormat.getSeparator());
+                line.append(df.format(volume));
+                line.append(outputFormat.getSeparator());
+                line.append(outputFormat.format(adjClose, this.precision));
+                tw.println(line.toString());
+            }
+            tw.close();
+        } catch (final IOException ex) {
+            throw new LoaderError(ex);
+        }
+    }
+} </s>
+<s>class temp {    public void testCopyFolderContents() throws IOException {
+        log.info("Running: testCopyFolderContents()");
+        IOUtils.copyFolderContents(srcFolderName, destFolderName);
+        Assert.assertTrue(destFile1.exists() && destFile1.isFile());
+        Assert.assertTrue(destFile2.exists() && destFile2.isFile());
+        Assert.assertTrue(destFile3.exists() && destFile3.isFile());
+    }
+} </s>
+<s>class temp {    public synchronized String encrypt(String password) {
+        try {
+            MessageDigest md = null;
+            md = MessageDigest.getInstance("SHA-1");
+            md.update(password.getBytes("UTF-8"));
+            byte raw[] = md.digest();
+            byte[] hash = (new Base64()).encode(raw);
+            return new String(hash);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Algorithm SHA-1 is not supported", e.getCause());
+            return null;
+        } catch (UnsupportedEncodingException e) {
+            logger.error("UTF-8 encoding is not supported");
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public void insert() throws Exception {
+        Connection con = DbUtil.connectToDb();
+        PreparedStatement pStmt = null;
+        try {
+            pStmt = con.prepareStatement("INSERT INTO " + Constants.TABLENAME + " (name,phone,address)" + " values(?,?,?)");
+            con.setAutoCommit(false);
+            pStmt.setString(1, name);
+            pStmt.setString(2, phone);
+            pStmt.setString(3, address);
+            int j = pStmt.executeUpdate();
+            con.commit();
+        } catch (Exception ex) {
+            try {
+                con.rollback();
+            } catch (SQLException sqlex) {
+                sqlex.printStackTrace(System.out);
+            }
+            throw ex;
+        } finally {
+            try {
+                pStmt.close();
+                con.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static String getDigestResponse(String user, String password, String method, String requri, String authstr) {
+        String realm = "";
+        String nonce = "";
+        String opaque = "";
+        String algorithm = "";
+        String qop = "";
+        StringBuffer digest = new StringBuffer();
+        String cnonce;
+        String noncecount;
+        String pAuthStr = authstr;
+        int ptr = 0;
+        String response = "";
+        int i = 0;
+        StringTokenizer st = new StringTokenizer(pAuthStr, ",");
+        StringTokenizer stprob = null;
+        String str = null;
+        String key = null;
+        String value = null;
+        Properties probs = new Properties();
+        while (st.hasMoreTokens()) {
+            String nextToken = st.nextToken();
+            stprob = new StringTokenizer(nextToken, "=");
+            key = stprob.nextToken();
+            value = stprob.nextToken();
+            if (value.charAt(0) == '"' || value.charAt(0) == '\'') {
+                value = value.substring(1, value.length() - 1);
+            }
+            probs.put(key, value);
+        }
+        digest.append("Digest username=\"" + user + "\", ");
+        digest.append("realm=\"");
+        digest.append(probs.getProperty("realm"));
+        digest.append("\", ");
+        digest.append("nonce=\"");
+        digest.append(probs.getProperty("nonce"));
+        digest.append("\", ");
+        digest.append("uri=\"" + requri + "\", ");
+        cnonce = "abcdefghi";
+        noncecount = "00000001";
+        String toDigest = user + ":" + realm + ":" + password;
+        byte[] digestbuffer = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(toDigest.getBytes());
+            digestbuffer = md.digest();
+        } catch (Exception e) {
+            System.err.println("Error creating digest request: " + e);
+            return null;
+        }
+        digest.append("qop=\"auth\", ");
+        digest.append("cnonce=\"" + cnonce + "\", ");
+        digest.append("nc=" + noncecount + ", ");
+        digest.append("response=\"" + response + "\"");
+        if (probs.getProperty("opaque") != null) {
+            digest.append(", opaque=\"" + probs.getProperty("opaque") + "\"");
+        }
+        System.out.println("SipProtocol: Digest calculated.");
+        return digest.toString();
+    }
+} </s>
+<s>class temp {    public static URL getWikipediaPage(String concept, String language) throws MalformedURLException, IOException {
+        String url = "http://" + language + ".wikipedia.org/wiki/Special:Search?search=" + URLEncoder.encode(concept, UTF_8_ENCODING) + "&go=Go";
+        HttpURLConnection.setFollowRedirects(false);
+        HttpURLConnection httpConnection = null;
+        try {
+            httpConnection = (HttpURLConnection) new URL(url).openConnection();
+            httpConnection.connect();
+            int responseCode = httpConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                return null;
+            } else if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                return new URL(httpConnection.getHeaderField("Location"));
+            } else {
+                logger.warn("Unexpected response code (" + responseCode + ").");
+                return null;
+            }
+        } finally {
+            if (httpConnection != null) {
+                httpConnection.disconnect();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void writeTo(File f) throws IOException {
+        if (state != STATE_OK) throw new IllegalStateException("Upload failed");
+        if (tempLocation == null) throw new IllegalStateException("File already saved");
+        if (f.isDirectory()) f = new File(f, filename);
+        FileInputStream fis = new FileInputStream(tempLocation);
+        FileOutputStream fos = new FileOutputStream(f);
+        byte[] buf = new byte[BUFFER_SIZE];
+        try {
+            int i = 0;
+            while ((i = fis.read(buf)) != -1) fos.write(buf, 0, i);
+        } finally {
+            deleteTemporaryFile();
+            fis.close();
+            fos.close();
+        }
+    }
+} </s>
+<s>class temp {    public void create() throws IOException {
+        FileChannel fc = new FileInputStream(sourceFile).getChannel();
+        for (RangeArrayElement element : array) {
+            FileChannel fc_ = fc.position(element.starting());
+            File part = new File(destinationDirectory, "_0x" + Long.toHexString(element.starting()) + ".partial");
+            FileChannel partfc = new FileOutputStream(part).getChannel();
+            partfc.transferFrom(fc_, 0, element.getSize());
+            partfc.force(true);
+            partfc.close();
+        }
+        fc.close();
+    }
+} </s>
+<s>class temp {        public void actionPerformed(ActionEvent event) {
+            System.out.println("STARTING on" + getQueryField().getText());
+            try {
+                URL url = new URL(getQueryField().getText());
+                getResponseField().setText("opening URL");
+                DataInputStream inputStream = new DataInputStream(url.openStream());
+                getResponseField().setText("collating response");
+                String line = inputStream.readLine();
+                String totalString = "";
+                while (line != null) {
+                    totalString += line + "\n";
+                    line = inputStream.readLine();
+                }
+                System.out.println("FINISHING");
+                getResponseField().setText(totalString);
+                System.out.println("FINISHED");
+            } catch (Exception exception) {
+                getResponseField().setText(exception.getMessage() + "\n");
+            }
+        }
+} </s>
+<s>class temp {    public static String encode(String plaintext) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA");
+            md.update(plaintext.getBytes("UTF-8"));
+            byte raw[] = md.digest();
+            String hash = (new BASE64Encoder()).encode(raw);
+            return hash;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Could not encrypt password for ISA db verification");
+        }
+    }
+} </s>
+<s>class temp {    private void writeStatsToDatabase(long transferJobAIPCount, long reprocessingJobAIPCount, long transferJobAIPVolume, long reprocessingJobAIPVolume, long overallBinaryAIPCount, Map<String, AIPStatistics> mimeTypeRegister) throws SQLException {
+        int nextAIPStatsID;
+        long nextMimetypeStatsID;
+        Statement select = dbConnection.createStatement();
+        String aipStatsQuery = "select max(aip_statistics_id) from aip_statistics";
+        ResultSet result = select.executeQuery(aipStatsQuery);
+        if (result.next()) {
+            nextAIPStatsID = result.getInt(1) + 1;
+        } else {
+            throw new SQLException("Problem getting maximum AIP Statistics ID");
+        }
+        String mimetypeStatsQuery = "select max(mimetype_aip_statistics_id) from mimetype_aip_statistics";
+        result = select.executeQuery(mimetypeStatsQuery);
+        if (result.next()) {
+            nextMimetypeStatsID = result.getLong(1) + 1;
+        } else {
+            throw new SQLException("Problem getting maximum MIME type AIP Statistics ID");
+        }
+        String insertAIPStatsEntryQuery = "insert into aip_statistics " + "(aip_statistics_id, tj_aip_count, tj_aip_volume, rj_aip_count, rj_aip_volume, " + "collation_date, binary_aip_count) " + "values (?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement insert = dbConnection.prepareStatement(insertAIPStatsEntryQuery);
+        insert.setInt(1, nextAIPStatsID);
+        insert.setLong(2, transferJobAIPCount);
+        insert.setLong(3, transferJobAIPVolume);
+        insert.setLong(4, reprocessingJobAIPCount);
+        insert.setLong(5, reprocessingJobAIPVolume);
+        insert.setDate(6, new java.sql.Date(System.currentTimeMillis()));
+        insert.setLong(7, overallBinaryAIPCount);
+        int rowsAdded = insert.executeUpdate();
+        if (rowsAdded != 1) {
+            dbConnection.rollback();
+            throw new SQLException("Could not insert row into AIP statistics table");
+        }
+        String insertMimeTypeStatsQuery = "insert into mimetype_aip_statistics " + "(mimetype_aip_statistics_id, aip_statistics_id, mimetype_aip_count, mimetype_aip_volume, mimetype) " + "values (?, ?, ?, ?, ?)";
+        insert = dbConnection.prepareStatement(insertMimeTypeStatsQuery);
+        insert.setInt(2, nextAIPStatsID);
+        for (String mimeType : mimeTypeRegister.keySet()) {
+            AIPStatistics mimeTypeStats = mimeTypeRegister.get(mimeType);
+            insert.setLong(1, nextMimetypeStatsID);
+            insert.setLong(3, mimeTypeStats.aipCount);
+            insert.setLong(4, mimeTypeStats.aipVolume);
+            insert.setString(5, mimeType);
+            nextMimetypeStatsID++;
+            rowsAdded = insert.executeUpdate();
+            if (rowsAdded != 1) {
+                dbConnection.rollback();
+                throw new SQLException("Could not insert row into MIME Type AIP statistics table");
+            }
+        }
+        dbConnection.commit();
+    }
+} </s>
+<s>class temp {    public SimplePropertiesMessageRepository() {
+        properties = new Properties();
+        try {
+            URL url = SimplePropertiesIconRepository.class.getResource(PROPERTIES_FILE_NAME);
+            properties.load(url.openStream());
+        } catch (Exception e) {
+            throw new Error("Messages file not found: " + PROPERTIES_FILE_NAME);
+        }
+    }
+} </s>
+<s>class temp {    private void readAnnotations() throws IOException {
+        final BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        try {
+            String line = null;
+            while ((line = in.readLine()) != null) {
+                lineNumber++;
+                if (line.startsWith("ANNOTATE")) {
+                    readAnnotationBlock(in);
+                }
+            }
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    private void readArchives(final VideoArchiveSet vas) throws IOException {
+        final BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String line = null;
+        try {
+            while ((line = in.readLine()) != null) {
+                if (line.startsWith("ARCHIVE")) {
+                    final StringTokenizer s = new StringTokenizer(line);
+                    s.nextToken();
+                    final Integer tapeNumber = Integer.valueOf(s.nextToken());
+                    final Timecode timeCode = new Timecode(s.nextToken());
+                    final VideoArchive va = new VideoArchive();
+                    va.setTimeCode(timeCode);
+                    va.setTapeNumber(tapeNumber);
+                    vas.addVideoArchive(va);
+                    archives.put(tapeNumber, va);
+                }
+            }
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            in.close();
+        }
+        if (archives.size() == 0) {
+            log.warn("No lines with ARCHIVE were found in the current vif file, will try to look at another vif with same yearday, " + "ship and platform and try to get archives from there:");
+            String urlBase = url.getPath().toString().substring(0, url.getPath().toString().lastIndexOf("/"));
+            File vifDir = new File(urlBase);
+            File[] allYeardayFiles = vifDir.listFiles();
+            for (int i = 0; i < allYeardayFiles.length; i++) {
+                if (allYeardayFiles[i].toString().endsWith(".vif")) {
+                    String filename = allYeardayFiles[i].toString().substring(allYeardayFiles[i].toString().lastIndexOf("/"));
+                    String fileLC = filename.toLowerCase();
+                    String toLookFor = new String(new Character(vifMetadata.shipCode).toString() + new Character(vifMetadata.platformCode).toString());
+                    String toLookForLC = toLookFor.toLowerCase();
+                    if (fileLC.indexOf(toLookForLC) >= 0) {
+                        log.warn("Will try to read archives from file " + allYeardayFiles[i]);
+                        final BufferedReader tempIn = new BufferedReader(new FileReader(allYeardayFiles[i]));
+                        String tempLine = null;
+                        try {
+                            while ((tempLine = tempIn.readLine()) != null) {
+                                if (tempLine.startsWith("ARCHIVE")) {
+                                    final StringTokenizer s = new StringTokenizer(tempLine);
+                                    s.nextToken();
+                                    final Integer tapeNumber = Integer.valueOf(s.nextToken());
+                                    final Timecode timeCode = new Timecode(s.nextToken());
+                                    final VideoArchive va = new VideoArchive();
+                                    va.setTimeCode(timeCode);
+                                    va.setTapeNumber(tapeNumber);
+                                    vas.addVideoArchive(va);
+                                    archives.put(tapeNumber, va);
+                                }
+                            }
+                        } catch (IOException e) {
+                            throw e;
+                        } finally {
+                            tempIn.close();
+                        }
+                    }
+                }
+                if (archives.size() > 0) {
+                    log.warn("Found " + archives.size() + " archives in that vif so will use that");
+                    break;
+                }
+            }
+            if (archives.size() == 0) {
+                log.warn("Still no archives were found in the file. Unable to process it.");
+            }
+        }
+    }
+} </s>
+<s>class temp {    protected InputStream callApiMethod(String apiUrl, int expected) {
+        try {
+            URL url = new URL(apiUrl);
+            HttpURLConnection request = (HttpURLConnection) url.openConnection();
+            for (String headerName : requestHeaders.keySet()) {
+                request.setRequestProperty(headerName, requestHeaders.get(headerName));
+            }
+            request.connect();
+            if (request.getResponseCode() != expected) {
+                Error error = readResponse(Error.class, getWrappedInputStream(request.getErrorStream(), GZIP_ENCODING.equalsIgnoreCase(request.getContentEncoding())));
+                throw createBingSearchApiClientException(error);
+            } else {
+                return getWrappedInputStream(request.getInputStream(), GZIP_ENCODING.equalsIgnoreCase(request.getContentEncoding()));
+            }
+        } catch (IOException e) {
+            throw new BingSearchException(e);
+        }
+    }
+} </s>
+<s>class temp {    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputResource.getInputStream()));
+        File targetDirectoryAsFile = new File(targetDirectory);
+        if (!targetDirectoryAsFile.exists()) {
+            FileUtils.forceMkdir(targetDirectoryAsFile);
+        }
+        File target = new File(targetDirectory, targetFile);
+        BufferedOutputStream dest = null;
+        while (zis.getNextEntry() != null) {
+            if (!target.exists()) {
+                target.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(target);
+            dest = new BufferedOutputStream(fos);
+            IOUtils.copy(zis, dest);
+            dest.flush();
+            dest.close();
+        }
+        zis.close();
+        if (!target.exists()) {
+            throw new IllegalStateException("Could not decompress anything from the archive!");
+        }
+        return RepeatStatus.FINISHED;
+    }
+} </s>
+<s>class temp {    public static void sortSeries(double[] series) {
+        if (series == null) {
+            throw new IllegalArgumentException("Incorrect series. It's null-pointed");
+        }
+        int k = 0;
+        int right = series.length - 1;
+        while (right > 0) {
+            k = 0;
+            for (int i = 0; i <= right - 1; i++) {
+                if (series[i] > series[i + 1]) {
+                    k = i;
+                    double tmp = series[i];
+                    series[i] = series[i + 1];
+                    series[i + 1] = tmp;
+                }
+            }
+            right = k;
+        }
+    }
+} </s>
+<s>class temp {    public static String md5String(String str) {
+        try {
+            MessageDigest md;
+            md = MessageDigest.getInstance("MD5");
+            md.update(str.getBytes());
+            byte[] hash = md.digest();
+            final char[] hexChars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+            StringBuffer res = new StringBuffer();
+            for (int i = 0; i < hash.length; i++) {
+                res.append(hexChars[(0xF0 & hash[i]) >> 4]);
+                res.append(hexChars[0x0F & hash[i]]);
+            }
+            return res.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    private static void copierScriptChargement(File webInfDir, String initialDataChoice) {
+        File chargementInitialDir = new File(webInfDir, "chargementInitial");
+        File fichierChargement = new File(chargementInitialDir, "ScriptChargementInitial.sql");
+        File fichierChargementAll = new File(chargementInitialDir, "ScriptChargementInitial-All.sql");
+        File fichierChargementTypesDocument = new File(chargementInitialDir, "ScriptChargementInitial-TypesDocument.sql");
+        File fichierChargementVide = new File(chargementInitialDir, "ScriptChargementInitial-Vide.sql");
+        if (fichierChargement.exists()) {
+            fichierChargement.delete();
+        }
+        File fichierUtilise = null;
+        if ("all".equals(initialDataChoice)) {
+            fichierUtilise = fichierChargementAll;
+        } else if ("typesDocument".equals(initialDataChoice)) {
+            fichierUtilise = fichierChargementTypesDocument;
+        } else if ("empty".equals(initialDataChoice)) {
+            fichierUtilise = fichierChargementVide;
+        }
+        if (fichierUtilise != null && fichierUtilise.exists()) {
+            FileChannel source = null;
+            FileChannel destination = null;
+            try {
+                source = new FileInputStream(fichierUtilise).getChannel();
+                destination = new FileOutputStream(fichierChargement).getChannel();
+                destination.transferFrom(source, 0, source.size());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (source != null) {
+                    try {
+                        source.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (destination != null) {
+                    try {
+                        destination.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    boolean copyFileStructure(File oldFile, File newFile) {
+        if (oldFile == null || newFile == null) return false;
+        File searchFile = newFile;
+        do {
+            if (oldFile.equals(searchFile)) return false;
+            searchFile = searchFile.getParentFile();
+        } while (searchFile != null);
+        if (oldFile.isDirectory()) {
+            if (progressDialog != null) {
+                progressDialog.setDetailFile(oldFile, ProgressDialog.COPY);
+            }
+            if (simulateOnly) {
+            } else {
+                if (!newFile.mkdirs()) return false;
+            }
+            File[] subFiles = oldFile.listFiles();
+            if (subFiles != null) {
+                if (progressDialog != null) {
+                    progressDialog.addWorkUnits(subFiles.length);
+                }
+                for (int i = 0; i < subFiles.length; i++) {
+                    File oldSubFile = subFiles[i];
+                    File newSubFile = new File(newFile, oldSubFile.getName());
+                    if (!copyFileStructure(oldSubFile, newSubFile)) return false;
+                    if (progressDialog != null) {
+                        progressDialog.addProgress(1);
+                        if (progressDialog.isCancelled()) return false;
+                    }
+                }
+            }
+        } else {
+            if (simulateOnly) {
+            } else {
+                FileReader in = null;
+                FileWriter out = null;
+                try {
+                    in = new FileReader(oldFile);
+                    out = new FileWriter(newFile);
+                    int count;
+                    while ((count = in.read()) != -1) out.write(count);
+                } catch (FileNotFoundException e) {
+                    return false;
+                } catch (IOException e) {
+                    return false;
+                } finally {
+                    try {
+                        if (in != null) in.close();
+                        if (out != null) out.close();
+                    } catch (IOException e) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+} </s>
+<s>class temp {    public void convert(String newDocumentName, URL url) throws IOException {
+        documentPath = createDirectoryStructure(this.destinationPath, newDocumentName);
+        try {
+            Document doc = builder.build(url.openStream());
+            Element elementx = doc.getRootElement();
+            convertElement(elementx);
+            System.out.println("\n\n");
+            XMLOutputter outp = new XMLOutputter(Format.getPrettyFormat());
+            System.out.println("as file: " + url.getFile());
+            File inputFile = new File(url.getFile());
+            File outputFile = new File(documentPath, renameFileExtention(inputFile, "-remaining.xml"));
+            System.out.println("outputFile: " + outputFile);
+            outp.output(doc, new FileOutputStream(outputFile));
+        } catch (JDOMException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleRaremapsException() {
+        if (params.uri.startsWith("http://www.raremaps.com/cgi-bin/gallery.pl/detail/")) try {
+            params.uri = params.uri.replace("cgi-bin/gallery.pl/detail", "maps/medium");
+            URL url = new URL(params.uri);
+            URLConnection connection = url.openConnection();
+            return processNewUri(connection);
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleICCException() {
+        if (params.uri.startsWith("http://vacani.icc.cat") || params.uri.startsWith("http://louisdl.louislibraries.org")) try {
+            params.uri = params.uri.replace("cdm4/item_viewer.php", "cgi-bin/getimage.exe") + "&DMSCALE=3";
+            params.uri = params.uri.replace("/u?", "cgi-bin/getimage.exe?CISOROOT=").replace(",", "&CISOPTR=") + "&DMSCALE=3";
+            URL url = new URL(params.uri);
+            URLConnection connection = url.openConnection();
+            return processNewUri(connection);
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleFirenzeException() {
+        if (params.uri.indexOf("bncf.firenze.sbn.it") != -1) try {
+            params.uri = params.uri.replace("http://opac.bncf.firenze.sbn.it/mdigit/jsp/mdigit.jsp?idr", "http://teca.bncf.firenze.sbn.it/TecaViewer/index.jsp?RisIdr");
+            URLConnection connection = new URL(params.uri).openConnection();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String url = null;
+            params.uri = "addPage('http://opac.bncf.firenze.sbn.it/php/xlimage/XLImageRV.php";
+            while ((url = reader.readLine()) != null) {
+                int index = url.indexOf(params.uri);
+                if (index != -1) {
+                    url = url.substring(url.indexOf("'") + 1, url.lastIndexOf("'"));
+                    break;
+                }
+            }
+            connection = new URL(url).openConnection();
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            params.uri = "<input type=\"image\" border=\"0\" name=\"tpos\" width=\"";
+            while ((url = reader.readLine()) != null) {
+                int index = url.indexOf(params.uri);
+                if (index != -1) {
+                    url = url.substring(url.indexOf(" src=\"") + 6, url.lastIndexOf("\" alt=\"")).replace("&z=2", "&z=32").replace("&z=4", "&z=64").replace("&z=8", "&z=128");
+                    break;
+                }
+            }
+            if (url != null) {
+                connection = new URL(url).openConnection();
+                return processNewUri(connection);
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleGMUException() {
+        if (params.uri.startsWith("http://mars.gmu.edu:8080")) try {
+            URLConnection connection = new URL(params.uri).openConnection();
+            int index = params.uri.lastIndexOf("?");
+            params.uri = "<img class=\"itemthumb\" src=\"";
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String url = null;
+            while ((url = reader.readLine()) != null) {
+                index = url.indexOf(params.uri);
+                if (index != -1) {
+                    url = "http://mars.gmu.edu:8080" + url.substring(index + 28);
+                    url = url.substring(0, url.indexOf("\" alt=\""));
+                    break;
+                }
+            }
+            if (url != null) {
+                connection = new URL(url).openConnection();
+                return processNewUri(connection);
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleFCLAException() {
+        if (params.uri.startsWith("http://image11.fcla.edu/cgi")) try {
+            params.uri = params.uri.substring(params.uri.indexOf("q1=") + 3);
+            params.uri = params.uri.substring(0, params.uri.indexOf("&"));
+            params.uri = "http://image11.fcla.edu/m/map/thumb/" + params.uri.substring(params.uri.length() - 3, params.uri.length() - 2) + "/" + params.uri.substring(params.uri.length() - 2, params.uri.length() - 1) + "/" + params.uri.substring(params.uri.length() - 1, params.uri.length()) + "/" + params.uri + ".jpg";
+            URL url = new URL(params.uri);
+            URLConnection connection = url.openConnection();
+            return processNewUri(connection);
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleBNException() {
+        if (params.uri.startsWith("http://purl.pt/")) try {
+            URLConnection connection = new URL(params.uri).openConnection();
+            if (params.uri.endsWith("/")) params.uri = params.uri.substring(0, params.uri.length() - 1);
+            int index = params.uri.lastIndexOf("/");
+            params.uri = "http://purl.pt/homepage/" + params.uri.substring(index + 1) + "/" + params.uri.substring(index + 1);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String url = null;
+            while ((url = reader.readLine()) != null) {
+                index = url.indexOf(params.uri);
+                if (index != -1) {
+                    url = url.substring(index);
+                    url = url.substring(0, url.indexOf("\""));
+                    break;
+                }
+            }
+            if (url != null) {
+                connection = new URL(url).openConnection();
+                return processNewUri(connection);
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleNLIBException() {
+        if (params.uri.startsWith("http://digar.nlib.ee/otsing/") || params.uri.startsWith("http://digar.nlib.ee/show")) try {
+            String url = "http://digar.nlib.ee/gmap/nd" + params.uri.substring(params.uri.indexOf(":") + 1, params.uri.lastIndexOf("&")) + "-tiles/z0x0y0.jpeg";
+            URLConnection connection = new URL(url).openConnection();
+            return processNewUri(connection);
+        } catch (Exception e) {
+            try {
+                if (params.uri.startsWith("http://digar.nlib.ee/show")) params.uri = "http://digar.nlib.ee/otsing/?pid=" + params.uri.substring(params.uri.lastIndexOf("/") + 1) + "&show";
+                URLConnection connection = new URL(params.uri).openConnection();
+                String url = params.uri;
+                if (url.endsWith("&show")) url = url.substring(0, url.length() - 5);
+                int index = url.lastIndexOf("?");
+                url = "stream" + url.substring(index);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String aux = null;
+                while ((aux = reader.readLine()) != null) {
+                    index = aux.indexOf(url);
+                    if (index != -1) {
+                        url = "http://digar.nlib.ee/otsing/" + aux.substring(index);
+                        index = url.indexOf('>');
+                        if (index == -1) index = url.indexOf("\"");
+                        url = url.substring(0, index);
+                        break;
+                    }
+                }
+                connection = new URL(url).openConnection();
+                return processNewUri(connection);
+            } catch (Exception e2) {
+            }
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    protected BufferedImage handleKBRException() {
+        if (params.uri.startsWith("http://mara.kbr.be/kbrImage/CM/") || params.uri.startsWith("http://mara.kbr.be/kbrImage/maps/") || params.uri.startsWith("http://opteron2.kbr.be/kp/viewer/")) try {
+            URLConnection connection = new URL(params.uri).openConnection();
+            String url = "get_image.php?intId=";
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String aux = null;
+            while ((aux = reader.readLine()) != null) {
+                if (aux.indexOf(url) != -1) {
+                    aux = aux.substring(aux.indexOf(url));
+                    url = "http://mara.kbr.be/kbrImage/" + aux.substring(0, aux.indexOf("\""));
+                    break;
+                }
+            }
+            connection = new URL(url).openConnection();
+            return processNewUri(connection);
+        } catch (Exception e) {
+            try {
+                String url = "http://mara.kbr.be/xlimages/maps/thumbnails" + params.uri.substring(params.uri.lastIndexOf("/")).replace(".imgf", ".jpg");
+                if (url != null) {
+                    URLConnection connection = new URL(url).openConnection();
+                    return processNewUri(connection);
+                }
+            } catch (Exception e2) {
+            }
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    private String createCSVFile(String fileName) throws FileNotFoundException, IOException {
+        String csvFile = fileName + ".csv";
+        BufferedReader buf = new BufferedReader(new FileReader(fileName));
+        BufferedWriter out = new BufferedWriter(new FileWriter(csvFile));
+        String line;
+        while ((line = buf.readLine()) != null) out.write(line + "\n");
+        buf.close();
+        out.close();
+        return csvFile;
+    }
+} </s>
+<s>class temp {    private List<String> readDescriptor(URL url) {
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            List<String> lines = new ArrayList<String>();
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+                if (line.length() > 0 && !line.startsWith("#")) lines.add(line);
+                line = reader.readLine();
+            }
+            return lines;
+        } catch (IOException e) {
+            throw new ExtensionException("Failed to read extension descriptor '%s'", e).withArgs(url);
+        } finally {
+            IoUtil.closeQuietly(reader);
+        }
+    }
+} </s>
+<s>class temp {    public void copyFile(File sourceFile, File destFile) throws IOException {
+        Log.level3("Copying " + sourceFile.getPath() + " to " + destFile.getPath());
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+        }
+        if (destination != null) {
+            destination.close();
+        }
+    }
+} </s>
+<s>class temp {    private static void recurseFiles(File root, File file, ZipArchiveOutputStream zaos, boolean absolute) throws IOException {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File file2 : files) {
+                recurseFiles(root, file2, zaos, absolute);
+            }
+        } else if ((!file.getName().endsWith(".zip")) && (!file.getName().endsWith(".ZIP"))) {
+            String filename = null;
+            if (absolute) {
+                filename = file.getAbsolutePath().substring(root.getAbsolutePath().length());
+            } else {
+                filename = file.getName();
+            }
+            ZipArchiveEntry zae = new ZipArchiveEntry(filename);
+            zae.setSize(file.length());
+            zaos.putArchiveEntry(zae);
+            FileInputStream fis = new FileInputStream(file);
+            IOUtils.copy(fis, zaos);
+            zaos.closeArchiveEntry();
+        }
+    }
+} </s>
+<s>class temp {    private static void addFile(File file, ZipArchiveOutputStream zaos) throws IOException {
+        String filename = null;
+        filename = file.getName();
+        ZipArchiveEntry zae = new ZipArchiveEntry(filename);
+        zae.setSize(file.length());
+        zaos.putArchiveEntry(zae);
+        FileInputStream fis = new FileInputStream(file);
+        IOUtils.copy(fis, zaos);
+        zaos.closeArchiveEntry();
+    }
+} </s>
+<s>class temp {    public static List<String> unZip(File tarFile, File directory) throws IOException {
+        List<String> result = new ArrayList<String>();
+        InputStream inputStream = new FileInputStream(tarFile);
+        ZipArchiveInputStream in = new ZipArchiveInputStream(inputStream);
+        ZipArchiveEntry entry = in.getNextZipEntry();
+        while (entry != null) {
+            OutputStream out = new FileOutputStream(new File(directory, entry.getName()));
+            IOUtils.copy(in, out);
+            out.close();
+            result.add(entry.getName());
+            entry = in.getNextZipEntry();
+        }
+        in.close();
+        return result;
+    }
+} </s>
+<s>class temp {    public int[] sort() {
+        boolean t = true;
+        int temp = 0;
+        int[] mas = new int[N];
+        Random rand = new Random();
+        for (int i = 0; i < N; i++) {
+            mas[i] = rand.nextInt(10) + 1;
+        }
+        while (t) {
+            t = false;
+            for (int i = 0; i < mas.length - 1; i++) {
+                if (mas[i] > mas[i + 1]) {
+                    temp = mas[i];
+                    mas[i] = mas[i + 1];
+                    mas[i + 1] = temp;
+                    t = true;
+                }
+            }
+        }
+        return mas;
+    }
+} </s>
+<s>class temp {    public static String encrypt(String key) {
+        MessageDigest md5 = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        md5.update(key.getBytes());
+        byte hash[] = md5.digest();
+        StringBuffer buffer = new StringBuffer();
+        for (int i = 0; i < hash.length; i++) {
+            String temp = Integer.toHexString(0xFF & hash[i]);
+            if (temp.length() == 1) temp = "0" + temp;
+            buffer.append(temp);
+        }
+        return buffer.toString();
+    }
+} </s>
+<s>class temp {    protected void convertInternal(InputStream inputStream, DocumentFormat inputFormat, OutputStream outputStream, DocumentFormat outputFormat) {
+        File inputFile = null;
+        File outputFile = null;
+        try {
+            inputFile = File.createTempFile("document", "." + inputFormat.getFileExtension());
+            OutputStream inputFileStream = null;
+            try {
+                inputFileStream = new FileOutputStream(inputFile);
+                IOUtils.copy(inputStream, inputFileStream);
+            } finally {
+                IOUtils.closeQuietly(inputFileStream);
+            }
+            outputFile = File.createTempFile("document", "." + outputFormat.getFileExtension());
+            convert(inputFile, inputFormat, outputFile, outputFormat);
+            InputStream outputFileStream = null;
+            try {
+                outputFileStream = new FileInputStream(outputFile);
+                IOUtils.copy(outputFileStream, outputStream);
+            } finally {
+                IOUtils.closeQuietly(outputFileStream);
+            }
+        } catch (IOException ioException) {
+            throw new OpenOfficeException("conversion failed", ioException);
+        } finally {
+            if (inputFile != null) {
+                inputFile.delete();
+            }
+            if (outputFile != null) {
+                outputFile.delete();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void insertTableData(Connection dest, TableMetaData tableMetaData) throws Exception {
+        PreparedStatement ps = null;
+        try {
+            dest.setAutoCommit(false);
+            String sql = "INSERT INTO " + tableMetaData.getSchema() + "." + tableMetaData.getTableName() + " (";
+            for (String columnName : tableMetaData.getColumnsNames()) {
+                sql += columnName + ",";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += ") VALUES (";
+            for (String columnName : tableMetaData.getColumnsNames()) {
+                sql += "?" + ",";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += ")";
+            IOHelper.writeInfo(sql);
+            ps = dest.prepareStatement(sql);
+            for (Row r : tableMetaData.getData()) {
+                try {
+                    int param = 1;
+                    for (String columnName : tableMetaData.getColumnsNames()) {
+                        if (dest instanceof OracleConnection) {
+                            if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("BLOB")) {
+                                BLOB blob = new BLOB((OracleConnection) dest, (byte[]) r.getRowData().get(columnName));
+                                ((OraclePreparedStatement) ps).setBLOB(param, blob);
+                            } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("CLOB")) {
+                                ((OraclePreparedStatement) ps).setStringForClob(param, (String) r.getRowData().get(columnName));
+                            } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("LONG")) {
+                                ps.setBytes(param, (byte[]) r.getRowData().get(columnName));
+                            }
+                        } else {
+                            IOHelper.writeInfo(columnName + " = " + r.getRowData().get(columnName));
+                            ps.setObject(param, r.getRowData().get(columnName));
+                        }
+                        param++;
+                    }
+                    if (ps.executeUpdate() != 1) {
+                        dest.rollback();
+                        updateTableData(dest, tableMetaData, r);
+                    }
+                } catch (Exception ex) {
+                    try {
+                        dest.rollback();
+                        updateTableData(dest, tableMetaData, r);
+                    } catch (Exception ex2) {
+                        IOHelper.writeError("Error in update " + sql, ex2);
+                    }
+                }
+                ps.clearParameters();
+            }
+            dest.commit();
+            dest.setAutoCommit(true);
+        } finally {
+            if (ps != null) ps.close();
+        }
+    }
+} </s>
+<s>class temp {    public static void updateTableData(Connection dest, TableMetaData tableMetaData) throws Exception {
+        PreparedStatement ps = null;
+        try {
+            dest.setAutoCommit(false);
+            String sql = "UPDATE " + tableMetaData.getSchema() + "." + tableMetaData.getTableName() + " SET ";
+            for (String columnName : tableMetaData.getColumnsNames()) {
+                sql += columnName + " = ? ,";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += " WHERE ";
+            for (String pkColumnName : tableMetaData.getPkColumns()) {
+                sql += pkColumnName + " = ? AND ";
+            }
+            sql = sql.substring(0, sql.length() - 4);
+            ps = dest.prepareStatement(sql);
+            for (Row r : tableMetaData.getData()) {
+                int param = 1;
+                for (String columnName : tableMetaData.getColumnsNames()) {
+                    if (dest instanceof OracleConnection) {
+                        if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("BLOB")) {
+                            BLOB blob = new BLOB((OracleConnection) dest, (byte[]) r.getRowData().get(columnName));
+                            ((OraclePreparedStatement) ps).setBLOB(param, blob);
+                        } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("CLOB")) {
+                            ((OraclePreparedStatement) ps).setStringForClob(param, (String) r.getRowData().get(columnName));
+                        } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("LONG")) {
+                            ps.setBytes(param, (byte[]) r.getRowData().get(columnName));
+                        }
+                    } else {
+                        ps.setObject(param, r.getRowData().get(columnName));
+                    }
+                    param++;
+                }
+                for (String pkColumnName : tableMetaData.getPkColumns()) {
+                    ps.setObject(param, r.getRowData().get(pkColumnName));
+                    param++;
+                }
+                if (ps.executeUpdate() != 1) {
+                    dest.rollback();
+                    throw new Exception();
+                }
+                ps.clearParameters();
+            }
+            dest.commit();
+            dest.setAutoCommit(true);
+        } finally {
+            if (ps != null) ps.close();
+        }
+    }
+} </s>
+<s>class temp {    public static void updateTableData(Connection dest, TableMetaData tableMetaData, Row r) throws Exception {
+        PreparedStatement ps = null;
+        try {
+            dest.setAutoCommit(false);
+            String sql = "UPDATE " + tableMetaData.getSchema() + "." + tableMetaData.getTableName() + " SET ";
+            for (String columnName : tableMetaData.getColumnsNames()) {
+                sql += columnName + " = ? ,";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += " WHERE ";
+            for (String pkColumnName : tableMetaData.getPkColumns()) {
+                sql += pkColumnName + " = ? AND ";
+            }
+            sql = sql.substring(0, sql.length() - 4);
+            System.out.println("UPDATE: " + sql);
+            ps = dest.prepareStatement(sql);
+            int param = 1;
+            for (String columnName : tableMetaData.getColumnsNames()) {
+                if (dest instanceof OracleConnection) {
+                    if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("BLOB")) {
+                        BLOB blob = new BLOB((OracleConnection) dest, (byte[]) r.getRowData().get(columnName));
+                        ((OraclePreparedStatement) ps).setBLOB(param, blob);
+                    } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("CLOB")) {
+                        ((OraclePreparedStatement) ps).setStringForClob(param, (String) r.getRowData().get(columnName));
+                    } else if (tableMetaData.getColumnsTypes().get(columnName).equalsIgnoreCase("LONG")) {
+                        ps.setBytes(param, (byte[]) r.getRowData().get(columnName));
+                    }
+                } else {
+                    ps.setObject(param, r.getRowData().get(columnName));
+                }
+                param++;
+            }
+            for (String pkColumnName : tableMetaData.getPkColumns()) {
+                ps.setObject(param, r.getRowData().get(pkColumnName));
+                param++;
+            }
+            if (ps.executeUpdate() != 1) {
+                dest.rollback();
+                throw new Exception("Erro no update");
+            }
+            ps.clearParameters();
+            dest.commit();
+            dest.setAutoCommit(true);
+        } finally {
+            if (ps != null) ps.close();
+        }
+    }
+} </s>
+<s>class temp {    public static String generateHash(String string, String algoritmo) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(algoritmo);
+            md.update(string.getBytes());
+            byte[] result = md.digest();
+            int firstPart;
+            int lastPart;
+            StringBuilder sBuilder = new StringBuilder();
+            for (int i = 0; i < result.length; i++) {
+                firstPart = ((result[i] >> 4) & 0xf) << 4;
+                lastPart = result[i] & 0xf;
+                if (firstPart == 0) sBuilder.append("0");
+                sBuilder.append(Integer.toHexString(firstPart | lastPart));
+            }
+            return sBuilder.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public DataSet newparse() throws SnifflibDatatypeException {
+        NumberFormat numformat = NumberFormat.getInstance();
+        if (this.headers.size() != this.types.size()) {
+            throw new SnifflibDatatypeException("Different number of headers (" + this.headers.size() + ") and types(" + this.types.size() + ").");
+        }
+        DataSet out = null;
+        if (!this.dryrun) {
+            out = new DataSet();
+        }
+        BufferedReader r = null;
+        StreamTokenizer tokenizer = null;
+        try {
+            if (this.isURL) {
+                if (this.url2goto == null) {
+                    return (null);
+                }
+                DataInputStream in = null;
+                try {
+                    in = new DataInputStream(this.url2goto.openStream());
+                    System.out.println("READY TO READ FROM URL:" + url2goto);
+                    r = new BufferedReader(new InputStreamReader(in));
+                } catch (Exception err) {
+                    throw new RuntimeException("Problem reading from URL " + this.url2goto + ".", err);
+                }
+            } else {
+                if (this.file == null) {
+                    throw new RuntimeException("Data file to be parsed can not be null.");
+                }
+                if (!this.file.exists()) {
+                    throw new RuntimeException("The file " + this.file + " does not exist.");
+                }
+                r = new BufferedReader(new FileReader(this.file));
+            }
+            if (this.ignorePreHeaderLines > 0) {
+                String strLine;
+                int k = 0;
+                while ((k < this.ignorePreHeaderLines) && ((strLine = r.readLine()) != null)) {
+                    k++;
+                }
+            }
+            tokenizer = new StreamTokenizer(r);
+            tokenizer.resetSyntax();
+            tokenizer.eolIsSignificant(true);
+            boolean parseNumbers = false;
+            for (int k = 0; k < this.types.size(); k++) {
+                Class type = (Class) this.types.get(k);
+                if (Number.class.isAssignableFrom(type)) {
+                    parseNumbers = true;
+                    break;
+                }
+            }
+            if (parseNumbers) {
+                tokenizer.parseNumbers();
+            }
+            tokenizer.eolIsSignificant(true);
+            if (this.delimiter.equals("\\t")) {
+                tokenizer.whitespaceChars('\t', '\t');
+                tokenizer.quoteChar('"');
+                tokenizer.whitespaceChars(' ', ' ');
+            } else if (this.delimiter.equals(",")) {
+                tokenizer.quoteChar('"');
+                tokenizer.whitespaceChars(',', ',');
+                tokenizer.whitespaceChars(' ', ' ');
+            } else {
+                if (this.delimiter.length() > 1) {
+                    throw new RuntimeException("Delimiter must be a single character.  Multiple character delimiters are not allowed.");
+                }
+                if (this.delimiter.length() > 0) {
+                    tokenizer.whitespaceChars(this.delimiter.charAt(0), this.delimiter.charAt(0));
+                } else {
+                    tokenizer.wordChars(Character.MIN_VALUE, Character.MAX_VALUE);
+                    tokenizer.eolIsSignificant(true);
+                    tokenizer.ordinaryChar('\n');
+                }
+            }
+            boolean readingHeaders = true;
+            boolean readingInitialValues = false;
+            boolean readingData = false;
+            boolean readingScientificNotation = false;
+            if (this.headers.size() > 0) {
+                readingHeaders = false;
+                readingInitialValues = true;
+            }
+            if (this.types.size() > 0) {
+                readingInitialValues = false;
+                Class targetclass;
+                for (int j = 0; j < this.types.size(); j++) {
+                    targetclass = (Class) this.types.get(j);
+                    try {
+                        this.constructors.add(targetclass.getConstructor(String.class));
+                    } catch (java.lang.NoSuchMethodException err) {
+                        throw new SnifflibDatatypeException("Could not find appropriate constructor for " + targetclass + ". " + err.getMessage());
+                    }
+                }
+                readingData = true;
+            }
+            int currentColumn = 0;
+            int currentRow = 0;
+            this.rowcount = 0;
+            boolean advanceField = true;
+            while (true) {
+                tokenizer.nextToken();
+                switch(tokenizer.ttype) {
+                    case StreamTokenizer.TT_WORD:
+                        {
+                            advanceField = true;
+                            if (readingScientificNotation) {
+                                throw new RuntimeException("Problem reading scientific notation at row " + currentRow + " column " + currentColumn + ".");
+                            }
+                            if (readingHeaders) {
+                                this.headers.add(tokenizer.sval);
+                            } else {
+                                if (readingInitialValues) {
+                                    this.types.add(String.class);
+                                }
+                                if (!this.dryrun) {
+                                    if (out.getColumnCount() <= currentColumn) {
+                                        out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                    }
+                                }
+                                try {
+                                    Constructor construct;
+                                    if (currentColumn < this.constructors.size()) {
+                                        construct = (Constructor) this.constructors.get(currentColumn);
+                                    } else {
+                                        Class targetclass = (Class) this.types.get(currentColumn);
+                                        construct = targetclass.getConstructor(String.class);
+                                        this.constructors.add(construct);
+                                    }
+                                    try {
+                                        try {
+                                            try {
+                                                if (!this.dryrun) {
+                                                    out.setValueAt(construct.newInstance((String) tokenizer.sval), currentRow, currentColumn);
+                                                } else if (this.findingTargetValue) {
+                                                    Object vvv = construct.newInstance((String) tokenizer.sval);
+                                                    this.valueQueue.push(vvv);
+                                                    if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                        this.targetValue = vvv;
+                                                        r.close();
+                                                        return (null);
+                                                    }
+                                                }
+                                            } catch (java.lang.reflect.InvocationTargetException err) {
+                                                throw new SnifflibDatatypeException("Problem constructing 1" + err.getMessage());
+                                            }
+                                        } catch (java.lang.IllegalAccessException err) {
+                                            throw new SnifflibDatatypeException("Problem constructing 2" + err.getMessage());
+                                        }
+                                    } catch (java.lang.InstantiationException err) {
+                                        throw new SnifflibDatatypeException("Problem constructing 3" + err.getMessage());
+                                    }
+                                } catch (java.lang.NoSuchMethodException err) {
+                                    throw new SnifflibDatatypeException("Problem constructing 4" + err.getMessage());
+                                }
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_NUMBER:
+                        {
+                            advanceField = true;
+                            if (readingHeaders) {
+                                throw new SnifflibDatatypeException("Expecting string header at row=" + currentRow + ", column=" + currentColumn + ".");
+                            } else {
+                                if (readingInitialValues) {
+                                    this.types.add(Double.class);
+                                }
+                                if (!this.dryrun) {
+                                    if (out.getColumnCount() <= currentColumn) {
+                                        out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                    }
+                                }
+                                try {
+                                    Constructor construct;
+                                    if (currentColumn < this.constructors.size()) {
+                                        construct = (Constructor) this.constructors.get(currentColumn);
+                                    } else {
+                                        Class targetclass = (Class) this.types.get(currentColumn);
+                                        construct = targetclass.getConstructor(double.class);
+                                        this.constructors.add(construct);
+                                    }
+                                    if (readingScientificNotation) {
+                                        Double val = this.scientificNumber;
+                                        if (!this.dryrun) {
+                                            try {
+                                                out.setValueAt(new Double(val.doubleValue() * tokenizer.nval), currentRow, currentColumn);
+                                            } catch (Exception err) {
+                                                throw new SnifflibDatatypeException("Problem constructing " + construct.getDeclaringClass() + "at row " + currentRow + " column " + currentColumn + ".", err);
+                                            }
+                                        } else if (this.findingTargetValue) {
+                                            Double NVAL = new Double(tokenizer.nval);
+                                            Object vvv = null;
+                                            try {
+                                                vvv = Double.parseDouble(val + "E" + NVAL.intValue());
+                                            } catch (Exception err) {
+                                                throw new RuntimeException("Problem parsing scientific notation at row=" + currentRow + " col=" + currentColumn + ".", err);
+                                            }
+                                            tokenizer.nextToken();
+                                            if (tokenizer.ttype != 'e') {
+                                                this.valueQueue.push(vvv);
+                                                if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                    this.targetValue = vvv;
+                                                    r.close();
+                                                    return (null);
+                                                }
+                                                currentColumn++;
+                                            } else {
+                                                tokenizer.pushBack();
+                                            }
+                                        }
+                                        readingScientificNotation = false;
+                                    } else {
+                                        try {
+                                            this.scientificNumber = new Double(tokenizer.nval);
+                                            if (!this.dryrun) {
+                                                out.setValueAt(this.scientificNumber, currentRow, currentColumn);
+                                            } else if (this.findingTargetValue) {
+                                                this.valueQueue.push(this.scientificNumber);
+                                                if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                    this.targetValue = this.scientificNumber;
+                                                    r.close();
+                                                    return (null);
+                                                }
+                                            }
+                                        } catch (Exception err) {
+                                            throw new SnifflibDatatypeException("Problem constructing " + construct.getDeclaringClass() + "at row " + currentRow + " column " + currentColumn + ".", err);
+                                        }
+                                    }
+                                } catch (java.lang.NoSuchMethodException err) {
+                                    throw new SnifflibDatatypeException("Problem constructing" + err.getMessage());
+                                }
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_EOL:
+                        {
+                            if (readingHeaders) {
+                                readingHeaders = false;
+                                readingInitialValues = true;
+                            } else {
+                                if (readingInitialValues) {
+                                    readingInitialValues = false;
+                                    readingData = true;
+                                }
+                            }
+                            if (readingData) {
+                                if (valueQueue.getUpperIndex() < currentRow) {
+                                    valueQueue.push("");
+                                }
+                                currentRow++;
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_EOF:
+                        {
+                            if (readingHeaders) {
+                                throw new SnifflibDatatypeException("End of file reached while reading headers.");
+                            }
+                            if (readingInitialValues) {
+                                throw new SnifflibDatatypeException("End of file reached while reading initial values.");
+                            }
+                            if (readingData) {
+                                readingData = false;
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            if (tokenizer.ttype == '"') {
+                                advanceField = true;
+                                if (readingHeaders) {
+                                    this.headers.add(tokenizer.sval);
+                                } else {
+                                    if (readingInitialValues) {
+                                        this.types.add(String.class);
+                                    }
+                                    if (!this.dryrun) {
+                                        if (out.getColumnCount() <= currentColumn) {
+                                            out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                        }
+                                    }
+                                    try {
+                                        Constructor construct;
+                                        if (currentColumn < this.constructors.size()) {
+                                            construct = (Constructor) this.constructors.get(currentColumn);
+                                        } else {
+                                            Class targetclass = (Class) this.types.get(currentColumn);
+                                            construct = targetclass.getConstructor(String.class);
+                                            this.constructors.add(construct);
+                                        }
+                                        try {
+                                            try {
+                                                try {
+                                                    if (!this.dryrun) {
+                                                        out.setValueAt(construct.newInstance((String) tokenizer.sval), currentRow, currentColumn);
+                                                    } else if (this.findingTargetValue) {
+                                                        Object vvv = construct.newInstance((String) tokenizer.sval);
+                                                        this.valueQueue.push(vvv);
+                                                        if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                            this.targetValue = vvv;
+                                                            r.close();
+                                                            return (null);
+                                                        }
+                                                    }
+                                                } catch (java.lang.reflect.InvocationTargetException err) {
+                                                    throw new SnifflibDatatypeException("Problem constructing a " + construct, err);
+                                                }
+                                            } catch (java.lang.IllegalAccessException err) {
+                                                throw new SnifflibDatatypeException("Problem constructing 2 ", err);
+                                            }
+                                        } catch (java.lang.InstantiationException err) {
+                                            throw new SnifflibDatatypeException("Problem constructing 3 ", err);
+                                        }
+                                    } catch (java.lang.NoSuchMethodException err) {
+                                        throw new SnifflibDatatypeException("Problem constructing 4", err);
+                                    }
+                                }
+                            } else if (tokenizer.ttype == 'e') {
+                                Class targetclass = (Class) this.types.get(currentColumn);
+                                if (Number.class.isAssignableFrom(targetclass)) {
+                                    currentColumn--;
+                                    readingScientificNotation = true;
+                                    advanceField = false;
+                                }
+                            } else {
+                                advanceField = false;
+                            }
+                            break;
+                        }
+                }
+                if (tokenizer.ttype == StreamTokenizer.TT_EOF) {
+                    advanceField = false;
+                    break;
+                }
+                if (advanceField) {
+                    currentColumn++;
+                    if (!readingHeaders) {
+                        if (currentColumn >= this.headers.size()) {
+                            currentColumn = 0;
+                        }
+                    }
+                }
+            }
+            if (!readingHeaders) {
+                this.rowcount = currentRow;
+            } else {
+                this.rowcount = 0;
+                readingHeaders = false;
+                if (this.ignorePostHeaderLines > 0) {
+                    String strLine;
+                    int k = 0;
+                    while ((k < this.ignorePostHeaderLines) && ((strLine = r.readLine()) != null)) {
+                        k++;
+                    }
+                }
+            }
+            r.close();
+        } catch (java.io.IOException err) {
+            throw new SnifflibDatatypeException(err.getMessage());
+        }
+        if (!this.dryrun) {
+            for (int j = 0; j < this.headers.size(); j++) {
+                out.setColumnName(j, (String) this.headers.get(j));
+            }
+        }
+        return (out);
+    }
+} </s>
+<s>class temp {    public DataSet parse() throws SnifflibDatatypeException {
+        NumberFormat numformat = NumberFormat.getInstance();
+        if (this.headers.size() != this.types.size()) {
+            throw new SnifflibDatatypeException("Different number of headers (" + this.headers.size() + ") and types(" + this.types.size() + ").");
+        }
+        DataSet out = null;
+        if (!this.dryrun) {
+            out = new DataSet();
+        }
+        BufferedReader r = null;
+        StreamTokenizer tokenizer = null;
+        try {
+            if (this.isURL) {
+                if (this.url2goto == null) {
+                    return (null);
+                }
+                DataInputStream in = null;
+                try {
+                    in = new DataInputStream(this.url2goto.openStream());
+                    System.out.println("READY TO READ FROM URL:" + url2goto);
+                    r = new BufferedReader(new InputStreamReader(in));
+                } catch (Exception err) {
+                    throw new RuntimeException("Problem reading from URL " + this.url2goto + ".", err);
+                }
+            } else {
+                if (this.file == null) {
+                    throw new RuntimeException("Data file to be parsed can not be null.");
+                }
+                if (!this.file.exists()) {
+                    throw new RuntimeException("The file " + this.file + " does not exist.");
+                }
+                r = new BufferedReader(new FileReader(this.file));
+            }
+            if (this.ignorePreHeaderLines > 0) {
+                String strLine;
+                int k = 0;
+                while ((k < this.ignorePreHeaderLines) && ((strLine = r.readLine()) != null)) {
+                    k++;
+                }
+            }
+            tokenizer = new StreamTokenizer(r);
+            tokenizer.resetSyntax();
+            tokenizer.eolIsSignificant(true);
+            tokenizer.parseNumbers();
+            if (this.delimiter.equals("\\t")) {
+                tokenizer.whitespaceChars('\t', '\t');
+            }
+            if (this.delimiter.equals(",")) {
+                tokenizer.whitespaceChars(',', ',');
+            }
+            tokenizer.quoteChar('"');
+            tokenizer.whitespaceChars(' ', ' ');
+            boolean readingHeaders = true;
+            boolean readingInitialValues = false;
+            boolean readingData = false;
+            boolean readingScientificNotation = false;
+            if (this.headers.size() > 0) {
+                readingHeaders = false;
+                readingInitialValues = true;
+            }
+            if (this.types.size() > 0) {
+                readingInitialValues = false;
+                Class targetclass;
+                for (int j = 0; j < this.types.size(); j++) {
+                    targetclass = (Class) this.types.get(j);
+                    try {
+                        this.constructors.add(targetclass.getConstructor(String.class));
+                    } catch (java.lang.NoSuchMethodException err) {
+                        throw new SnifflibDatatypeException("Could not find appropriate constructor for " + targetclass + ". " + err.getMessage());
+                    }
+                }
+                readingData = true;
+            }
+            int currentColumn = 0;
+            int currentRow = 0;
+            this.rowcount = 0;
+            boolean advanceField = true;
+            while (true) {
+                tokenizer.nextToken();
+                switch(tokenizer.ttype) {
+                    case StreamTokenizer.TT_WORD:
+                        {
+                            if (readingScientificNotation) {
+                                throw new RuntimeException("Problem reading scientific notation at row " + currentRow + " column " + currentColumn + ".");
+                            }
+                            advanceField = true;
+                            if (readingHeaders) {
+                                this.headers.add(tokenizer.sval);
+                            } else {
+                                if (readingInitialValues) {
+                                    this.types.add(String.class);
+                                }
+                                if (!this.dryrun) {
+                                    if (out.getColumnCount() <= currentColumn) {
+                                        out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                    }
+                                }
+                                try {
+                                    Constructor construct;
+                                    if (currentColumn < this.constructors.size()) {
+                                        construct = (Constructor) this.constructors.get(currentColumn);
+                                    } else {
+                                        Class targetclass = (Class) this.types.get(currentColumn);
+                                        construct = targetclass.getConstructor(String.class);
+                                        this.constructors.add(construct);
+                                    }
+                                    try {
+                                        try {
+                                            try {
+                                                if (!this.dryrun) {
+                                                    out.setValueAt(construct.newInstance((String) tokenizer.sval), currentRow, currentColumn);
+                                                } else if (this.findingTargetValue) {
+                                                    if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                        this.targetValue = construct.newInstance((String) tokenizer.sval);
+                                                        r.close();
+                                                        return (null);
+                                                    }
+                                                }
+                                            } catch (java.lang.reflect.InvocationTargetException err) {
+                                                throw new SnifflibDatatypeException("Problem constructing 1" + err.getMessage());
+                                            }
+                                        } catch (java.lang.IllegalAccessException err) {
+                                            throw new SnifflibDatatypeException("Problem constructing 2" + err.getMessage());
+                                        }
+                                    } catch (java.lang.InstantiationException err) {
+                                        throw new SnifflibDatatypeException("Problem constructing 3" + err.getMessage());
+                                    }
+                                } catch (java.lang.NoSuchMethodException err) {
+                                    throw new SnifflibDatatypeException("Problem constructing 4" + err.getMessage());
+                                }
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_NUMBER:
+                        {
+                            advanceField = true;
+                            if (readingHeaders) {
+                                throw new SnifflibDatatypeException("Expecting string header at row=" + currentRow + ", column=" + currentColumn + ".");
+                            } else {
+                                if (readingInitialValues) {
+                                    this.types.add(Double.class);
+                                }
+                                if (!this.dryrun) {
+                                    if (out.getColumnCount() <= currentColumn) {
+                                        out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                    }
+                                }
+                                try {
+                                    Constructor construct;
+                                    if (currentColumn < this.constructors.size()) {
+                                        construct = (Constructor) this.constructors.get(currentColumn);
+                                    } else {
+                                        Class targetclass = (Class) this.types.get(currentColumn);
+                                        construct = targetclass.getConstructor(double.class);
+                                        this.constructors.add(construct);
+                                    }
+                                    if (readingScientificNotation) {
+                                        Double val = this.scientificNumber;
+                                        if (!this.dryrun) {
+                                            try {
+                                                out.setValueAt(new Double(val.doubleValue() * tokenizer.nval), currentRow, currentColumn);
+                                            } catch (Exception err) {
+                                                throw new SnifflibDatatypeException("Problem constructing " + construct.getDeclaringClass() + "at row " + currentRow + " column " + currentColumn + ".", err);
+                                            }
+                                        } else if (this.findingTargetValue) {
+                                            if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                Double NVAL = new Double(tokenizer.nval);
+                                                try {
+                                                    this.targetValue = numformat.parse(val + "E" + NVAL);
+                                                } catch (Exception err) {
+                                                    throw new RuntimeException("Problem parsing scientific notation at row=" + currentRow + " col=" + currentColumn + ".");
+                                                }
+                                                tokenizer.nextToken();
+                                                if (tokenizer.ttype != 'e') {
+                                                    r.close();
+                                                    return (null);
+                                                } else {
+                                                    tokenizer.pushBack();
+                                                }
+                                            }
+                                        }
+                                        readingScientificNotation = false;
+                                    } else {
+                                        try {
+                                            this.scientificNumber = new Double(tokenizer.nval);
+                                            if (!this.dryrun) {
+                                                out.setValueAt(this.scientificNumber, currentRow, currentColumn);
+                                            } else if (this.findingTargetValue) {
+                                                if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                    this.targetValue = this.scientificNumber;
+                                                    r.close();
+                                                    return (null);
+                                                }
+                                            }
+                                        } catch (Exception err) {
+                                            throw new SnifflibDatatypeException("Problem constructing " + construct.getDeclaringClass() + "at row " + currentRow + " column " + currentColumn + ".", err);
+                                        }
+                                    }
+                                } catch (java.lang.NoSuchMethodException err) {
+                                    throw new SnifflibDatatypeException("Problem constructing" + err.getMessage());
+                                }
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_EOL:
+                        {
+                            if (readingHeaders) {
+                                readingHeaders = false;
+                                readingInitialValues = true;
+                            } else {
+                                if (readingInitialValues) {
+                                    readingInitialValues = false;
+                                    readingData = true;
+                                }
+                            }
+                            if (readingData) {
+                                currentRow++;
+                            }
+                            break;
+                        }
+                    case StreamTokenizer.TT_EOF:
+                        {
+                            if (readingHeaders) {
+                                throw new SnifflibDatatypeException("End of file reached while reading headers.");
+                            }
+                            if (readingInitialValues) {
+                                throw new SnifflibDatatypeException("End of file reached while reading initial values.");
+                            }
+                            if (readingData) {
+                                readingData = false;
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            if (tokenizer.ttype == '"') {
+                                advanceField = true;
+                                if (readingHeaders) {
+                                    this.headers.add(tokenizer.sval);
+                                } else {
+                                    if (readingInitialValues) {
+                                        this.types.add(String.class);
+                                    }
+                                    if (!this.dryrun) {
+                                        if (out.getColumnCount() <= currentColumn) {
+                                            out.addColumn((String) this.headers.get(currentColumn), (Class) this.types.get(currentColumn));
+                                        }
+                                    }
+                                    try {
+                                        Constructor construct;
+                                        if (currentColumn < this.constructors.size()) {
+                                            construct = (Constructor) this.constructors.get(currentColumn);
+                                        } else {
+                                            Class targetclass = (Class) this.types.get(currentColumn);
+                                            construct = targetclass.getConstructor(String.class);
+                                            this.constructors.add(construct);
+                                        }
+                                        try {
+                                            try {
+                                                try {
+                                                    if (!this.dryrun) {
+                                                        out.setValueAt(construct.newInstance((String) tokenizer.sval), currentRow, currentColumn);
+                                                    } else if (this.findingTargetValue) {
+                                                        if ((this.targetRow == currentRow) && (this.targetColumn == currentColumn)) {
+                                                            this.targetValue = construct.newInstance((String) tokenizer.sval);
+                                                            r.close();
+                                                            return (null);
+                                                        }
+                                                    }
+                                                } catch (java.lang.reflect.InvocationTargetException err) {
+                                                    throw new SnifflibDatatypeException("Problem constructing 1 " + err.getMessage());
+                                                }
+                                            } catch (java.lang.IllegalAccessException err) {
+                                                throw new SnifflibDatatypeException("Problem constructing 2 " + err.getMessage());
+                                            }
+                                        } catch (java.lang.InstantiationException err) {
+                                            throw new SnifflibDatatypeException("Problem constructing 3 " + err.getMessage());
+                                        }
+                                    } catch (java.lang.NoSuchMethodException err) {
+                                        throw new SnifflibDatatypeException("Problem constructing 4" + err.getMessage());
+                                    }
+                                }
+                            } else if (tokenizer.ttype == 'e') {
+                                Class targetclass = (Class) this.types.get(currentColumn);
+                                if (Number.class.isAssignableFrom(targetclass)) {
+                                    currentColumn--;
+                                    readingScientificNotation = true;
+                                    advanceField = false;
+                                }
+                            } else {
+                                advanceField = false;
+                            }
+                            break;
+                        }
+                }
+                if (tokenizer.ttype == StreamTokenizer.TT_EOF) {
+                    break;
+                }
+                if (advanceField) {
+                    currentColumn++;
+                    if (!readingHeaders) {
+                        if (currentColumn >= this.headers.size()) {
+                            currentColumn = 0;
+                        }
+                    }
+                }
+            }
+            if (!readingHeaders) {
+                this.rowcount = currentRow;
+            } else {
+                this.rowcount = 0;
+                readingHeaders = false;
+                if (this.ignorePostHeaderLines > 0) {
+                    String strLine;
+                    int k = 0;
+                    while ((k < this.ignorePostHeaderLines) && ((strLine = r.readLine()) != null)) {
+                        k++;
+                    }
+                }
+            }
+            r.close();
+        } catch (java.io.IOException err) {
+            throw new SnifflibDatatypeException(err.getMessage());
+        }
+        if (!this.dryrun) {
+            for (int j = 0; j < this.headers.size(); j++) {
+                out.setColumnName(j, (String) this.headers.get(j));
+            }
+        }
+        return (out);
+    }
+} </s>

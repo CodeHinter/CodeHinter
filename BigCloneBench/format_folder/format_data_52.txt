@@ -1,0 +1,3837 @@
+<s>class temp {    private static void fileUpload() throws Exception {
+        file = new File("c:/Documents and Settings/dinesh/Desktop/ZShareUploaderPlugin.java");
+        httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost("http://flameupload.com/cgi/ubr_upload.pl?upload_id=" + uploadid);
+        MultipartEntity mpEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+        ContentBody cbFile = new FileBody(file);
+        mpEntity.addPart("upfile_0", cbFile);
+        mpEntity.addPart("uploaded", new StringBody("on"));
+        mpEntity.addPart("hotfile", new StringBody("on"));
+        mpEntity.addPart("turbobit", new StringBody("on"));
+        mpEntity.addPart("depositfiles", new StringBody("on"));
+        mpEntity.addPart("fileserve", new StringBody("on"));
+        mpEntity.addPart("filefactory", new StringBody("on"));
+        mpEntity.addPart("netload", new StringBody("on"));
+        mpEntity.addPart("uploadstation", new StringBody("on"));
+        mpEntity.addPart("badongo", new StringBody("on"));
+        mpEntity.addPart("uploading", new StringBody("on"));
+        mpEntity.addPart("megashare", new StringBody("on"));
+        mpEntity.addPart("_2shared", new StringBody("on"));
+        httppost.setEntity(mpEntity);
+        NULogger.getLogger().log(Level.INFO, "executing request {0}", httppost.getRequestLine());
+        NULogger.getLogger().info("Now uploading your file into flameupload.com");
+        HttpResponse response = httpclient.execute(httppost);
+        HttpEntity resEntity = response.getEntity();
+        NULogger.getLogger().info(response.getStatusLine().toString());
+        NULogger.getLogger().info(EntityUtils.toString(resEntity));
+        Header[] allHeaders = response.getAllHeaders();
+        for (int i = 0; i < allHeaders.length; i++) {
+            System.out.println(allHeaders[i].getName() + "=" + allHeaders[i].getValue());
+        }
+        if (response.getStatusLine().getStatusCode() == 302) {
+            NULogger.getLogger().info("Files uploaded successfully");
+        } else {
+            throw new Exception("There might be a problem with your internet connection or server error. Please try again later :(");
+        }
+    }
+} </s>
+<s>class temp {    public void includeJs(Group group, Writer out, PageContext pageContext) throws IOException {
+        includeResource(pageContext, out, RetentionHelper.buildRootRetentionFilePath(group, ".js"), JS_BEGIN_TAG, JS_END_TAG);
+        ByteArrayOutputStream outtmp = new ByteArrayOutputStream();
+        if (AbstractGroupBuilder.getInstance().buildGroupJsIfNeeded(group, outtmp, pageContext.getServletContext())) {
+            FileOutputStream fileStream = new FileOutputStream(new File(RetentionHelper.buildFullRetentionFilePath(group, ".js")));
+            IOUtils.copy(new ByteArrayInputStream(outtmp.toByteArray()), fileStream);
+            fileStream.close();
+        }
+    }
+} </s>
+<s>class temp {    public void includeCss(Group group, Writer out, PageContext pageContext) throws IOException {
+        ByteArrayOutputStream outtmp = new ByteArrayOutputStream();
+        if (AbstractGroupBuilder.getInstance().buildGroupJsIfNeeded(group, outtmp, pageContext.getServletContext())) {
+            FileOutputStream fileStream = null;
+            try {
+                fileStream = new FileOutputStream(new File(RetentionHelper.buildFullRetentionFilePath(group, ".css")));
+                IOUtils.copy(new ByteArrayInputStream(outtmp.toByteArray()), fileStream);
+            } finally {
+                if (fileStream != null) fileStream.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public boolean copy(File src, File dest, byte[] b) {
+        if (src.isDirectory()) {
+            String[] ss = src.list();
+            for (int i = 0; i < ss.length; i++) if (!copy(new File(src, ss[i]), new File(dest, ss[i]), b)) return false;
+            return true;
+        }
+        delete(dest);
+        dest.getParentFile().mkdirs();
+        try {
+            FileInputStream fis = new FileInputStream(src);
+            try {
+                FileOutputStream fos = new FileOutputStream(dest);
+                try {
+                    int read;
+                    while ((read = fis.read(b)) != -1) fos.write(b, 0, read);
+                } finally {
+                    try {
+                        fos.close();
+                    } catch (IOException ignore) {
+                    }
+                    register(dest);
+                }
+            } finally {
+                fis.close();
+            }
+            if (log.isDebugEnabled()) log.debug("Success: M-COPY " + src + " -> " + dest);
+            return true;
+        } catch (IOException e) {
+            log.error("Failed: M-COPY " + src + " -> " + dest, e);
+            return false;
+        }
+    }
+} </s>
+<s>class temp {    public boolean ReadFile() {
+        boolean ret = false;
+        FilenameFilter FileFilter = null;
+        File dir = new File(fDir);
+        String[] FeeFiles;
+        int Lines = 0;
+        BufferedReader FeeFile = null;
+        PreparedStatement DelSt = null, InsSt = null;
+        String Line = null, Term = null, CurTerm = null, TermType = null, Code = null;
+        double[] Fee = new double[US_D + 1];
+        double FeeAm = 0;
+        String UpdateSt = "INSERT INTO reporter.term_fee (TERM, TERM_TYPE, THEM_VC,	THEM_VE, THEM_EC, THEM_EE, THEM_D," + "BA_VC, BA_VE, BA_EC, BA_EE, BA_D," + "US_VC, US_VE, US_EC, US_EE, US_D)" + "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        try {
+            FileFilter = new FilenameFilter() {
+
+                public boolean accept(File dir, String name) {
+                    if ((new File(dir, name)).isDirectory()) return false; else return (name.matches(fFileMask));
+                }
+            };
+            FeeFiles = dir.list(FileFilter);
+            java.util.Arrays.sort(FeeFiles);
+            System.out.println(FeeFiles[FeeFiles.length - 1] + " " + (new SimpleDateFormat("dd.MM.yy HH:mm:ss")).format(new Date()));
+            Log.info(String.format("Load = %1s", fDir + FeeFiles[FeeFiles.length - 1]));
+            FeeFile = new BufferedReader(new FileReader(fDir + FeeFiles[FeeFiles.length - 1]));
+            FeeZero(Fee);
+            DelSt = cnProd.prepareStatement("delete from reporter.term_fee");
+            DelSt.executeUpdate();
+            InsSt = cnProd.prepareStatement(UpdateSt);
+            WriteTerm(FeeFiles[FeeFiles.length - 1] + " " + (new SimpleDateFormat("dd.MM.yy HH:mm:ss")).format(new Date()), "XXX", Fee, InsSt);
+            while ((Line = FeeFile.readLine()) != null) {
+                Lines++;
+                if (!Line.matches("\\d{15}\\s+        .+")) continue;
+                Term = Line.substring(7, 15);
+                if ((CurTerm == null) || !Term.equals(CurTerm)) {
+                    if (CurTerm != null) {
+                        WriteTerm(CurTerm, TermType, Fee, InsSt);
+                    }
+                    CurTerm = Term;
+                    if (Line.indexOf("   ") > 0) TermType = "   "; else TermType = "   ";
+                    FeeZero(Fee);
+                }
+                Code = Line.substring(64, 68).trim().toUpperCase();
+                if (Code.equals("ST") || Code.equals("AC") || Code.equals("8110") || Code.equals("8160")) continue;
+                FeeAm = new Double(Line.substring(140, 160)).doubleValue();
+                if (Line.indexOf("               ") > 0) SetFee(Fee, CARD_THEM, Code, FeeAm); else if (Line.indexOf("               ") > 0) SetFee(Fee, CARD_BA, Code, FeeAm); else if (Line.indexOf("            ") > 0) SetFee(Fee, CARD_US, Code, FeeAm); else throw new Exception("                .:" + Line);
+            }
+            WriteTerm(CurTerm, TermType, Fee, InsSt);
+            cnProd.commit();
+            ret = true;
+        } catch (Exception e) {
+            System.out.printf("Err = %1s\r\n", e.getMessage());
+            Log.error(String.format("Err = %1s", e.getMessage()));
+            Log.error(String.format("Line = %1s", Line));
+            try {
+                cnProd.rollback();
+            } catch (Exception ee) {
+            }
+            ;
+        } finally {
+            try {
+                if (FeeFile != null) FeeFile.close();
+            } catch (Exception ee) {
+            }
+        }
+        try {
+            if (DelSt != null) DelSt.close();
+            if (InsSt != null) InsSt.close();
+            cnProd.setAutoCommit(true);
+        } catch (Exception ee) {
+        }
+        Log.info(String.format("Lines = %1d", Lines));
+        return (ret);
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        try {
+            File fichierXSD = new File("D:/Users/Balley/données/gml/commune.xsd");
+            URL urlFichierXSD = fichierXSD.toURI().toURL();
+            InputStream isXSD = urlFichierXSD.openStream();
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = dbFactory.newDocumentBuilder();
+            Document documentXSD = (builder.parse(isXSD));
+            ChargeurGMLSchema chargeur = new ChargeurGMLSchema(documentXSD);
+            SchemaConceptuelJeu sc = chargeur.gmlSchema2schemaConceptuel(documentXSD);
+            System.out.println(sc.getFeatureTypes().size());
+            for (int i = 0; i < sc.getFeatureTypes().size(); i++) {
+                System.out.println(sc.getFeatureTypes().get(i).getTypeName());
+                for (int j = 0; j < sc.getFeatureTypes().get(i).getFeatureAttributes().size(); j++) {
+                    System.out.println("    " + sc.getFeatureTypes().get(i).getFeatureAttributes().get(j).getMemberName() + " : " + sc.getFeatureTypes().get(i).getFeatureAttributes().get(j).getValueType());
+                }
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public void elimina(Pedido pe) throws errorSQL, errorConexionBD {
+        System.out.println("GestorPedido.elimina()");
+        int id = pe.getId();
+        String sql;
+        Statement stmt = null;
+        try {
+            gd.begin();
+            sql = "DELETE FROM pedido WHERE id=" + id;
+            System.out.println("Ejecutando: " + sql);
+            stmt = gd.getConexion().createStatement();
+            stmt.executeUpdate(sql);
+            System.out.println("executeUpdate");
+            gd.commit();
+            System.out.println("commit");
+            stmt.close();
+        } catch (SQLException e) {
+            gd.rollback();
+            throw new errorSQL(e.toString());
+        } catch (errorConexionBD e) {
+            System.err.println("Error en GestorPedido.elimina(): " + e);
+        } catch (errorSQL e) {
+            System.err.println("Error en GestorPedido.elimina(): " + e);
+        }
+    }
+} </s>
+<s>class temp {    public String sendRequest(java.lang.String servletName, java.lang.String request) {
+        String reqxml = "";
+        org.jdom.Document retdoc = null;
+        String myurl = java.util.prefs.Preferences.systemRoot().get("serverurl", "");
+        String myport = java.util.prefs.Preferences.systemRoot().get("portno", "8080");
+        if (this.serverURL == null) {
+            try {
+                java.net.URL codebase = newgen.presentation.NewGenMain.getAppletInstance().getCodeBase();
+                if (codebase != null) serverURL = codebase.getHost(); else serverURL = "localhost";
+            } catch (Exception exp) {
+                exp.printStackTrace();
+                serverURL = "localhost";
+            }
+            newgen.presentation.component.IPAddressPortNoDialog ipdig = new newgen.presentation.component.IPAddressPortNoDialog(myurl, myport);
+            ipdig.show();
+            serverURL = myurl = ipdig.getIPAddress();
+            myport = ipdig.getPortNo();
+            java.util.prefs.Preferences.systemRoot().put("serverurl", serverURL);
+            java.util.prefs.Preferences.systemRoot().put("portno", myport);
+            System.out.println(serverURL);
+        }
+        try {
+            System.out.println("http://" + serverURL + ":" + myport + "/newgenlibctxt/" + servletName);
+            java.net.URL url = new java.net.URL("http://" + serverURL + ":" + myport + "/newgenlibctxt/" + servletName);
+            java.net.URLConnection urlconn = (java.net.URLConnection) url.openConnection();
+            urlconn.setDoOutput(true);
+            urlconn.setRequestProperty("Content-type", "text/xml; charset=UTF-8");
+            java.io.OutputStream os = urlconn.getOutputStream();
+            String req1xml = request;
+            java.util.zip.CheckedOutputStream cos = new java.util.zip.CheckedOutputStream(os, new java.util.zip.Adler32());
+            java.util.zip.GZIPOutputStream gop = new java.util.zip.GZIPOutputStream(cos);
+            java.io.OutputStreamWriter dos = new java.io.OutputStreamWriter(gop, "UTF-8");
+            System.out.println(req1xml);
+            dos.write(req1xml);
+            dos.flush();
+            dos.close();
+            System.out.println("url conn: " + urlconn.getContentEncoding() + "  " + urlconn.getContentType());
+            java.io.InputStream ios = urlconn.getInputStream();
+            java.util.zip.CheckedInputStream cis = new java.util.zip.CheckedInputStream(ios, new java.util.zip.Adler32());
+            java.util.zip.GZIPInputStream gip = new java.util.zip.GZIPInputStream(cis);
+            java.io.InputStreamReader br = new java.io.InputStreamReader(gip, "UTF-8");
+            retdoc = (new org.jdom.input.SAXBuilder()).build(br);
+        } catch (java.net.ConnectException conexp) {
+            javax.swing.JOptionPane.showMessageDialog(null, newgen.presentation.NewGenMain.getAppletInstance().getMyResource().getString("ConnectExceptionMessage"), "Critical error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        } catch (Exception exp) {
+            exp.printStackTrace(System.out);
+        }
+        System.out.println(reqxml);
+        return "";
+    }
+} </s>
+<s>class temp {    public void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    private void sortWhats(String[] labels, int[] whats, String simplifyString) {
+        int n = whats.length;
+        boolean swapped;
+        do {
+            swapped = false;
+            for (int i = 0; i < n - 1; i++) {
+                int i0_pos = simplifyString.indexOf(labels[whats[i]]);
+                int i1_pos = simplifyString.indexOf(labels[whats[i + 1]]);
+                if (i0_pos > i1_pos) {
+                    int temp = whats[i];
+                    whats[i] = whats[i + 1];
+                    whats[i + 1] = temp;
+                    swapped = true;
+                }
+            }
+        } while (swapped);
+    }
+} </s>
+<s>class temp {    public boolean getFiles(String pRemoteDirectory, String pLocalDirectory) throws IOException {
+        final String methodSignature = "boolean getFiles(String,String): ";
+        FTPClient fc = new FTPClient();
+        fc.connect(getRemoteHost());
+        fc.login(getUserName(), getPassword());
+        fc.changeWorkingDirectory(pRemoteDirectory);
+        FTPFile[] files = fc.listFiles();
+        boolean retrieved = false;
+        logInfo("Listing Files: ");
+        int retrieveCount = 0;
+        File tmpFile = null;
+        for (int i = 0; i < files.length; i++) {
+            tmpFile = new File(files[i].getName());
+            if (!tmpFile.isDirectory()) {
+                FileOutputStream fos = new FileOutputStream(pLocalDirectory + "/" + files[i].getName());
+                retrieved = fc.retrieveFile(files[i].getName(), fos);
+                if (false == retrieved) {
+                    logInfo("Unable to retrieve file: " + files[i].getName());
+                } else {
+                    logInfo("Successfully retrieved file: " + files[i].getName());
+                    retrieveCount++;
+                }
+                if (null != fos) {
+                    fos.flush();
+                    fos.close();
+                }
+            }
+        }
+        logInfo("Retrieve count: " + retrieveCount);
+        if (retrieveCount > 0) {
+            return true;
+        }
+        return false;
+    }
+} </s>
+<s>class temp {    public boolean getFile(String pRemoteDirectory, String pLocalDirectory, String pFileName) throws IOException {
+        FTPClient fc = new FTPClient();
+        fc.connect(getRemoteHost());
+        fc.login(getUserName(), getPassword());
+        fc.changeWorkingDirectory(pRemoteDirectory);
+        String workingDirectory = fc.printWorkingDirectory();
+        FileOutputStream fos = null;
+        logInfo("Connected to remote host=" + getRemoteHost() + "; userName=" + getUserName() + "; " + "; remoteDirectory=" + pRemoteDirectory + "; localDirectory=" + pLocalDirectory + "; workingDirectory=" + workingDirectory);
+        try {
+            fos = new FileOutputStream(pLocalDirectory + "/" + pFileName);
+            boolean retrieved = fc.retrieveFile(pFileName, fos);
+            if (true == retrieved) {
+                logInfo("Successfully retrieved file: " + pFileName);
+            } else {
+                logError("Could not retrieve file: " + pFileName);
+            }
+            return retrieved;
+        } finally {
+            if (null != fos) {
+                fos.flush();
+                fos.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File source, File dest) throws IOException {
+        FileChannel in = null, out = null;
+        try {
+            in = new FileInputStream(source).getChannel();
+            out = new FileOutputStream(dest).getChannel();
+            in.transferTo(0, in.size(), out);
+        } catch (FileNotFoundException fnfe) {
+            Log.debug(fnfe);
+        } finally {
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
+    }
+} </s>
+<s>class temp {    public static void save(String from, String recipient, InputStream in, MimeMessage message) throws IOException, MessagingException, DocumentVideException {
+        ConversationManager conversationManager = FGDSpringUtils.getConversationManager();
+        conversationManager.beginConversation();
+        FGDDelegate delegate = new FGDDelegate();
+        UtilisateurIFGD utilisateur = delegate.getUtilisateurParCourriel(from);
+        if (utilisateur == null) {
+            String responseEmailSubject = "Votre adresse ne correspond pas à celle d'un utilisateur d'IntelliGID";
+            String responseEmailMessage = "<h3>Pour sauvegarder un courriel, vous devez être un utilisateur d'IntelliGID et l'adresse de courrier électronique utilisée doit être celle apparaissant dans votre profil.</h3>";
+            String sender = recipient.endsWith("localhost") ? FGDSpringUtils.getExpediteurSupport() : recipient;
+            Map<String, String> recipients = new HashMap<String, String>();
+            recipients.put(from, null);
+            MailUtils.sendSimpleHTMLMessage(recipients, responseEmailSubject, responseEmailMessage, sender);
+            return;
+        }
+        File tempFile = File.createTempFile("email", ".eml");
+        tempFile.deleteOnExit();
+        BufferedInputStream bis = new BufferedInputStream(in);
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
+        IOUtils.copy(bis, bos);
+        IOUtils.closeQuietly(bis);
+        IOUtils.closeQuietly(bos);
+        if (message == null) {
+            GestionnaireProprietesMimeMessageParser gestionnaire = new GestionnaireProprietesMimeMessageParser();
+            message = gestionnaire.asMimeMessage(new BufferedInputStream(new FileInputStream(tempFile)));
+        }
+        String subject;
+        try {
+            subject = message.getSubject().replace("Fwd:", "").trim();
+        } catch (MessagingException e) {
+            subject = "Message sans sujet";
+        }
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        if (!tempDir.exists()) {
+            tempDir.mkdirs();
+        }
+        File emailFile = new File(tempDir, FilenameUtils.normalize(subject) + ".eml");
+        FileUtils.copyFile(tempFile, emailFile);
+        FicheDocument ficheDocument = new FicheDocument();
+        ficheDocument.setFicheCompletee(false);
+        ficheDocument.setDateCreationHorodatee(new Date());
+        ficheDocument.setUtilisateurSoumetteur(utilisateur);
+        ficheDocument.getLangues().addAll(getLanguesDefaut());
+        ficheDocument.setCourriel(true);
+        FileIOContenuFichierElectronique contenuFichier = new FileIOContenuFichierElectronique(emailFile, "multipart/alternative");
+        SupportDocument support = new SupportDocument();
+        support.setFicheDocument(ficheDocument);
+        FichierElectroniqueUtils.setContenu(ficheDocument, support, contenuFichier, utilisateur);
+        ficheDocument.setTitre(subject);
+        delegate.sauvegarder(ficheDocument, utilisateur);
+        String modifyEmail = "http://" + FGDSpringUtils.getServerHost() + ":" + FGDSpringUtils.getServerPort() + "/" + FGDSpringUtils.getApplicationName() + "/app/modifierDocument/id/" + ficheDocument.getId();
+        System.out.println(modifyEmail);
+        String responseEmailSubject = "Veuillez compléter la fiche du courriel «" + subject + "»";
+        String responseEmailMessage = "<h3>Le courrier électronique a été sauvegardé, mais il est nécessaire de <a href=\"" + modifyEmail + "\">compléter sa fiche</a>.</h3>";
+        String sender = recipient.endsWith("localhost") ? FGDSpringUtils.getExpediteurSupport() : recipient;
+        try {
+            MailUtils.sendSimpleHTMLMessage(utilisateur, responseEmailSubject, responseEmailMessage, sender);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        conversationManager.commitTransaction();
+        tempFile.delete();
+    }
+} </s>
+<s>class temp {    public PTask stop(PTask task, SyrupConnection con) throws Exception {
+        PreparedStatement s = null;
+        ResultSet result = null;
+        try {
+            s = con.prepareStatementFromCache(sqlImpl().sqlStatements().checkWorkerStatement());
+            s.setString(1, task.key());
+            result = s.executeQuery();
+            con.commit();
+            if (result.next()) {
+                String url = result.getString("worker");
+                InputStream i = null;
+                try {
+                    Object b = new URL(url).getContent();
+                    if (b instanceof InputStream) {
+                        i = (InputStream) b;
+                        byte[] bb = new byte[256];
+                        int ll = i.read(bb);
+                        String k = new String(bb, 0, ll);
+                        if (k.equals(task.key())) {
+                            return task;
+                        }
+                    }
+                } catch (Exception e) {
+                } finally {
+                    if (i != null) {
+                        i.close();
+                    }
+                }
+                PreparedStatement s2 = null;
+                s2 = con.prepareStatementFromCache(sqlImpl().sqlStatements().resetWorkerStatement());
+                s2.setString(1, task.key());
+                s2.executeUpdate();
+                task = sqlImpl().queryFunctions().readPTask(task.key(), con);
+                sqlImpl().loggingFunctions().log(task.key(), LogEntry.STOPPED, con);
+                con.commit();
+            }
+        } finally {
+            con.rollback();
+            close(result);
+        }
+        return task;
+    }
+} </s>
+<s>class temp {    private String getRenderedBody(String spec) throws Exception {
+        log.entering(Rss2MailTask.class.getName(), "getRenderedBody");
+        final URL url = new URL(spec);
+        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.connect();
+        final InputStream inputStream = connection.getInputStream();
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line = "";
+        final StringBuffer bf = new StringBuffer();
+        while (line != null) {
+            line = reader.readLine();
+            if (line != null) {
+                bf.append(line);
+            }
+        }
+        log.exiting(Rss2MailTask.class.getName(), "getRenderedBody");
+        return bf.toString();
+    }
+} </s>
+<s>class temp {    private int getRootNodeId(DataSource dataSource) throws SQLException {
+        Connection conn = null;
+        Statement st = null;
+        ResultSet rs = null;
+        String query = null;
+        try {
+            conn = dataSource.getConnection();
+            st = conn.createStatement();
+            query = "select " + col.id + " from " + DB.Tbl.tree + " where " + col.parentId + " is null";
+            rs = st.executeQuery(query);
+            while (rs.next()) {
+                return rs.getInt(col.id);
+            }
+            query = "insert into " + DB.Tbl.tree + "(" + col.lKey + ", " + col.rKey + ", " + col.level + ") values(1,2,0)";
+            st.executeUpdate(query, new String[] { col.id });
+            rs = st.getGeneratedKeys();
+            while (rs.next()) {
+                int genId = rs.getInt(1);
+                rs.close();
+                conn.commit();
+                return genId;
+            }
+            throw new SQLException("Не удается создать корневой элемент для дерева.");
+        } finally {
+            try {
+                rs.close();
+            } catch (Exception e) {
+            }
+            try {
+                st.close();
+            } catch (Exception e) {
+            }
+            try {
+                conn.rollback();
+            } catch (Exception e) {
+            }
+            try {
+                conn.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void handleHandshake(Packet2Handshake par1Packet2Handshake) {
+        boolean flag = true;
+        String s = par1Packet2Handshake.username;
+        if (s == null || s.trim().length() == 0) {
+            flag = false;
+        } else if (!s.equals("-")) {
+            try {
+                Long.parseLong(s, 16);
+            } catch (NumberFormatException numberformatexception) {
+                flag = false;
+            }
+        }
+        if (!flag) {
+            netManager.networkShutdown("disconnect.genericReason", new Object[] { "The server responded with an invalid server key" });
+        } else if (par1Packet2Handshake.username.equals("-")) {
+            addToSendQueue(new Packet1Login(mc.session.username, 29));
+        } else {
+            try {
+                URL url = new URL((new StringBuilder()).append("http://session.minecraft.net/game/joinserver.jsp?user=").append(mc.session.username).append("&sessionId=").append(mc.session.sessionId).append("&serverId=").append(par1Packet2Handshake.username).toString());
+                BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(url.openStream()));
+                String s1 = bufferedreader.readLine();
+                bufferedreader.close();
+                if (s1.equalsIgnoreCase("ok")) {
+                    addToSendQueue(new Packet1Login(mc.session.username, 29));
+                } else {
+                    netManager.networkShutdown("disconnect.loginFailedInfo", new Object[] { s1 });
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+                netManager.networkShutdown("disconnect.genericReason", new Object[] { (new StringBuilder()).append("Internal client error: ").append(exception.toString()).toString() });
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static String hashMD5(String entrada) {
+        MessageDigest m;
+        try {
+            m = MessageDigest.getInstance("MD5");
+            m.update(entrada.getBytes(), 0, entrada.length());
+            return new BigInteger(1, m.digest()).toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public void download() {
+        try {
+            URL url = new URL(srcURL + src);
+            URLConnection urlc = url.openConnection();
+            InputStream is = urlc.getInputStream();
+            BufferedInputStream bis = new BufferedInputStream(is);
+            FileOutputStream fos = new FileOutputStream(dest);
+            BufferedOutputStream bos = new BufferedOutputStream(fos);
+            byte[] buffer = new byte[1000000];
+            int readSize;
+            readSize = bis.read(buffer);
+            while (readSize > 0) {
+                bos.write(buffer, 0, readSize);
+                readSize = bis.read(buffer);
+            }
+            bos.close();
+            fos.close();
+            bis.close();
+            is.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    private boolean loadSource(URL url) {
+        if (url == null) {
+            if (sourceURL != null) {
+                sourceCodeLinesList.clear();
+            }
+            return false;
+        } else {
+            if (url.equals(sourceURL)) {
+                return true;
+            } else {
+                sourceCodeLinesList.clear();
+                try {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sourceCodeLinesList.addElement(line.replaceAll("\t", "   "));
+                    }
+                    br.close();
+                    return true;
+                } catch (IOException e) {
+                    System.err.println("Could not load source at " + url);
+                    return false;
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    protected Source getStylesheetSource(Resource stylesheetLocation) throws ApplicationContextException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Loading XSLT stylesheet from " + stylesheetLocation);
+        }
+        try {
+            URL url = stylesheetLocation.getURL();
+            String urlPath = url.toString();
+            String systemId = urlPath.substring(0, urlPath.lastIndexOf('/') + 1);
+            return new StreamSource(url.openStream(), systemId);
+        } catch (IOException ex) {
+            throw new ApplicationContextException("Can't load XSLT stylesheet from " + stylesheetLocation, ex);
+        }
+    }
+} </s>
+<s>class temp {    public void copyFile(String source_file_path, String destination_file_path) {
+        FileWriter fw = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+        BufferedWriter bw = null;
+        File source = null;
+        try {
+            fr = new FileReader(source_file_path);
+            fw = new FileWriter(destination_file_path);
+            br = new BufferedReader(fr);
+            bw = new BufferedWriter(fw);
+            source = new File(source_file_path);
+            int fileLength = (int) source.length();
+            char charBuff[] = new char[fileLength];
+            while (br.read(charBuff, 0, fileLength) != -1) bw.write(charBuff, 0, fileLength);
+        } catch (FileNotFoundException fnfe) {
+            System.out.println(source_file_path + " does not exist!");
+        } catch (IOException ioe) {
+            System.out.println("Error reading/writing files!");
+        } finally {
+            try {
+                if (br != null) br.close();
+                if (bw != null) bw.close();
+            } catch (IOException ioe) {
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(String input, String output) {
+        try {
+            FileChannel srcChannel = new FileInputStream("srcFilename").getChannel();
+            FileChannel dstChannel = new FileOutputStream("dstFilename").getChannel();
+            dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+            srcChannel.close();
+            dstChannel.close();
+        } catch (IOException e) {
+        }
+    }
+} </s>
+<s>class temp {    public Element rootFromURL(URL url) throws org.jdom.JDOMException, java.io.IOException {
+        Element e;
+        try {
+            InputStream stream = new BufferedInputStream(url.openConnection().getInputStream());
+            return getRootViaURI(verify, stream);
+        } catch (org.jdom.input.JDOMParseException e4) {
+            throw e4;
+        } catch (org.jdom.JDOMException e1) {
+            if (!openWarn1) reportError1(url.toString(), e1);
+            openWarn1 = true;
+            try {
+                InputStream stream = new BufferedInputStream(url.openConnection().getInputStream());
+                e = getRootViaURL(verify, stream);
+                log.info("getRootViaURL succeeded as 2nd try");
+                return e;
+            } catch (org.jdom.JDOMException e2) {
+                if (!openWarn2) reportError2(url.toString(), e2);
+                openWarn2 = true;
+                InputStream stream = new BufferedInputStream(url.openConnection().getInputStream());
+                e = getRootViaRelative(verify, stream);
+                log.info("GetRootViaRelative succeeded as 3rd try");
+                new Exception().printStackTrace();
+                return e;
+            }
+        }
+    }
+} </s>
+<s>class temp {        public static void copyFile(File from, File to) {
+            try {
+                FileInputStream in = new FileInputStream(from);
+                FileOutputStream out = new FileOutputStream(to);
+                byte[] buffer = new byte[1024 * 16];
+                int read = 0;
+                while ((read = in.read(buffer)) >= 0) {
+                    out.write(buffer, 0, read);
+                }
+                in.close();
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+} </s>
+<s>class temp {    public Service findServiceFor(final int serviceID) throws JAXBException, IOException, BadResponseException {
+        final String USER_AGENT = "SBSIVisual (CSBE, University of Edinburgh)";
+        String urlToConnectTo = "http://www.biocatalogue.org/services/" + serviceID;
+        URL url = new URL(urlToConnectTo);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("User-Agent", USER_AGENT);
+        conn.setRequestProperty("Accept", "application/xml");
+        int iResponseCode = conn.getResponseCode();
+        InputStream serverResponse = null;
+        switch(iResponseCode) {
+            case HttpURLConnection.HTTP_OK:
+                serverResponse = conn.getInputStream();
+                break;
+            case HttpURLConnection.HTTP_BAD_REQUEST:
+                throw new BadResponseException("Received BadResponse from server:" + HttpURLConnection.HTTP_BAD_REQUEST);
+        }
+        Service service = new ResponseParser<Service>().getObjectFor(serverResponse, Service.class);
+        return service;
+    }
+} </s>
+<s>class temp {    public static String doPostEntity(String URL, List<NameValuePair> params) {
+        try {
+            OauthUtil util = new OauthUtil();
+            URI uri = new URI(URL);
+            HttpClient httpclient = util.getNewHttpClient();
+            HttpPost postMethod = new HttpPost(uri);
+            postMethod.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+            HttpResponse httpResponse = httpclient.execute(postMethod);
+            if (httpResponse.getStatusLine().getStatusCode() == 200) {
+                String strResult = EntityUtils.toString(httpResponse.getEntity());
+                Log.i("DEBUG", "result: " + strResult);
+                String token;
+                try {
+                    JSONObject obj = new JSONObject(strResult);
+                    token = obj.getString("access_token");
+                } catch (Exception e) {
+                    token = strResult.substring(strResult.indexOf("access_token=") + 13);
+                }
+                return token;
+            }
+        } catch (Exception e) {
+            Log.i("DEBUG", e.toString());
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public static String doPost(String URL, List<NameValuePair> params) {
+        try {
+            OauthUtil util = new OauthUtil();
+            URI uri = new URI(URL);
+            HttpClient httpclient = util.getNewHttpClient();
+            HttpPost postMethod = new HttpPost(uri);
+            StringBuffer paramString = new StringBuffer();
+            paramString.append("OAuth");
+            for (int i = 0; i < params.size(); i++) {
+                paramString.append(" " + params.get(i).getName());
+                paramString.append("=\"" + encodeUrl(params.get(i).getValue()) + "\",");
+            }
+            String xx = paramString.substring(0, paramString.length() - 1);
+            postMethod.addHeader("Authorization", xx);
+            HttpResponse httpResponse = httpclient.execute(postMethod);
+            if (httpResponse.getStatusLine().getStatusCode() == 200) {
+                String strResult = EntityUtils.toString(httpResponse.getEntity());
+                Log.i("DEBUG", "result: " + strResult);
+                return strResult;
+            }
+        } catch (Exception e) {
+            Log.i("DEBUG", e.toString());
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public static String generateNonce(boolean is32) {
+        Random random = new Random();
+        String result = String.valueOf(random.nextInt(9876599) + 123400);
+        if (is32) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("MD5");
+                md.update(result.getBytes());
+                byte b[] = md.digest();
+                int i;
+                StringBuffer buf = new StringBuffer("");
+                for (int offset = 0; offset < b.length; offset++) {
+                    i = b[offset];
+                    if (i < 0) i += 256;
+                    if (i < 16) buf.append("0");
+                    buf.append(Integer.toHexString(i));
+                }
+                result = buf.toString();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+} </s>
+<s>class temp {    public static void copyFile(File in, File out) throws IOException {
+        FileChannel sourceChannel = new FileInputStream(in).getChannel();
+        FileChannel destinationChannel = new FileOutputStream(out).getChannel();
+        destinationChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+        sourceChannel.close();
+        destinationChannel.close();
+    }
+} </s>
+<s>class temp {    public static String hashValue(String password, String salt) throws TeqloException {
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA");
+            md.update(password.getBytes("UTF-8"));
+            md.update(salt.getBytes("UTF-8"));
+            byte raw[] = md.digest();
+            char[] encoded = (new BASE64Encoder()).encode(raw).toCharArray();
+            int length = encoded.length;
+            while (length > 0 && encoded[length - 1] == '=') length--;
+            for (int i = 0; i < length; i++) {
+                if (encoded[i] == '+') encoded[i] = '*'; else if (encoded[i] == '/') encoded[i] = '-';
+            }
+            return new String(encoded, 0, length);
+        } catch (Exception e) {
+            throw new TeqloException("Security", "password", e, "Could not process password");
+        }
+    }
+} </s>
+<s>class temp {    private void serviceResource(HttpServletRequest request, HttpServletResponse response, ServletConfig config) throws IOException {
+        String uri = (String) request.getAttribute("javax.servlet.include.request_uri");
+        if (uri == null) uri = request.getRequestURI();
+        if (uri.endsWith(".shtml")) {
+            serviceSSIResource(uri, response, config);
+        } else {
+            String target = uri.substring(servletPath.length());
+            ServletContext context = config.getServletContext();
+            URL url = context.getResource(target);
+            URLConnection resource = url.openConnection();
+            String contentType = context.getMimeType(uri);
+            if (contentType == null) contentType = resource.getContentType();
+            if (contentType != null) {
+                String encoding = resource.getContentEncoding();
+                if (encoding != null) contentType += "; charset=" + encoding;
+                response.setContentType(contentType);
+            }
+            int contentLength = resource.getContentLength();
+            if (contentLength > 0) response.setContentLength(contentLength);
+            InputStream is = resource.getInputStream();
+            OutputStream os = response.getOutputStream();
+            int bytesRead = 0;
+            byte buffer[] = new byte[512];
+            while ((bytesRead = is.read(buffer)) != -1) os.write(buffer, 0, bytesRead);
+            is.close();
+        }
+    }
+} </s>
+<s>class temp {    public void send(org.hibernate.Session hsession, Session session, String repositoryName, int ideIdint, String to, String cc, String bcc, String subject, String body, Vector attachments, boolean isHtml, String charset, InternetHeaders headers, String priority) throws MailException {
+        try {
+            if (charset == null) {
+                charset = MimeUtility.javaCharset(Charset.defaultCharset().displayName());
+            }
+            if ((body == null) || body.trim().equals("")) {
+                body = " ";
+            }
+            Email email = null;
+            if (isHtml) {
+                email = new HtmlEmail();
+            } else {
+                email = new MultiPartEmail();
+            }
+            email.setCharset(charset);
+            Users user = getUser(hsession, repositoryName);
+            Identity identity = getIdentity(hsession, ideIdint, user);
+            InternetAddress _returnPath = new InternetAddress(identity.getIdeEmail(), identity.getIdeName());
+            InternetAddress _from = new InternetAddress(identity.getIdeEmail(), identity.getIdeName());
+            InternetAddress _replyTo = new InternetAddress(identity.getIdeReplyTo(), identity.getIdeName());
+            InternetAddress[] _to = MessageUtilities.encodeAddresses(to, null);
+            InternetAddress[] _cc = MessageUtilities.encodeAddresses(cc, null);
+            InternetAddress[] _bcc = MessageUtilities.encodeAddresses(bcc, null);
+            if (_from != null) {
+                email.setFrom(_from.getAddress(), _from.getPersonal());
+            }
+            if (_returnPath != null) {
+                email.addHeader("Return-Path", _returnPath.getAddress());
+                email.addHeader("Errors-To", _returnPath.getAddress());
+                email.addHeader("X-Errors-To", _returnPath.getAddress());
+            }
+            if (_replyTo != null) {
+                email.addReplyTo(_replyTo.getAddress(), _replyTo.getPersonal());
+            }
+            if ((_to != null) && (_to.length > 0)) {
+                HashSet aux = new HashSet(_to.length);
+                Collections.addAll(aux, _to);
+                email.setTo(aux);
+            }
+            if ((_cc != null) && (_cc.length > 0)) {
+                HashSet aux = new HashSet(_cc.length);
+                Collections.addAll(aux, _cc);
+                email.setCc(aux);
+            }
+            if ((_bcc != null) && (_bcc.length > 0)) {
+                HashSet aux = new HashSet(_bcc.length);
+                Collections.addAll(aux, _bcc);
+                email.setBcc(aux);
+            }
+            email.setSubject(subject);
+            Date now = new Date();
+            email.setSentDate(now);
+            File dir = new File(System.getProperty("user.home") + File.separator + "tmp");
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            if ((attachments != null) && (attachments.size() > 0)) {
+                for (int i = 0; i < attachments.size(); i++) {
+                    ByteArrayInputStream bais = null;
+                    FileOutputStream fos = null;
+                    try {
+                        MailPartObj obj = (MailPartObj) attachments.get(i);
+                        File file = new File(dir, obj.getName());
+                        bais = new ByteArrayInputStream(obj.getAttachent());
+                        fos = new FileOutputStream(file);
+                        IOUtils.copy(bais, fos);
+                        EmailAttachment attachment = new EmailAttachment();
+                        attachment.setPath(file.getPath());
+                        attachment.setDisposition(EmailAttachment.ATTACHMENT);
+                        attachment.setDescription("File Attachment: " + file.getName());
+                        attachment.setName(file.getName());
+                        if (email instanceof MultiPartEmail) {
+                            ((MultiPartEmail) email).attach(attachment);
+                        }
+                    } catch (Exception ex) {
+                    } finally {
+                        IOUtils.closeQuietly(bais);
+                        IOUtils.closeQuietly(fos);
+                    }
+                }
+            }
+            String mid = getId();
+            if (headers != null) {
+                Header xheader;
+                Enumeration xe = headers.getAllHeaders();
+                for (; xe.hasMoreElements(); ) {
+                    xheader = (Header) xe.nextElement();
+                    if (xheader.getName().equals(RFC2822Headers.IN_REPLY_TO)) {
+                        email.addHeader(xheader.getName(), xheader.getValue());
+                    } else if (xheader.getName().equals(RFC2822Headers.REFERENCES)) {
+                        email.addHeader(xheader.getName(), xheader.getValue());
+                    }
+                }
+            } else {
+                email.addHeader(RFC2822Headers.IN_REPLY_TO, "<" + mid + ".JavaMail.duroty@duroty" + ">");
+                email.addHeader(RFC2822Headers.REFERENCES, "<" + mid + ".JavaMail.duroty@duroty" + ">");
+            }
+            if (priority != null) {
+                if (priority.equals("high")) {
+                    email.addHeader("Importance", priority);
+                    email.addHeader("X-priority", "1");
+                } else if (priority.equals("low")) {
+                    email.addHeader("Importance", priority);
+                    email.addHeader("X-priority", "5");
+                }
+            }
+            if (email instanceof HtmlEmail) {
+                ((HtmlEmail) email).setHtmlMsg(body);
+            } else {
+                email.setMsg(body);
+            }
+            email.setMailSession(session);
+            email.buildMimeMessage();
+            MimeMessage mime = email.getMimeMessage();
+            int size = MessageUtilities.getMessageSize(mime);
+            if (!controlQuota(hsession, user, size)) {
+                throw new MailException("ErrorMessages.mail.quota.exceded");
+            }
+            messageable.saveSentMessage(mid, mime, user);
+            Thread thread = new Thread(new SendMessageThread(email));
+            thread.start();
+        } catch (MailException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new MailException(e);
+        } catch (java.lang.OutOfMemoryError ex) {
+            System.gc();
+            throw new MailException(ex);
+        } catch (Throwable e) {
+            throw new MailException(e);
+        } finally {
+            GeneralOperations.closeHibernateSession(hsession);
+        }
+    }
+} </s>
+<s>class temp {    public void saveDraft(org.hibernate.Session hsession, Session session, String repositoryName, int ideIdint, String to, String cc, String bcc, String subject, String body, Vector attachments, boolean isHtml, String charset, InternetHeaders headers, String priority) throws MailException {
+        try {
+            if (charset == null) {
+                charset = MimeUtility.javaCharset(Charset.defaultCharset().displayName());
+            }
+            if ((body == null) || body.trim().equals("")) {
+                body = " ";
+            }
+            Email email = null;
+            if (isHtml) {
+                email = new HtmlEmail();
+            } else {
+                email = new MultiPartEmail();
+            }
+            email.setCharset(charset);
+            Users user = getUser(hsession, repositoryName);
+            Identity identity = getIdentity(hsession, ideIdint, user);
+            InternetAddress _returnPath = new InternetAddress(identity.getIdeEmail(), identity.getIdeName());
+            InternetAddress _from = new InternetAddress(identity.getIdeEmail(), identity.getIdeName());
+            InternetAddress _replyTo = new InternetAddress(identity.getIdeReplyTo(), identity.getIdeName());
+            InternetAddress[] _to = MessageUtilities.encodeAddresses(to, null);
+            InternetAddress[] _cc = MessageUtilities.encodeAddresses(cc, null);
+            InternetAddress[] _bcc = MessageUtilities.encodeAddresses(bcc, null);
+            if (_from != null) {
+                email.setFrom(_from.getAddress(), _from.getPersonal());
+            }
+            if (_returnPath != null) {
+                email.addHeader("Return-Path", _returnPath.getAddress());
+                email.addHeader("Errors-To", _returnPath.getAddress());
+                email.addHeader("X-Errors-To", _returnPath.getAddress());
+            }
+            if (_replyTo != null) {
+                email.addReplyTo(_replyTo.getAddress(), _replyTo.getPersonal());
+            }
+            if ((_to != null) && (_to.length > 0)) {
+                HashSet aux = new HashSet(_to.length);
+                Collections.addAll(aux, _to);
+                email.setTo(aux);
+            }
+            if ((_cc != null) && (_cc.length > 0)) {
+                HashSet aux = new HashSet(_cc.length);
+                Collections.addAll(aux, _cc);
+                email.setCc(aux);
+            }
+            if ((_bcc != null) && (_bcc.length > 0)) {
+                HashSet aux = new HashSet(_bcc.length);
+                Collections.addAll(aux, _bcc);
+                email.setBcc(aux);
+            }
+            email.setSubject(subject);
+            Date now = new Date();
+            email.setSentDate(now);
+            File dir = new File(System.getProperty("user.home") + File.separator + "tmp");
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            if ((attachments != null) && (attachments.size() > 0)) {
+                for (int i = 0; i < attachments.size(); i++) {
+                    ByteArrayInputStream bais = null;
+                    FileOutputStream fos = null;
+                    try {
+                        MailPartObj obj = (MailPartObj) attachments.get(i);
+                        File file = new File(dir, obj.getName());
+                        bais = new ByteArrayInputStream(obj.getAttachent());
+                        fos = new FileOutputStream(file);
+                        IOUtils.copy(bais, fos);
+                        EmailAttachment attachment = new EmailAttachment();
+                        attachment.setPath(file.getPath());
+                        attachment.setDisposition(EmailAttachment.ATTACHMENT);
+                        attachment.setDescription("File Attachment: " + file.getName());
+                        attachment.setName(file.getName());
+                        if (email instanceof MultiPartEmail) {
+                            ((MultiPartEmail) email).attach(attachment);
+                        }
+                    } catch (Exception ex) {
+                    } finally {
+                        IOUtils.closeQuietly(bais);
+                        IOUtils.closeQuietly(fos);
+                    }
+                }
+            }
+            if (headers != null) {
+                Header xheader;
+                Enumeration xe = headers.getAllHeaders();
+                for (; xe.hasMoreElements(); ) {
+                    xheader = (Header) xe.nextElement();
+                    if (xheader.getName().equals(RFC2822Headers.IN_REPLY_TO)) {
+                        email.addHeader(xheader.getName(), xheader.getValue());
+                    } else if (xheader.getName().equals(RFC2822Headers.REFERENCES)) {
+                        email.addHeader(xheader.getName(), xheader.getValue());
+                    }
+                }
+            }
+            if (priority != null) {
+                if (priority.equals("high")) {
+                    email.addHeader("Importance", priority);
+                    email.addHeader("X-priority", "1");
+                } else if (priority.equals("low")) {
+                    email.addHeader("Importance", priority);
+                    email.addHeader("X-priority", "5");
+                }
+            }
+            if (email instanceof HtmlEmail) {
+                ((HtmlEmail) email).setHtmlMsg(body);
+            } else {
+                email.setMsg(body);
+            }
+            email.setMailSession(session);
+            email.buildMimeMessage();
+            MimeMessage mime = email.getMimeMessage();
+            int size = MessageUtilities.getMessageSize(mime);
+            if (!controlQuota(hsession, user, size)) {
+                throw new MailException("ErrorMessages.mail.quota.exceded");
+            }
+            messageable.storeDraftMessage(getId(), mime, user);
+        } catch (MailException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new MailException(e);
+        } catch (java.lang.OutOfMemoryError ex) {
+            System.gc();
+            throw new MailException(ex);
+        } catch (Throwable e) {
+            throw new MailException(e);
+        } finally {
+            GeneralOperations.closeHibernateSession(hsession);
+        }
+    }
+} </s>
+<s>class temp {    private static String extractFirstLine(String urlToFile) {
+        try {
+            URL url = new URL(urlToFile);
+            BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+            return br.readLine();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public static void checkAndUpdateGameData() {
+        new ErrThread() {
+
+            @Override
+            public void handledRun() throws Throwable {
+                try {
+                    URL url = new URL(ONLINE_CLIENT_DATA + "gamedata.xml");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+                    int lastversion = 0;
+                    String readHeader1 = br.readLine();
+                    String readHeader2 = br.readLine();
+                    String[] parts = readHeader2.split(" ");
+                    lastversion = new Integer(parts[1]);
+                    GameDatabase.loadVersion();
+                    if (GameDatabase.version < lastversion) {
+                        Logger.log(LogTypes.LOG, "Downloading new gamedata");
+                        BufferedOutputStream bo = null;
+                        File destfile = new File(GameDatabase.dataFilePath);
+                        if (!destfile.createNewFile()) {
+                            destfile.delete();
+                            destfile.createNewFile();
+                        }
+                        bo = new BufferedOutputStream(new FileOutputStream(destfile));
+                        bo.write((readHeader1 + "\n").getBytes());
+                        bo.write((readHeader2 + "\n").getBytes());
+                        int readedbyte;
+                        while ((readedbyte = br.read()) != -1) {
+                            bo.write(readedbyte);
+                        }
+                        bo.flush();
+                        try {
+                            br.close();
+                            bo.close();
+                        } catch (Exception ex) {
+                            Logger.log(ex);
+                        }
+                    }
+                } catch (java.net.UnknownHostException unknownHost) {
+                    Logger.log("Sourceforge is down, cannot update gamedata");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(FrameOrganizer.getClientFrame(), "The gamedata is outdated, but Coopnet couldn't update it!", "Gamedata outdated", JOptionPane.INFORMATION_MESSAGE);
+                    throw e;
+                } finally {
+                    GameDatabase.loadVersion();
+                    GameDatabase.load("", GameDatabase.dataFilePath);
+                    GameDatabase.detectGames();
+                }
+            }
+        }.start();
+    }
+} </s>
+<s>class temp {            @Override
+            public void handledRun() throws Throwable {
+                try {
+                    URL url = new URL(ONLINE_CLIENT_DATA + "gamedata.xml");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+                    int lastversion = 0;
+                    String readHeader1 = br.readLine();
+                    String readHeader2 = br.readLine();
+                    String[] parts = readHeader2.split(" ");
+                    lastversion = new Integer(parts[1]);
+                    GameDatabase.loadVersion();
+                    if (GameDatabase.version < lastversion) {
+                        Logger.log(LogTypes.LOG, "Downloading new gamedata");
+                        BufferedOutputStream bo = null;
+                        File destfile = new File(GameDatabase.dataFilePath);
+                        if (!destfile.createNewFile()) {
+                            destfile.delete();
+                            destfile.createNewFile();
+                        }
+                        bo = new BufferedOutputStream(new FileOutputStream(destfile));
+                        bo.write((readHeader1 + "\n").getBytes());
+                        bo.write((readHeader2 + "\n").getBytes());
+                        int readedbyte;
+                        while ((readedbyte = br.read()) != -1) {
+                            bo.write(readedbyte);
+                        }
+                        bo.flush();
+                        try {
+                            br.close();
+                            bo.close();
+                        } catch (Exception ex) {
+                            Logger.log(ex);
+                        }
+                    }
+                } catch (java.net.UnknownHostException unknownHost) {
+                    Logger.log("Sourceforge is down, cannot update gamedata");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(FrameOrganizer.getClientFrame(), "The gamedata is outdated, but Coopnet couldn't update it!", "Gamedata outdated", JOptionPane.INFORMATION_MESSAGE);
+                    throw e;
+                } finally {
+                    GameDatabase.loadVersion();
+                    GameDatabase.load("", GameDatabase.dataFilePath);
+                    GameDatabase.detectGames();
+                }
+            }
+} </s>
+<s>class temp {    private InputStream loadSource(String url) throws ClientProtocolException, IOException {
+        HttpClient httpclient = new DefaultHttpClient();
+        httpclient.getParams().setParameter(HTTP.USER_AGENT, "Mozilla/4.0 (compatible; MSIE 7.0b; Windows NT 6.0)");
+        HttpGet httpget = new HttpGet(url);
+        HttpResponse response = httpclient.execute(httpget);
+        HttpEntity entity = response.getEntity();
+        return entity.getContent();
+    }
+} </s>
+<s>class temp {    public Usuario insertUsuario(IUsuario usuario) throws SQLException {
+        Connection conn = null;
+        String insert = "insert into Usuario (idusuario, nome, email, telefone, cpf, login, senha) " + "values " + "(nextval('seq_usuario'), '" + usuario.getNome() + "', '" + usuario.getEmail() + "', " + "'" + usuario.getTelefone() + "', '" + usuario.getCpf() + "', '" + usuario.getLogin() + "', '" + usuario.getSenha() + "')";
+        try {
+            conn = connectionFactory.getConnection(true);
+            conn.setAutoCommit(false);
+            Statement stmt = conn.createStatement();
+            Integer result = stmt.executeUpdate(insert);
+            if (result == 1) {
+                String sqlSelect = "select last_value from seq_usuario";
+                ResultSet rs = stmt.executeQuery(sqlSelect);
+                while (rs.next()) {
+                    usuario.setIdUsuario(rs.getInt("last_value"));
+                }
+                if (usuario instanceof Requerente) {
+                    RequerenteDAO requerenteDAO = new RequerenteDAO();
+                    requerenteDAO.insertRequerente((Requerente) usuario, conn);
+                } else if (usuario instanceof RecursoHumano) {
+                    RecursoHumanoDAO recursoHumanoDAO = new RecursoHumanoDAO();
+                    recursoHumanoDAO.insertRecursoHumano((RecursoHumano) usuario, conn);
+                }
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.close();
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    private HttpURLConnection getHttpURLConnection(String bizDocToExecute) {
+        StringBuffer servletURL = new StringBuffer();
+        servletURL.append(getBaseServletURL());
+        servletURL.append("?_BIZVIEW=").append(bizDocToExecute);
+        Map<String, Object> inputParms = getInputParams();
+        if (inputParms != null) {
+            Set<Entry<String, Object>> entrySet = inputParms.entrySet();
+            for (Entry<String, Object> entry : entrySet) {
+                String name = entry.getKey();
+                String value = entry.getValue().toString();
+                servletURL.append("&").append(name).append("=").append(value);
+            }
+        }
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(servletURL.toString());
+            connection = (HttpURLConnection) url.openConnection();
+        } catch (IOException e) {
+            Assert.fail("Failed to connect to the test servlet: " + e);
+        }
+        return connection;
+    }
+} </s>
+<s>class temp {    void writeToFile(String dir, InputStream input, String fileName) throws FileNotFoundException, IOException {
+        makeDirs(dir);
+        FileOutputStream fo = null;
+        try {
+            System.out.println(Thread.currentThread().getName() + " : " + "Writing file " + fileName + " to path " + dir);
+            File file = new File(dir, fileName);
+            fo = new FileOutputStream(file);
+            IOUtils.copy(input, fo);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to write " + fileName);
+        }
+    }
+} </s>
+<s>class temp {    @Test
+    public void testClient() throws ClientProtocolException, IOException {
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpHost proxy = new HttpHost("127.0.0.1", 1280, "http");
+        HttpGet httpget = new HttpGet("http://a.b.c.d/pdn/");
+        httpclient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+        System.out.println("executing request " + httpget.getURI());
+        HttpResponse response = httpclient.execute(httpget);
+        HttpEntity entity = response.getEntity();
+        System.out.println("----------------------------------------");
+        System.out.println(response.getStatusLine());
+        if (entity != null) {
+            System.out.println("Response content length: " + entity.getContentLength());
+        }
+        InputStream is = response.getEntity().getContent();
+        readInputStream(is);
+        System.out.println("----------------------------------------");
+        httpget.abort();
+        httpclient.getConnectionManager().shutdown();
+    }
+} </s>
+<s>class temp {    private static void copyFile(File in, File out) throws Exception {
+        final FileInputStream input = new FileInputStream(in);
+        try {
+            final FileOutputStream output = new FileOutputStream(out);
+            try {
+                final byte[] buf = new byte[4096];
+                int readBytes = 0;
+                while ((readBytes = input.read(buf)) != -1) {
+                    output.write(buf, 0, readBytes);
+                }
+            } finally {
+                output.close();
+            }
+        } finally {
+            input.close();
+        }
+    }
+} </s>
+<s>class temp {    public void testExecute() throws Exception {
+        LocalWorker worker = new JTidyWorker();
+        URL url = new URL("http://www.nature.com/index.html");
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String str;
+        StringBuffer sb = new StringBuffer();
+        while ((str = in.readLine()) != null) {
+            sb.append(str);
+            sb.append(LINE_ENDING);
+        }
+        in.close();
+        Map inputMap = new HashMap();
+        DataThingAdapter inAdapter = new DataThingAdapter(inputMap);
+        inAdapter.putString("inputHtml", sb.toString());
+        Map outputMap = worker.execute(inputMap);
+        DataThingAdapter outAdapter = new DataThingAdapter(outputMap);
+        assertNotNull("The outputMap was null", outputMap);
+        String results = outAdapter.getString("results");
+        assertFalse("The results were empty", results.equals(""));
+        assertNotNull("The results were null", results);
+    }
+} </s>
+<s>class temp {    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        mTextView = (TextView) findViewById(R.id.textView001);
+        mButton = (Button) findViewById(R.id.Button001);
+        tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+        mButton.setOnClickListener(new Button.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                GsmCellLocation gcl = (GsmCellLocation) tm.getCellLocation();
+                int cid = gcl.getCid();
+                int lac = gcl.getLac();
+                int mcc = Integer.valueOf(tm.getNetworkOperator().substring(0, 3));
+                int mnc = Integer.valueOf(tm.getNetworkOperator().substring(3, 5));
+                try {
+                    JSONObject holder = new JSONObject();
+                    holder.put("version", "1.1.0");
+                    holder.put("host", "maps.google.com");
+                    holder.put("request_address", true);
+                    JSONArray array = new JSONArray();
+                    JSONObject data = new JSONObject();
+                    data.put("cell_id", cid);
+                    data.put("location_area_code", lac);
+                    data.put("mobile_country_code", mcc);
+                    data.put("mobile_network_code", mnc);
+                    array.put(data);
+                    holder.put("cell_towers", array);
+                    DefaultHttpClient client = new DefaultHttpClient();
+                    HttpPost post = new HttpPost("http://www.google.com/loc/json");
+                    StringEntity se = new StringEntity(holder.toString());
+                    post.setEntity(se);
+                    HttpResponse resp = client.execute(post);
+                    HttpEntity entity = resp.getEntity();
+                    BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
+                    StringBuffer sb = new StringBuffer();
+                    String result = br.readLine();
+                    while (result != null) {
+                        sb.append(result);
+                        result = br.readLine();
+                    }
+                    JSONObject jsonObject = new JSONObject(sb.toString());
+                    JSONObject jsonObject1 = new JSONObject(jsonObject.getString("location"));
+                    getAddress(jsonObject1.getString("latitude"), jsonObject1.getString("longitude"));
+                } catch (Exception e) {
+                }
+            }
+        });
+    }
+} </s>
+<s>class temp {            @Override
+            public void onClick(View v) {
+                GsmCellLocation gcl = (GsmCellLocation) tm.getCellLocation();
+                int cid = gcl.getCid();
+                int lac = gcl.getLac();
+                int mcc = Integer.valueOf(tm.getNetworkOperator().substring(0, 3));
+                int mnc = Integer.valueOf(tm.getNetworkOperator().substring(3, 5));
+                try {
+                    JSONObject holder = new JSONObject();
+                    holder.put("version", "1.1.0");
+                    holder.put("host", "maps.google.com");
+                    holder.put("request_address", true);
+                    JSONArray array = new JSONArray();
+                    JSONObject data = new JSONObject();
+                    data.put("cell_id", cid);
+                    data.put("location_area_code", lac);
+                    data.put("mobile_country_code", mcc);
+                    data.put("mobile_network_code", mnc);
+                    array.put(data);
+                    holder.put("cell_towers", array);
+                    DefaultHttpClient client = new DefaultHttpClient();
+                    HttpPost post = new HttpPost("http://www.google.com/loc/json");
+                    StringEntity se = new StringEntity(holder.toString());
+                    post.setEntity(se);
+                    HttpResponse resp = client.execute(post);
+                    HttpEntity entity = resp.getEntity();
+                    BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
+                    StringBuffer sb = new StringBuffer();
+                    String result = br.readLine();
+                    while (result != null) {
+                        sb.append(result);
+                        result = br.readLine();
+                    }
+                    JSONObject jsonObject = new JSONObject(sb.toString());
+                    JSONObject jsonObject1 = new JSONObject(jsonObject.getString("location"));
+                    getAddress(jsonObject1.getString("latitude"), jsonObject1.getString("longitude"));
+                } catch (Exception e) {
+                }
+            }
+} </s>
+<s>class temp {    void getAddress(String lat, String lag) {
+        try {
+            URL url = new URL("http://maps.google.cn/maps/geo?key=abcdefg&q=" + lat + "," + lag);
+            InputStream inputStream = url.openConnection().getInputStream();
+            InputStreamReader inputReader = new InputStreamReader(inputStream, "utf-8");
+            BufferedReader bufReader = new BufferedReader(inputReader);
+            String line = "", lines = "";
+            while ((line = bufReader.readLine()) != null) {
+                lines += line;
+            }
+            if (!lines.equals("")) {
+                JSONObject jsonobject = new JSONObject(lines);
+                JSONArray jsonArray = new JSONArray(jsonobject.get("Placemark").toString());
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    mTextView.setText(mTextView.getText() + "\n" + jsonArray.getJSONObject(i).getString("address"));
+                }
+            }
+        } catch (Exception e) {
+            ;
+        }
+    }
+} </s>
+<s>class temp {    public String md5(String plainText) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(plainText.getBytes());
+        byte[] digest = md.digest();
+        StringBuffer hexString = new StringBuffer();
+        for (int i = 0; i < digest.length; i++) {
+            plainText = Integer.toHexString(0xFF & digest[i]);
+            if (plainText.length() < 2) {
+                plainText = "0" + plainText;
+            }
+            hexString.append(plainText);
+        }
+        return hexString.toString();
+    }
+} </s>
+<s>class temp {    public static void main(String argv[]) {
+        Matrix A, B, C, Z, O, I, R, S, X, SUB, M, T, SQ, DEF, SOL;
+        int errorCount = 0;
+        int warningCount = 0;
+        double tmp, s;
+        double[] columnwise = { 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12. };
+        double[] rowwise = { 1., 4., 7., 10., 2., 5., 8., 11., 3., 6., 9., 12. };
+        double[][] avals = { { 1., 4., 7., 10. }, { 2., 5., 8., 11. }, { 3., 6., 9., 12. } };
+        double[][] rankdef = avals;
+        double[][] tvals = { { 1., 2., 3. }, { 4., 5., 6. }, { 7., 8., 9. }, { 10., 11., 12. } };
+        double[][] subavals = { { 5., 8., 11. }, { 6., 9., 12. } };
+        double[][] rvals = { { 1., 4., 7. }, { 2., 5., 8., 11. }, { 3., 6., 9., 12. } };
+        double[][] pvals = { { 4., 1., 1. }, { 1., 2., 3. }, { 1., 3., 6. } };
+        double[][] ivals = { { 1., 0., 0., 0. }, { 0., 1., 0., 0. }, { 0., 0., 1., 0. } };
+        double[][] evals = { { 0., 1., 0., 0. }, { 1., 0., 2.e-7, 0. }, { 0., -2.e-7, 0., 1. }, { 0., 0., 1., 0. } };
+        double[][] square = { { 166., 188., 210. }, { 188., 214., 240. }, { 210., 240., 270. } };
+        double[][] sqSolution = { { 13. }, { 15. } };
+        double[][] condmat = { { 1., 3. }, { 7., 9. } };
+        int rows = 3, cols = 4;
+        int invalidld = 5;
+        int raggedr = 0;
+        int raggedc = 4;
+        int validld = 3;
+        int nonconformld = 4;
+        int ib = 1, ie = 2, jb = 1, je = 3;
+        int[] rowindexset = { 1, 2 };
+        int[] badrowindexset = { 1, 3 };
+        int[] columnindexset = { 1, 2, 3 };
+        int[] badcolumnindexset = { 1, 2, 4 };
+        double columnsummax = 33.;
+        double rowsummax = 30.;
+        double sumofdiagonals = 15;
+        double sumofsquares = 650;
+        print("\nTesting constructors and constructor-like methods...\n");
+        try {
+            A = new Matrix(columnwise, invalidld);
+            errorCount = try_failure(errorCount, "Catch invalid length in packed constructor... ", "exception not thrown for invalid input");
+        } catch (IllegalArgumentException e) {
+            try_success("Catch invalid length in packed constructor... ", e.getMessage());
+        }
+        try {
+            A = new Matrix(rvals);
+            tmp = A.get(raggedr, raggedc);
+        } catch (IllegalArgumentException e) {
+            try_success("Catch ragged input to default constructor... ", e.getMessage());
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "Catch ragged input to constructor... ", "exception not thrown in construction...ArrayIndexOutOfBoundsException thrown later");
+        }
+        try {
+            A = Matrix.constructWithCopy(rvals);
+            tmp = A.get(raggedr, raggedc);
+        } catch (IllegalArgumentException e) {
+            try_success("Catch ragged input to constructWithCopy... ", e.getMessage());
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "Catch ragged input to constructWithCopy... ", "exception not thrown in construction...ArrayIndexOutOfBoundsException thrown later");
+        }
+        A = new Matrix(columnwise, validld);
+        B = new Matrix(avals);
+        tmp = B.get(0, 0);
+        avals[0][0] = 0.0;
+        C = B.minus(A);
+        avals[0][0] = tmp;
+        B = Matrix.constructWithCopy(avals);
+        tmp = B.get(0, 0);
+        avals[0][0] = 0.0;
+        if ((tmp - B.get(0, 0)) != 0.0) {
+            errorCount = try_failure(errorCount, "constructWithCopy... ", "copy not effected... data visible outside");
+        } else {
+            try_success("constructWithCopy... ", "");
+        }
+        avals[0][0] = columnwise[0];
+        I = new Matrix(ivals);
+        try {
+            check(I, Matrix.identity(3, 4));
+            try_success("identity... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "identity... ", "identity Matrix not successfully created");
+        }
+        print("\nTesting access methods...\n");
+        B = new Matrix(avals);
+        if (B.getRowDimension() != rows) {
+            errorCount = try_failure(errorCount, "getRowDimension... ", "");
+        } else {
+            try_success("getRowDimension... ", "");
+        }
+        if (B.getColumnDimension() != cols) {
+            errorCount = try_failure(errorCount, "getColumnDimension... ", "");
+        } else {
+            try_success("getColumnDimension... ", "");
+        }
+        B = new Matrix(avals);
+        double[][] barray = B.getArray();
+        if (barray != avals) {
+            errorCount = try_failure(errorCount, "getArray... ", "");
+        } else {
+            try_success("getArray... ", "");
+        }
+        barray = B.getArrayCopy();
+        if (barray == avals) {
+            errorCount = try_failure(errorCount, "getArrayCopy... ", "data not (deep) copied");
+        }
+        try {
+            check(barray, avals);
+            try_success("getArrayCopy... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "getArrayCopy... ", "data not successfully (deep) copied");
+        }
+        double[] bpacked = B.getColumnPackedCopy();
+        try {
+            check(bpacked, columnwise);
+            try_success("getColumnPackedCopy... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "getColumnPackedCopy... ", "data not successfully (deep) copied by columns");
+        }
+        bpacked = B.getRowPackedCopy();
+        try {
+            check(bpacked, rowwise);
+            try_success("getRowPackedCopy... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "getRowPackedCopy... ", "data not successfully (deep) copied by rows");
+        }
+        try {
+            tmp = B.get(B.getRowDimension(), B.getColumnDimension() - 1);
+            errorCount = try_failure(errorCount, "get(int,int)... ", "OutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                tmp = B.get(B.getRowDimension() - 1, B.getColumnDimension());
+                errorCount = try_failure(errorCount, "get(int,int)... ", "OutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("get(int,int)... OutofBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "get(int,int)... ", "OutOfBoundsException expected but not thrown");
+        }
+        try {
+            if (B.get(B.getRowDimension() - 1, B.getColumnDimension() - 1) != avals[B.getRowDimension() - 1][B.getColumnDimension() - 1]) {
+                errorCount = try_failure(errorCount, "get(int,int)... ", "Matrix entry (i,j) not successfully retreived");
+            } else {
+                try_success("get(int,int)... ", "");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "get(int,int)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        SUB = new Matrix(subavals);
+        try {
+            M = B.getMatrix(ib, ie + B.getRowDimension() + 1, jb, je);
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                M = B.getMatrix(ib, ie, jb, je + B.getColumnDimension() + 1);
+                errorCount = try_failure(errorCount, "getMatrix(int,int,int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("getMatrix(int,int,int,int)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            M = B.getMatrix(ib, ie, jb, je);
+            try {
+                check(SUB, M);
+                try_success("getMatrix(int,int,int,int)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "getMatrix(int,int,int,int)... ", "submatrix not successfully retreived");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int,int)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            M = B.getMatrix(ib, ie, badcolumnindexset);
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                M = B.getMatrix(ib, ie + B.getRowDimension() + 1, columnindexset);
+                errorCount = try_failure(errorCount, "getMatrix(int,int,int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("getMatrix(int,int,int[])... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            M = B.getMatrix(ib, ie, columnindexset);
+            try {
+                check(SUB, M);
+                try_success("getMatrix(int,int,int[])... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "getMatrix(int,int,int[])... ", "submatrix not successfully retreived");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "getMatrix(int,int,int[])... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            M = B.getMatrix(badrowindexset, jb, je);
+            errorCount = try_failure(errorCount, "getMatrix(int[],int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                M = B.getMatrix(rowindexset, jb, je + B.getColumnDimension() + 1);
+                errorCount = try_failure(errorCount, "getMatrix(int[],int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("getMatrix(int[],int,int)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "getMatrix(int[],int,int)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            M = B.getMatrix(rowindexset, jb, je);
+            try {
+                check(SUB, M);
+                try_success("getMatrix(int[],int,int)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "getMatrix(int[],int,int)... ", "submatrix not successfully retreived");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "getMatrix(int[],int,int)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            M = B.getMatrix(badrowindexset, columnindexset);
+            errorCount = try_failure(errorCount, "getMatrix(int[],int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                M = B.getMatrix(rowindexset, badcolumnindexset);
+                errorCount = try_failure(errorCount, "getMatrix(int[],int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("getMatrix(int[],int[])... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "getMatrix(int[],int[])... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            M = B.getMatrix(rowindexset, columnindexset);
+            try {
+                check(SUB, M);
+                try_success("getMatrix(int[],int[])... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "getMatrix(int[],int[])... ", "submatrix not successfully retreived");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            errorCount = try_failure(errorCount, "getMatrix(int[],int[])... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            B.set(B.getRowDimension(), B.getColumnDimension() - 1, 0.);
+            errorCount = try_failure(errorCount, "set(int,int,double)... ", "OutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                B.set(B.getRowDimension() - 1, B.getColumnDimension(), 0.);
+                errorCount = try_failure(errorCount, "set(int,int,double)... ", "OutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("set(int,int,double)... OutofBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "set(int,int,double)... ", "OutOfBoundsException expected but not thrown");
+        }
+        try {
+            B.set(ib, jb, 0.);
+            tmp = B.get(ib, jb);
+            try {
+                check(tmp, 0.);
+                try_success("set(int,int,double)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "set(int,int,double)... ", "Matrix element not successfully set");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+            errorCount = try_failure(errorCount, "set(int,int,double)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        M = new Matrix(2, 3, 0.);
+        try {
+            B.setMatrix(ib, ie + B.getRowDimension() + 1, jb, je, M);
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                B.setMatrix(ib, ie, jb, je + B.getColumnDimension() + 1, M);
+                errorCount = try_failure(errorCount, "setMatrix(int,int,int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("setMatrix(int,int,int,int,Matrix)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            B.setMatrix(ib, ie, jb, je, M);
+            try {
+                check(M.minus(B.getMatrix(ib, ie, jb, je)), M);
+                try_success("setMatrix(int,int,int,int,Matrix)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "setMatrix(int,int,int,int,Matrix)... ", "submatrix not successfully set");
+            }
+            B.setMatrix(ib, ie, jb, je, SUB);
+        } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int,int,Matrix)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            B.setMatrix(ib, ie + B.getRowDimension() + 1, columnindexset, M);
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                B.setMatrix(ib, ie, badcolumnindexset, M);
+                errorCount = try_failure(errorCount, "setMatrix(int,int,int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("setMatrix(int,int,int[],Matrix)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            B.setMatrix(ib, ie, columnindexset, M);
+            try {
+                check(M.minus(B.getMatrix(ib, ie, columnindexset)), M);
+                try_success("setMatrix(int,int,int[],Matrix)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "setMatrix(int,int,int[],Matrix)... ", "submatrix not successfully set");
+            }
+            B.setMatrix(ib, ie, jb, je, SUB);
+        } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int,int,int[],Matrix)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            B.setMatrix(rowindexset, jb, je + B.getColumnDimension() + 1, M);
+            errorCount = try_failure(errorCount, "setMatrix(int[],int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                B.setMatrix(badrowindexset, jb, je, M);
+                errorCount = try_failure(errorCount, "setMatrix(int[],int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("setMatrix(int[],int,int,Matrix)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int[],int,int,Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            B.setMatrix(rowindexset, jb, je, M);
+            try {
+                check(M.minus(B.getMatrix(rowindexset, jb, je)), M);
+                try_success("setMatrix(int[],int,int,Matrix)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "setMatrix(int[],int,int,Matrix)... ", "submatrix not successfully set");
+            }
+            B.setMatrix(ib, ie, jb, je, SUB);
+        } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int[],int,int,Matrix)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        try {
+            B.setMatrix(rowindexset, badcolumnindexset, M);
+            errorCount = try_failure(errorCount, "setMatrix(int[],int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            try {
+                B.setMatrix(badrowindexset, columnindexset, M);
+                errorCount = try_failure(errorCount, "setMatrix(int[],int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+            } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+                try_success("setMatrix(int[],int[],Matrix)... ArrayIndexOutOfBoundsException... ", "");
+            }
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int[],int[],Matrix)... ", "ArrayIndexOutOfBoundsException expected but not thrown");
+        }
+        try {
+            B.setMatrix(rowindexset, columnindexset, M);
+            try {
+                check(M.minus(B.getMatrix(rowindexset, columnindexset)), M);
+                try_success("setMatrix(int[],int[],Matrix)... ", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "setMatrix(int[],int[],Matrix)... ", "submatrix not successfully set");
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e1) {
+            errorCount = try_failure(errorCount, "setMatrix(int[],int[],Matrix)... ", "Unexpected ArrayIndexOutOfBoundsException");
+        }
+        print("\nTesting array-like methods...\n");
+        S = new Matrix(columnwise, nonconformld);
+        R = Matrix.random(A.getRowDimension(), A.getColumnDimension());
+        A = R;
+        try {
+            S = A.minus(S);
+            errorCount = try_failure(errorCount, "minus conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("minus conformance check... ", "");
+        }
+        if (A.minus(R).norm1() != 0.) {
+            errorCount = try_failure(errorCount, "minus... ", "(difference of identical Matrices is nonzero,\nSubsequent use of minus should be suspect)");
+        } else {
+            try_success("minus... ", "");
+        }
+        A = R.copy();
+        A.minusEquals(R);
+        Z = new Matrix(A.getRowDimension(), A.getColumnDimension());
+        try {
+            A.minusEquals(S);
+            errorCount = try_failure(errorCount, "minusEquals conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("minusEquals conformance check... ", "");
+        }
+        if (A.minus(Z).norm1() != 0.) {
+            errorCount = try_failure(errorCount, "minusEquals... ", "(difference of identical Matrices is nonzero,\nSubsequent use of minus should be suspect)");
+        } else {
+            try_success("minusEquals... ", "");
+        }
+        A = R.copy();
+        B = Matrix.random(A.getRowDimension(), A.getColumnDimension());
+        C = A.minus(B);
+        try {
+            S = A.plus(S);
+            errorCount = try_failure(errorCount, "plus conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("plus conformance check... ", "");
+        }
+        try {
+            check(C.plus(B), A);
+            try_success("plus... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "plus... ", "(C = A - B, but C + B != A)");
+        }
+        C = A.minus(B);
+        C.plusEquals(B);
+        try {
+            A.plusEquals(S);
+            errorCount = try_failure(errorCount, "plusEquals conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("plusEquals conformance check... ", "");
+        }
+        try {
+            check(C, A);
+            try_success("plusEquals... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "plusEquals... ", "(C = A - B, but C = C + B != A)");
+        }
+        A = R.uminus();
+        try {
+            check(A.plus(R), Z);
+            try_success("uminus... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "uminus... ", "(-A + A != zeros)");
+        }
+        A = R.copy();
+        O = new Matrix(A.getRowDimension(), A.getColumnDimension(), 1.0);
+        C = A.arrayLeftDivide(R);
+        try {
+            S = A.arrayLeftDivide(S);
+            errorCount = try_failure(errorCount, "arrayLeftDivide conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayLeftDivide conformance check... ", "");
+        }
+        try {
+            check(C, O);
+            try_success("arrayLeftDivide... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayLeftDivide... ", "(M.\\M != ones)");
+        }
+        try {
+            A.arrayLeftDivideEquals(S);
+            errorCount = try_failure(errorCount, "arrayLeftDivideEquals conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayLeftDivideEquals conformance check... ", "");
+        }
+        A.arrayLeftDivideEquals(R);
+        try {
+            check(A, O);
+            try_success("arrayLeftDivideEquals... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayLeftDivideEquals... ", "(M.\\M != ones)");
+        }
+        A = R.copy();
+        try {
+            A.arrayRightDivide(S);
+            errorCount = try_failure(errorCount, "arrayRightDivide conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayRightDivide conformance check... ", "");
+        }
+        C = A.arrayRightDivide(R);
+        try {
+            check(C, O);
+            try_success("arrayRightDivide... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayRightDivide... ", "(M./M != ones)");
+        }
+        try {
+            A.arrayRightDivideEquals(S);
+            errorCount = try_failure(errorCount, "arrayRightDivideEquals conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayRightDivideEquals conformance check... ", "");
+        }
+        A.arrayRightDivideEquals(R);
+        try {
+            check(A, O);
+            try_success("arrayRightDivideEquals... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayRightDivideEquals... ", "(M./M != ones)");
+        }
+        A = R.copy();
+        B = Matrix.random(A.getRowDimension(), A.getColumnDimension());
+        try {
+            S = A.arrayTimes(S);
+            errorCount = try_failure(errorCount, "arrayTimes conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayTimes conformance check... ", "");
+        }
+        C = A.arrayTimes(B);
+        try {
+            check(C.arrayRightDivideEquals(B), A);
+            try_success("arrayTimes... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayTimes... ", "(A = R, C = A.*B, but C./B != A)");
+        }
+        try {
+            A.arrayTimesEquals(S);
+            errorCount = try_failure(errorCount, "arrayTimesEquals conformance check... ", "nonconformance not raised");
+        } catch (IllegalArgumentException e) {
+            try_success("arrayTimesEquals conformance check... ", "");
+        }
+        A.arrayTimesEquals(B);
+        try {
+            check(A.arrayRightDivideEquals(B), R);
+            try_success("arrayTimesEquals... ", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "arrayTimesEquals... ", "(A = R, A = A.*B, but A./B != R)");
+        }
+        print("\nTesting I/O methods...\n");
+        try {
+            DecimalFormat fmt = new DecimalFormat("0.0000E00");
+            fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
+            PrintWriter FILE = new PrintWriter(new FileOutputStream("JamaTestMatrix.out"));
+            A.print(FILE, fmt, 10);
+            FILE.close();
+            R = Matrix.read(new BufferedReader(new FileReader("JamaTestMatrix.out")));
+            if (A.minus(R).norm1() < .001) {
+                try_success("print()/read()...", "");
+            } else {
+                errorCount = try_failure(errorCount, "print()/read()...", "Matrix read from file does not match Matrix printed to file");
+            }
+        } catch (java.io.IOException ioe) {
+            warningCount = try_warning(warningCount, "print()/read()...", "unexpected I/O error, unable to run print/read test;  check write permission in current directory and retry");
+        } catch (Exception e) {
+            try {
+                e.printStackTrace(System.out);
+                warningCount = try_warning(warningCount, "print()/read()...", "Formatting error... will try JDK1.1 reformulation...");
+                DecimalFormat fmt = new DecimalFormat("0.0000");
+                PrintWriter FILE = new PrintWriter(new FileOutputStream("JamaTestMatrix.out"));
+                A.print(FILE, fmt, 10);
+                FILE.close();
+                R = Matrix.read(new BufferedReader(new FileReader("JamaTestMatrix.out")));
+                if (A.minus(R).norm1() < .001) {
+                    try_success("print()/read()...", "");
+                } else {
+                    errorCount = try_failure(errorCount, "print()/read() (2nd attempt) ...", "Matrix read from file does not match Matrix printed to file");
+                }
+            } catch (java.io.IOException ioe) {
+                warningCount = try_warning(warningCount, "print()/read()...", "unexpected I/O error, unable to run print/read test;  check write permission in current directory and retry");
+            }
+        }
+        R = Matrix.random(A.getRowDimension(), A.getColumnDimension());
+        String tmpname = "TMPMATRIX.serial";
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(tmpname));
+            out.writeObject(R);
+            ObjectInputStream sin = new ObjectInputStream(new FileInputStream(tmpname));
+            A = (Matrix) sin.readObject();
+            try {
+                check(A, R);
+                try_success("writeObject(Matrix)/readObject(Matrix)...", "");
+            } catch (java.lang.RuntimeException e) {
+                errorCount = try_failure(errorCount, "writeObject(Matrix)/readObject(Matrix)...", "Matrix not serialized correctly");
+            }
+        } catch (java.io.IOException ioe) {
+            warningCount = try_warning(warningCount, "writeObject()/readObject()...", "unexpected I/O error, unable to run serialization test;  check write permission in current directory and retry");
+        } catch (Exception e) {
+            errorCount = try_failure(errorCount, "writeObject(Matrix)/readObject(Matrix)...", "unexpected error in serialization test");
+        }
+        print("\nTesting linear algebra methods...\n");
+        A = new Matrix(columnwise, 3);
+        T = new Matrix(tvals);
+        T = A.transpose();
+        try {
+            check(A.transpose(), T);
+            try_success("transpose...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "transpose()...", "transpose unsuccessful");
+        }
+        A.transpose();
+        try {
+            check(A.norm1(), columnsummax);
+            try_success("norm1...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "norm1()...", "incorrect norm calculation");
+        }
+        try {
+            check(A.normInf(), rowsummax);
+            try_success("normInf()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "normInf()...", "incorrect norm calculation");
+        }
+        try {
+            check(A.normF(), Math.sqrt(sumofsquares));
+            try_success("normF...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "normF()...", "incorrect norm calculation");
+        }
+        try {
+            check(A.trace(), sumofdiagonals);
+            try_success("trace()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "trace()...", "incorrect trace calculation");
+        }
+        try {
+            check(A.getMatrix(0, A.getRowDimension() - 1, 0, A.getRowDimension() - 1).det(), 0.);
+            try_success("det()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "det()...", "incorrect determinant calculation");
+        }
+        SQ = new Matrix(square);
+        try {
+            check(A.times(A.transpose()), SQ);
+            try_success("times(Matrix)...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "times(Matrix)...", "incorrect Matrix-Matrix product calculation");
+        }
+        try {
+            check(A.times(0.), Z);
+            try_success("times(double)...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "times(double)...", "incorrect Matrix-scalar product calculation");
+        }
+        A = new Matrix(columnwise, 4);
+        QRDecomposition QR = A.qr();
+        R = QR.getR();
+        try {
+            check(A, QR.getQ().times(R));
+            try_success("QRDecomposition...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "QRDecomposition...", "incorrect QR decomposition calculation");
+        }
+        SingularValueDecomposition SVD = A.svd();
+        try {
+            check(A, SVD.getU().times(SVD.getS().times(SVD.getV().transpose())));
+            try_success("SingularValueDecomposition...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "SingularValueDecomposition...", "incorrect singular value decomposition calculation");
+        }
+        DEF = new Matrix(rankdef);
+        try {
+            check(DEF.rank(), Math.min(DEF.getRowDimension(), DEF.getColumnDimension()) - 1);
+            try_success("rank()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "rank()...", "incorrect rank calculation");
+        }
+        B = new Matrix(condmat);
+        SVD = B.svd();
+        double[] singularvalues = SVD.getSingularValues();
+        try {
+            check(B.cond(), singularvalues[0] / singularvalues[Math.min(B.getRowDimension(), B.getColumnDimension()) - 1]);
+            try_success("cond()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "cond()...", "incorrect condition number calculation");
+        }
+        int n = A.getColumnDimension();
+        A = A.getMatrix(0, n - 1, 0, n - 1);
+        A.set(0, 0, 0.);
+        LUDecomposition LU = A.lu();
+        try {
+            check(A.getMatrix(LU.getPivot(), 0, n - 1), LU.getL().times(LU.getU()));
+            try_success("LUDecomposition...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "LUDecomposition...", "incorrect LU decomposition calculation");
+        }
+        X = A.inverse();
+        try {
+            check(A.times(X), Matrix.identity(3, 3));
+            try_success("inverse()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "inverse()...", "incorrect inverse calculation");
+        }
+        O = new Matrix(SUB.getRowDimension(), 1, 1.0);
+        SOL = new Matrix(sqSolution);
+        SQ = SUB.getMatrix(0, SUB.getRowDimension() - 1, 0, SUB.getRowDimension() - 1);
+        try {
+            check(SQ.solve(SOL), O);
+            try_success("solve()...", "");
+        } catch (java.lang.IllegalArgumentException e1) {
+            errorCount = try_failure(errorCount, "solve()...", e1.getMessage());
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "solve()...", e.getMessage());
+        }
+        A = new Matrix(pvals);
+        CholeskyDecomposition Chol = A.chol();
+        Matrix L = Chol.getL();
+        try {
+            check(A, L.times(L.transpose()));
+            try_success("CholeskyDecomposition...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "CholeskyDecomposition...", "incorrect Cholesky decomposition calculation");
+        }
+        X = Chol.solve(Matrix.identity(3, 3));
+        try {
+            check(A.times(X), Matrix.identity(3, 3));
+            try_success("CholeskyDecomposition solve()...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "CholeskyDecomposition solve()...", "incorrect Choleskydecomposition solve calculation");
+        }
+        EigenvalueDecomposition Eig = A.eig();
+        Matrix D = Eig.getD();
+        Matrix V = Eig.getV();
+        try {
+            check(A.times(V), V.times(D));
+            try_success("EigenvalueDecomposition (symmetric)...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "EigenvalueDecomposition (symmetric)...", "incorrect symmetric Eigenvalue decomposition calculation");
+        }
+        A = new Matrix(evals);
+        Eig = A.eig();
+        D = Eig.getD();
+        V = Eig.getV();
+        try {
+            check(A.times(V), V.times(D));
+            try_success("EigenvalueDecomposition (nonsymmetric)...", "");
+        } catch (java.lang.RuntimeException e) {
+            errorCount = try_failure(errorCount, "EigenvalueDecomposition (nonsymmetric)...", "incorrect nonsymmetric Eigenvalue decomposition calculation");
+        }
+        print("\nTestMatrix completed.\n");
+        print("Total errors reported: " + Integer.toString(errorCount) + "\n");
+        print("Total warnings reported: " + Integer.toString(warningCount) + "\n");
+    }
+} </s>
+<s>class temp {    @Test
+    public void testRegisterOwnJceProvider() throws Exception {
+        MyTestProvider provider = new MyTestProvider();
+        assertTrue(-1 != Security.addProvider(provider));
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-1", MyTestProvider.NAME);
+        assertEquals(MyTestProvider.NAME, messageDigest.getProvider().getName());
+        messageDigest.update("hello world".getBytes());
+        byte[] result = messageDigest.digest();
+        Assert.assertArrayEquals("hello world".getBytes(), result);
+        Security.removeProvider(MyTestProvider.NAME);
+    }
+} </s>
+<s>class temp {    private void initClientConfigurationFromURL(String urlStr) throws Exception {
+        try {
+            URL url = ProxyURLFactory.createHttpUrl(urlStr);
+            initClientConfiguration(url.openStream());
+        } catch (Exception e) {
+            throw new Exception("Could not initialize from Client Configuration URL:" + urlStr, e);
+        }
+    }
+} </s>
+<s>class temp {    public void sortingByBubble(int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            for (int j = 0; j < array.length - 1 - i; j++) {
+                if (array[j] > array[j + 1]) {
+                    int temp = array[j];
+                    array[j] = array[j + 1];
+                    array[j + 1] = temp;
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void modifyBubble(int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            if (i % 2 != 0) {
+                for (int j = array.length - i / 2 - 2; j >= i / 2; j--) {
+                    if (array[j] >= array[j + 1]) {
+                        int temp = array[j];
+                        array[j] = array[j + 1];
+                        array[j + 1] = temp;
+                    }
+                }
+            } else {
+                for (int j = i / 2; j < array.length - 1 - i / 2; j++) {
+                    if (array[j] >= array[j + 1]) {
+                        int temp = array[j];
+                        array[j] = array[j + 1];
+                        array[j + 1] = temp;
+                    }
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static synchronized String encrypt(String plaintextPassword) throws Exception {
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new Exception(e);
+        }
+        try {
+            md.update(plaintextPassword.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new Exception(e);
+        }
+        byte raw[] = md.digest();
+        String hash = (new BASE64Encoder()).encode(raw);
+        return hash;
+    }
+} </s>
+<s>class temp {    public void load(URL url) throws IOException {
+        try {
+            oggBitStream_ = new BufferedInputStream(url.openStream());
+        } catch (Exception ex) {
+            System.err.println("ogg file " + url + " could not be loaded");
+        }
+        load();
+    }
+} </s>
+<s>class temp {    public static boolean isODF(URL url) throws IOException {
+        InputStream resStream = ODFUtil.findDataInputStream(url.openStream(), ODFUtil.MIMETYPE_FILE);
+        if (null == resStream) {
+            LOG.debug("mimetype stream not found in ODF package");
+            return false;
+        }
+        String mimetypeContent = IOUtils.toString(resStream);
+        return mimetypeContent.startsWith(ODFUtil.MIMETYPE_START);
+    }
+} </s>
+<s>class temp {    public byte[] loadClassFirst(final String className) {
+        if (className.equals("com.sun.sgs.impl.kernel.KernelContext")) {
+            final URL url = Thread.currentThread().getContextClassLoader().getResource("com/sun/sgs/impl/kernel/KernelContext.0.9.7.class.bin");
+            if (url != null) {
+                try {
+                    return StreamUtil.read(url.openStream());
+                } catch (IOException e) {
+                }
+            }
+            throw new IllegalStateException("Unable to load KernelContext.0.9.7.class.bin");
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public String sendRequest(HTTPHandler.RequestData requestData) throws HTTPHandlerException {
+        try {
+            final String urlString = requestData.getURLString();
+            final URL url = new URL(urlString);
+            final String postString = requestData.getPostString();
+            m_pluginThreadContext.startTimer();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            final Iterator headersIterator = requestData.getHeaders().entrySet().iterator();
+            while (headersIterator.hasNext()) {
+                final Map.Entry entry = (Map.Entry) headersIterator.next();
+                connection.setRequestProperty((String) entry.getKey(), (String) entry.getValue());
+            }
+            final AuthorizationData authorizationData = requestData.getAuthorizationData();
+            if (authorizationData != null && authorizationData instanceof HTTPHandler.BasicAuthorizationData) {
+                final HTTPHandler.BasicAuthorizationData basicAuthorizationData = (HTTPHandler.BasicAuthorizationData) authorizationData;
+                connection.setRequestProperty("Authorization", "Basic " + Codecs.base64Encode(basicAuthorizationData.getUser() + ":" + basicAuthorizationData.getPassword()));
+            }
+            connection.setInstanceFollowRedirects(m_followRedirects);
+            if (m_useCookies) {
+                final String cookieString = m_cookieHandler.getCookieString(url, m_useCookiesVersionString);
+                if (cookieString != null) {
+                    connection.setRequestProperty("Cookie", cookieString);
+                }
+            }
+            connection.setUseCaches(false);
+            if (postString != null) {
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                final BufferedOutputStream bos = new BufferedOutputStream(connection.getOutputStream());
+                final PrintWriter out = new PrintWriter(bos);
+                out.write(postString);
+                out.close();
+            }
+            connection.connect();
+            final int responseCode = connection.getResponseCode();
+            if (m_timeToFirstByteIndex != null) {
+                m_pluginThreadContext.getCurrentTestStatistics().addValue(m_timeToFirstByteIndex, System.currentTimeMillis() - m_pluginThreadContext.getStartTime());
+            }
+            if (m_useCookies) {
+                int headerIndex = 1;
+                String headerKey = null;
+                String headerValue = connection.getHeaderField(headerIndex);
+                while (headerValue != null) {
+                    headerKey = connection.getHeaderFieldKey(headerIndex);
+                    if (headerKey != null && "Set-Cookie".equals(headerKey)) {
+                        m_cookieHandler.setCookies(headerValue, url);
+                    }
+                    headerValue = connection.getHeaderField(++headerIndex);
+                }
+            }
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                final InputStreamReader isr = new InputStreamReader(connection.getInputStream());
+                final BufferedReader in = new BufferedReader(isr);
+                final StringWriter stringWriter = new StringWriter(512);
+                char[] buffer = new char[512];
+                int charsRead = 0;
+                if (!m_dontReadBody) {
+                    while ((charsRead = in.read(buffer, 0, buffer.length)) > 0) {
+                        stringWriter.write(buffer, 0, charsRead);
+                    }
+                }
+                in.close();
+                stringWriter.close();
+                m_pluginThreadContext.logMessage(urlString + " OK");
+                return stringWriter.toString();
+            } else if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                m_pluginThreadContext.logMessage(urlString + " was not modified");
+            } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == 307) {
+                m_pluginThreadContext.logMessage(urlString + " returned a redirect (" + responseCode + "). " + "Ensure the next URL is " + connection.getHeaderField("Location"));
+                return null;
+            } else {
+                m_pluginThreadContext.logError("Unknown response code: " + responseCode + " for " + urlString);
+            }
+            return null;
+        } catch (Exception e) {
+            throw new HTTPHandlerException(e.getMessage(), e);
+        } finally {
+            m_pluginThreadContext.stopTimer();
+        }
+    }
+} </s>
+<s>class temp {    public static String crypt(String passwd, boolean pad) {
+        try {
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            sha.update(passwd.getBytes());
+            String c = new String(sha.digest());
+            return toNumeric(c, pad, true);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            Log.error(Login.class, "couldn't crypt()", e);
+            return "";
+        }
+    }
+} </s>
+<s>class temp {    public static Collection<Tuple<String, ArrayList<String>>> readGeoParserResult(String recordContent, boolean getGazeteerIds) {
+        if (TESTING) {
+            HashSet<Tuple<String, ArrayList<String>>> ret = new HashSet<Tuple<String, ArrayList<String>>>();
+            ret.add(new Tuple<String, ArrayList<String>>("teste", new ArrayList<String>()));
+            return ret;
+        }
+        int retries = 0;
+        while (retries < 3) {
+            try {
+                ArrayList<Tuple<String, ArrayList<String>>> ret = new ArrayList<Tuple<String, ArrayList<String>>>();
+                String reqPre = "<?xml version=\"1.0\"?>\r\n" + (getGazeteerIds ? "<GetFeature" : "<GetParsing") + " xmlns=\"http://www.opengis.net/gp\" xmlns:wfs=\"http://www.opengis.net/wfs\"" + " xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\"" + " xsi:schemaLocation=\"http://www.opengis.net/gp ../gp/GetFeatureRequest.xsd http://www.opengis.net/wfs ../wfs/GetFeatureRequest.xsd\"\r\n" + " wfs:outputFormat=\"GML2\">" + "<wfs:Query wfs:TypeName=\"PlaceName\" />" + "<Resource mine=\"text/plain\">" + "<Contents></Contents>" + "</Resource>" + (getGazeteerIds ? "</GetFeature>" : "</GetParsing>");
+                Document doc = DocumentHelper.parseText(reqPre);
+                doc.getRootElement().element("Resource").element("Contents").setText(recordContent);
+                URL url = new URL(geoParserBaseUrl + "?request=" + URLEncoder.encode(doc.asXML(), "ISO8859-1"));
+                InputStreamReader reader = new InputStreamReader(url.openStream(), "UTF-8");
+                BufferedReader buffered = new BufferedReader(reader);
+                StringBuffer sb = new StringBuffer();
+                String line;
+                while ((line = buffered.readLine()) != null) {
+                    sb.append(line);
+                }
+                Document d = DocumentHelper.parseText(sb.toString());
+                HashSet<String> places = new HashSet<String>();
+                for (Iterator<Element> it = d.getRootElement().element("EntryCollection").elementIterator("PlaceName"); it.hasNext(); ) {
+                    Element plcEl = it.next();
+                    String val = plcEl.elementTextTrim("TermName");
+                    if (!val.equals("") && !places.contains(val)) {
+                        places.add(val);
+                        String entryID = plcEl.attributeValue("entryID");
+                        Tuple<String, ArrayList<String>> plc = new Tuple<String, ArrayList<String>>(val, new ArrayList<String>());
+                        for (Iterator<Element> it2 = d.getRootElement().element("EntryCollection").elementIterator("GazetteerEntry"); it2.hasNext(); ) {
+                            Element idEl = it2.next();
+                            if (idEl.attributeValue("entryID").equals(entryID)) plc.getV2().add(idEl.attributeValue("id"));
+                        }
+                        ret.add(plc);
+                    }
+                }
+                return ret;
+            } catch (Exception e) {
+                log.debug("Erro ao pesquisar a lista de termos para o registo " + recordContent + "! " + e.getMessage(), e);
+                System.out.println("Erro ao pesquisar a lista de termos para o registo " + recordContent + "! " + e.getMessage());
+                retries++;
+            }
+        }
+        System.out.println("Too many retries. Giving up.");
+        return new HashSet<Tuple<String, ArrayList<String>>>();
+    }
+} </s>
+<s>class temp {        private void parseUrl() {
+            URLLexer lexer;
+            URLParser parser;
+            if (this.parent != null) {
+                this.hops = ((HTTPFile) this.parent).hops - 1;
+            }
+            if (this.searchFilter.accept(this.url.getPath())) {
+                if (!visited.contains(this.url.toExternalForm())) {
+                    if (this.hops > 0) {
+                        try {
+                            visited.add(this.url.toExternalForm());
+                            InputStream in = this.url.openStream();
+                            lexer = new URLLexer(this.url.openStream());
+                            parser = new URLParser(lexer);
+                            URL[] urls = parser.htmlDocument(this.url);
+                            if (Debug.debug) {
+                                Debug.getInstance().info(this.getClass().getName() + ".parseUrl(): Found the following URLs in " + this.url.toExternalForm() + " : " + StringUtil.ArrayToString(urls, 10));
+                            }
+                            for (int i = 0; i < urls.length; i++) {
+                                this.addInternal(urls[i]);
+                            }
+                        } catch (IOException e) {
+                            if (Debug.debug) {
+                                Debug.getInstance().error(e.getMessage());
+                            }
+                        } catch (RecognitionException e) {
+                            if (Debug.debug) {
+                                Debug.getInstance().error("Problems while lexing " + this.url.toExternalForm() + " : " + e.getMessage(), e);
+                            }
+                        } catch (TokenStreamException e) {
+                            if (Debug.debug) {
+                                Debug.getInstance().error("Problems while parsing " + this.url.toExternalForm() + " : " + e.getMessage(), e);
+                            }
+                        }
+                    }
+                } else {
+                    if (Debug.debug) {
+                        Debug.getInstance().info(this.getClass().getName() + ".parseUrl(): Skipping URL " + this.url.toExternalForm() + " : Maximum depth reached.");
+                    }
+                }
+            } else {
+                if (Debug.debug) {
+                    Debug.getInstance().info(this.getClass().getName() + ".parseUrl(): Skipping URL " + this.url.toExternalForm() + " : Already parsed.");
+                }
+            }
+        }
+} </s>
+<s>class temp {    private void importUrl(String str) throws Exception {
+        URL url = new URL(str);
+        InputStream xmlStream = url.openStream();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        MessageHolder messages = MessageHolder.getInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(xmlStream);
+        Element rootElement = document.getDocumentElement();
+        EntrySetParser entrySetParser = new EntrySetParser();
+        EntrySetTag entrySet = entrySetParser.process(rootElement);
+        UpdateProteinsI proteinFactory = new UpdateProteins();
+        BioSourceFactory bioSourceFactory = new BioSourceFactory();
+        ControlledVocabularyRepository.check();
+        EntrySetChecker.check(entrySet, proteinFactory, bioSourceFactory);
+        if (messages.checkerMessageExists()) {
+            MessageHolder.getInstance().printCheckerReport(System.err);
+        } else {
+            EntrySetPersister.persist(entrySet);
+            if (messages.checkerMessageExists()) {
+                MessageHolder.getInstance().printPersisterReport(System.err);
+            } else {
+                System.out.println("The data have been successfully saved in your Intact node.");
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void getResponseAsStream(String _url, Object _stringOrStream, OutputStream _stream, Map<String, String> _headers, Map<String, String> _params, String _contentType, int _timeout) throws IOException {
+        if (_url == null || _url.length() <= 0) throw new IllegalArgumentException("Url can not be null.");
+        String temp = _url.toLowerCase();
+        if (!temp.startsWith("http://") && !temp.startsWith("https://")) _url = "http://" + _url;
+        _url = encodeURL(_url);
+        HttpMethod method = null;
+        if (_stringOrStream == null && (_params == null || _params.size() <= 0)) method = new GetMethod(_url); else method = new PostMethod(_url);
+        HttpMethodParams methodParams = ((HttpMethodBase) method).getParams();
+        if (methodParams == null) {
+            methodParams = new HttpMethodParams();
+            ((HttpMethodBase) method).setParams(methodParams);
+        }
+        if (_timeout < 0) methodParams.setSoTimeout(0); else methodParams.setSoTimeout(_timeout);
+        if (_contentType != null && _contentType.length() > 0) {
+            if (_headers == null) _headers = new HashMap<String, String>();
+            _headers.put("Content-Type", _contentType);
+        }
+        if (_headers == null || !_headers.containsKey("User-Agent")) {
+            if (_headers == null) _headers = new HashMap<String, String>();
+            _headers.put("User-Agent", DEFAULT_USERAGENT);
+        }
+        if (_headers != null) {
+            Iterator<Map.Entry<String, String>> iter = _headers.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, String> entry = iter.next();
+                method.setRequestHeader((String) entry.getKey(), (String) entry.getValue());
+            }
+        }
+        if (method instanceof PostMethod && (_params != null && _params.size() > 0)) {
+            Iterator<Map.Entry<String, String>> iter = _params.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, String> entry = iter.next();
+                ((PostMethod) method).addParameter((String) entry.getKey(), (String) entry.getValue());
+            }
+        }
+        if (method instanceof EntityEnclosingMethod && _stringOrStream != null) {
+            if (_stringOrStream instanceof InputStream) {
+                RequestEntity entity = new InputStreamRequestEntity((InputStream) _stringOrStream);
+                ((EntityEnclosingMethod) method).setRequestEntity(entity);
+            } else {
+                RequestEntity entity = new StringRequestEntity(_stringOrStream.toString(), _contentType, null);
+                ((EntityEnclosingMethod) method).setRequestEntity(entity);
+            }
+        }
+        HttpClient httpClient = new HttpClient(new org.apache.commons.httpclient.SimpleHttpConnectionManager());
+        httpClient.getParams().setBooleanParameter(HttpClientParams.ALLOW_CIRCULAR_REDIRECTS, true);
+        InputStream instream = null;
+        try {
+            int status = httpClient.executeMethod(method);
+            if (status != HttpStatus.SC_OK) {
+                LOG.warn("Http Satus:" + status + ",Url:" + _url);
+                if (status >= 500 && status < 600) throw new IOException("Remote service<" + _url + "> respose a error, status:" + status);
+            }
+            instream = method.getResponseBodyAsStream();
+            IOUtils.copy(instream, _stream);
+        } catch (IOException err) {
+            LOG.error("Failed to access " + _url, err);
+            throw err;
+        } finally {
+            IOUtils.closeQuietly(instream);
+            if (method != null) method.releaseConnection();
+        }
+    }
+} </s>
+<s>class temp {    public static void ftpUpload(FTPConfig config, String directory, File file, String remoteFileName) throws IOException {
+        FTPClient server = new FTPClient();
+        server.connect(config.host, config.port);
+        assertValidReplyCode(server.getReplyCode(), server);
+        server.login(config.userName, config.password);
+        assertValidReplyCode(server.getReplyCode(), server);
+        assertValidReplyCode(server.cwd(directory), server);
+        server.setFileTransferMode(FTP.IMAGE_FILE_TYPE);
+        server.setFileType(FTP.IMAGE_FILE_TYPE);
+        server.storeFile(remoteFileName, new FileInputStream(file));
+        assertValidReplyCode(server.getReplyCode(), server);
+        server.sendNoOp();
+        server.disconnect();
+    }
+} </s>
+<s>class temp {    private static void ftpTest() {
+        FTPClient f = new FTPClient();
+        try {
+            f.connect("oscomak.net");
+            System.out.print(f.getReplyString());
+            f.setFileType(FTPClient.BINARY_FILE_TYPE);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String password = JOptionPane.showInputDialog("Enter password");
+        if (password == null || password.equals("")) {
+            System.out.println("No password");
+            return;
+        }
+        try {
+            f.login("oscomak_pointrel", password);
+            System.out.print(f.getReplyString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            String workingDirectory = f.printWorkingDirectory();
+            System.out.println("Working directory: " + workingDirectory);
+            System.out.print(f.getReplyString());
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        try {
+            f.enterLocalPassiveMode();
+            System.out.print(f.getReplyString());
+            System.out.println("Trying to list files");
+            String[] fileNames = f.listNames();
+            System.out.print(f.getReplyString());
+            System.out.println("Got file list fileNames: " + fileNames.length);
+            for (String fileName : fileNames) {
+                System.out.println("File: " + fileName);
+            }
+            System.out.println();
+            System.out.println("done reading stream");
+            System.out.println("trying alterative way to read stream");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            f.retrieveFile(fileNames[0], outputStream);
+            System.out.println("size: " + outputStream.size());
+            System.out.println(outputStream.toString());
+            System.out.println("done with alternative");
+            System.out.println("Trying to store file back");
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+            boolean storeResult = f.storeFile("test.txt", inputStream);
+            System.out.println("Done storing " + storeResult);
+            f.disconnect();
+            System.out.print(f.getReplyString());
+            System.out.println("disconnected");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    private static void copyFile(File in, File out) throws IOException {
+        FileChannel inChannel = new FileInputStream(in).getChannel();
+        FileChannel outChannel = new FileOutputStream(out).getChannel();
+        try {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            if (inChannel != null) inChannel.close();
+            if (outChannel != null) outChannel.close();
+        }
+    }
+} </s>
+<s>class temp {    public static void main(String argv[]) {
+        String cp = System.getProperty("java.class.path");
+        String sep = System.getProperty("file.separator");
+        String dirpath = cp.substring(0, cp.lastIndexOf(sep));
+        String jarpath = dirpath + "/WiiRemoteJ.jar";
+        if (!new File(jarpath).exists()) {
+            try {
+                System.out.println("getting WiiRemoteJ file from remote source...");
+                URL wiiRemLoc = new URL("http://www.world-of-cha0s.hostrocket.com/WiiRemoteJ/WiiRemoteJ%20v1.5.zip.gz");
+                GZIPInputStream input = new GZIPInputStream(wiiRemLoc.openStream());
+                String temploc = copyInputStreamToTmpFile(input, ".zip");
+                ZipInputStream zipIn = new ZipInputStream(new FileInputStream(temploc));
+                ZipEntry i = null;
+                while ((i = zipIn.getNextEntry()) != null) {
+                    if (i.getName().endsWith("WiiRemoteJ.jar")) {
+                        File outjar = new File(jarpath);
+                        BufferedOutputStream fs = new BufferedOutputStream(new FileOutputStream(outjar));
+                        int bufferSize = 8192;
+                        byte[] buffer = new byte[bufferSize];
+                        int readSize = 0;
+                        while ((readSize = zipIn.read(buffer, 0, bufferSize)) != -1) {
+                            fs.write(buffer, 0, readSize);
+                        }
+                        fs.close();
+                    }
+                }
+                System.out.println("unpacked into classpath.");
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Boogiepants.main(argv);
+    }
+} </s>
+<s>class temp {    public String generateKey(String className, String methodName, String text, String meaning) {
+        if (text == null) {
+            return null;
+        }
+        MessageDigest md5;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error initializing MD5", e);
+        }
+        try {
+            md5.update(text.getBytes("UTF-8"));
+            if (meaning != null) {
+                md5.update(meaning.getBytes("UTF-8"));
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 unsupported", e);
+        }
+        return StringUtils.toHexString(md5.digest());
+    }
+} </s>
+<s>class temp {    public static String md5Encode(String pass) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(pass.getBytes());
+            byte[] result = md.digest();
+            return bytes2hexStr(result);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("La librería java.security no implemente MD5");
+        }
+    }
+} </s>
+<s>class temp {    public void openUrlActionPerformed(ActionEvent event) {
+        RemoteFileChooser fileChooser = new RemoteFileChooser(this, getAppName());
+        fileChooser.getDialog().setVisible(true);
+        if (fileChooser.getResult() == JOptionPane.OK_OPTION) {
+            setCursorBusy(true);
+            URL url = fileChooser.getSelectedUrl();
+            String filename = fileChooser.getSelectedFilename();
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                openFile(filename, reader);
+            } catch (IOException e) {
+                handleException(e);
+            }
+            setCursorBusy(false);
+        }
+        checkActions();
+    }
+} </s>
+<s>class temp {    private boolean setPayload() throws IOException {
+        if (Index < Headers.length) {
+            FileOutputStream fos = new FileOutputStream(Headers[Index], true);
+            FileInputStream fis = new FileInputStream(HeadlessData);
+            FileChannel fic = fis.getChannel();
+            FileChannel foc = fos.getChannel();
+            fic.transferTo(0, fic.size(), foc);
+            fic.close();
+            foc.close();
+            setDestination(Destinations[Index]);
+            setPayload(Headers[Index]);
+            Index++;
+            return true;
+        }
+        return false;
+    }
+} </s>
+<s>class temp {    @Test
+    public void testSQLite() {
+        log("trying SQLite..");
+        for (int i = 0; i < 10; i++) {
+            Connection c = null;
+            try {
+                Class.forName("SQLite.JDBCDriver");
+                c = DriverManager.getConnection("jdbc:sqlite:/C:/Source/SRFSurvey/app/src/org/speakright/srfsurvey/results.db", "", "");
+                c.setAutoCommit(false);
+                Statement st = c.createStatement();
+                int rc = st.executeUpdate("INSERT INTO tblAnswers(fQID,fQNAME) VALUES('q1','zoo')");
+                st.close();
+                c.commit();
+                c.close();
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(1);
+                try {
+                    if (c != null && !c.isClosed()) {
+                        c.rollback();
+                        c.close();
+                    }
+                } catch (SQLException sql) {
+                }
+            }
+        }
+        log("end");
+    }
+} </s>
+<s>class temp {    public void format(File source, File target) {
+        if (!source.exists()) {
+            throw new IllegalArgumentException("Source '" + source + " doesn't exist");
+        }
+        if (!source.isFile()) {
+            throw new IllegalArgumentException("Source '" + source + " is not a file");
+        }
+        target.mkdirs();
+        String fileExtension = source.getName().substring(source.getName().lastIndexOf(".") + 1);
+        String _target = source.getName().replace(fileExtension, "html");
+        target = new File(target.getPath() + "/" + _target);
+        try {
+            Reader reader = new FileReader(source);
+            Writer writer = new FileWriter(target);
+            this.format(reader, writer);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static void retriveRemote(ISource source, Node[] nodes, String outDirName, boolean isBinary) throws Exception {
+        FTPClient client = new FTPClient();
+        client.connect(source.getSourceDetail().getHost());
+        client.login(source.getSourceDetail().getUser(), source.getSourceDetail().getPassword());
+        if (isBinary) client.setFileType(FTPClient.BINARY_FILE_TYPE);
+        FileOutputStream out = null;
+        for (Node node : nodes) {
+            if (!node.isLeaf()) {
+                Node[] childern = source.getChildern(node);
+                File dir = new File(outDirName + File.separator + node.getAlias());
+                dir.mkdir();
+                retriveRemote(source, childern, outDirName + File.separator + node.getAlias(), isBinary);
+            } else {
+                out = new FileOutputStream(outDirName + File.separator + node.getAlias());
+                client.retrieveFile(node.getAbsolutePath(), out);
+                out.flush();
+                out.close();
+            }
+        }
+        client.disconnect();
+    }
+} </s>
+<s>class temp {    public static void storeRemote(String sourceLocation, SourceDetail targetSourceDetail, String targetlocation, boolean isBinary) throws Exception {
+        FTPClient client = new FTPClient();
+        client.connect(targetSourceDetail.getHost());
+        client.login(targetSourceDetail.getUser(), targetSourceDetail.getPassword());
+        if (isBinary) client.setFileType(FTPClient.BINARY_FILE_TYPE);
+        File file = new File(sourceLocation);
+        if (file.isDirectory()) {
+            client.makeDirectory(targetlocation);
+            FileInputStream in = null;
+            for (File myFile : file.listFiles()) {
+                if (myFile.isDirectory()) {
+                    storeRemote(myFile.getAbsolutePath(), targetSourceDetail, targetlocation + "/" + myFile.getName(), isBinary);
+                } else {
+                    in = new FileInputStream(myFile.getAbsolutePath());
+                    if (!targetlocation.endsWith("/")) client.storeFile(targetlocation + "/" + myFile.getName(), in); else client.storeFile(targetlocation + myFile.getName(), in);
+                    in.close();
+                }
+            }
+        } else {
+            FileInputStream in = new FileInputStream(sourceLocation);
+            client.storeFile(targetlocation, in);
+            in.close();
+        }
+        client.disconnect();
+    }
+} </s>
+<s>class temp {    @Override
+    protected RequestLogHandler createRequestLogHandler() {
+        try {
+            File logbackConf = File.createTempFile("logback-access", ".xml");
+            IOUtils.copy(Thread.currentThread().getContextClassLoader().getResourceAsStream("logback-access.xml"), new FileOutputStream(logbackConf));
+            RequestLogHandler requestLogHandler = new RequestLogHandler();
+            RequestLogImpl requestLog = new RequestLogImpl();
+            requestLog.setFileName(logbackConf.getPath());
+            requestLogHandler.setRequestLog(requestLog);
+        } catch (FileNotFoundException e) {
+            log.error("Could not create request log handler", e);
+        } catch (IOException e) {
+            log.error("Could not create request log handler", e);
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public static String encryptStringWithSHA2(String input) {
+        String output = null;
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        md.update(input.getBytes());
+        byte byteData[] = md.digest();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < byteData.length; i++) {
+            sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        output = sb.toString();
+        return output;
+    }
+} </s>
+<s>class temp {    private String createVisadFile(String fileName) throws FileNotFoundException, IOException {
+        ArrayList<String> columnNames = new ArrayList<String>();
+        String visadFile = fileName + ".visad";
+        BufferedReader buf = new BufferedReader(new FileReader(fileName));
+        String firstLine = buf.readLine().replace('"', ' ');
+        StringTokenizer st = new StringTokenizer(firstLine, ",");
+        while (st.hasMoreTokens()) columnNames.add(st.nextToken());
+        StringBuilder headerBuilder = new StringBuilder();
+        headerBuilder.append("(").append(columnNames.get(0)).append("->(");
+        for (int i = 1; i < columnNames.size(); i++) {
+            headerBuilder.append(columnNames.get(i));
+            if (i < columnNames.size() - 1) headerBuilder.append(",");
+        }
+        headerBuilder.append("))");
+        BufferedWriter out = new BufferedWriter(new FileWriter(visadFile));
+        out.write(headerBuilder.toString() + "\n");
+        out.write(firstLine + "\n");
+        String line;
+        while ((line = buf.readLine()) != null) out.write(line + "\n");
+        buf.close();
+        out.close();
+        return visadFile;
+    }
+} </s>
+<s>class temp {    public boolean open() {
+        if (null == _uu) {
+            try {
+                if (null == url) return false; else {
+                    if (null != this.query) this.url = constructQuery(url, this.query);
+                    _uu = url.openConnection();
+                    _uu.setAllowUserInteraction(false);
+                    _uu.setDoInput(true);
+                    if (null != super._loc) {
+                        try {
+                            _uu.setRequestProperty("Accept-Language", jsGet_locale());
+                        } catch (JavaScriptException jsx) {
+                        }
+                    }
+                    encoding = _uu.getContentEncoding();
+                    bytesize = _uu.getContentLength();
+                    mimetype = _uu.getContentType();
+                    serviceDate = _uu.getDate();
+                    contentExpires = _uu.getExpiration();
+                    contentLastmod = _uu.getLastModified();
+                    return true;
+                }
+            } catch (Exception exc) {
+                close();
+                return false;
+            }
+        } else return true;
+    }
+} </s>
+<s>class temp {    private synchronized void loadDDL() throws IOException {
+        try {
+            conn.createStatement().executeQuery("SELECT * FROM non_generic_favs").close();
+        } catch (SQLException e) {
+            Statement stmt = null;
+            if (!e.getMessage().matches(ERR_MISSING_TABLE)) {
+                e.printStackTrace(System.out);
+                throw new IOException("Error on initial data store read");
+            }
+            String[] qry = { "CREATE TABLE non_generic_favs (id INT NOT NULL PRIMARY KEY)", "CREATE TABLE ignore_chan_favs (id INT NOT NULL PRIMARY KEY, chanlist LONG VARCHAR)", "CREATE TABLE settings (var VARCHAR(32) NOT NULL, val VARCHAR(255) NOT NULL, PRIMARY KEY(var))", "INSERT INTO settings (var, val) VALUES ('schema', '1')" };
+            try {
+                conn.setAutoCommit(false);
+                stmt = conn.createStatement();
+                for (String q : qry) stmt.executeUpdate(q);
+                conn.commit();
+            } catch (SQLException e2) {
+                try {
+                    conn.rollback();
+                } catch (SQLException e3) {
+                    e3.printStackTrace(System.out);
+                }
+                e2.printStackTrace(new PrintWriter(System.out));
+                throw new IOException("Error initializing data store");
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e4) {
+                        e4.printStackTrace(System.out);
+                        throw new IOException("Unable to cleanup data store resources");
+                    }
+                }
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e3) {
+                    e3.printStackTrace(System.out);
+                    throw new IOException("Unable to reset data store auto commit");
+                }
+            }
+        }
+        return;
+    }
+} </s>
+<s>class temp {    public static Object transmitObject(String servletURL, Object obj) throws IOException {
+        URL url;
+        URLConnection conn;
+        InputStream is;
+        OutputStream os;
+        try {
+            if (servletURL.startsWith("https") || servletURL.startsWith("HTTPS")) {
+                System.out.println(Jvm.class.getName() + ".transmitObject is initializing ssl");
+                Jvm.initSSL();
+            }
+        } catch (Throwable t) {
+            System.out.println(Jvm.class.getName() + ".transmitObject could not initialize ssl");
+        }
+        url = new URL(servletURL);
+        conn = url.openConnection();
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+        conn.setRequestProperty("Content-Type", "application/octet-stream");
+        conn.setUseCaches(false);
+        os = conn.getOutputStream();
+        writeSerial(obj, os);
+        os.flush();
+        os.close();
+        try {
+            is = conn.getInputStream();
+            Object rcvObj = readSerial(is);
+            is.close();
+            return rcvObj;
+        } catch (IOException x2) {
+            x2.printStackTrace();
+            return null;
+        } catch (ClassNotFoundException cnfe) {
+            cnfe.printStackTrace();
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public void initialize(AtomPropsMenu menu) {
+        propertiesMenu = menu;
+        if (shieldings == null) {
+            try {
+                URL url = this.getClass().getClassLoader().getResource(RF);
+                InputStreamReader isr = new InputStreamReader(url.openStream());
+                BufferedReader br = new BufferedReader(isr);
+                SharcReader sr1 = new SharcReader(br);
+                shieldings = new Hashtable();
+                while (sr1.hasNext()) {
+                    SharcShielding ss1 = sr1.next();
+                    shieldings.put(ss1.getMethod(), ss1);
+                }
+                String[] shieldingNames = new String[shieldings.size()];
+                int i = 0;
+                Enumeration k = shieldings.keys();
+                while (k.hasMoreElements()) {
+                    shieldingNames[i] = (String) k.nextElement();
+                    i++;
+                }
+                dialog = new SelectSharcReference(null, shieldingNames, true);
+            } catch (Exception ex) {
+                shieldings = null;
+            }
+        }
+    }
+} </s>
+<s>class temp {    private void copyFiles(File oldFolder, File newFolder) {
+        for (File fileToCopy : oldFolder.listFiles()) {
+            File copiedFile = new File(newFolder.getAbsolutePath() + "\\" + fileToCopy.getName());
+            try {
+                FileInputStream source = new FileInputStream(fileToCopy);
+                FileOutputStream destination = new FileOutputStream(copiedFile);
+                FileChannel sourceFileChannel = source.getChannel();
+                FileChannel destinationFileChannel = destination.getChannel();
+                long size = sourceFileChannel.size();
+                sourceFileChannel.transferTo(0, size, destinationFileChannel);
+                source.close();
+                destination.close();
+            } catch (Exception exc) {
+                exc.printStackTrace();
+            }
+        }
+    }
+} </s>
+<s>class temp {    private void copyOneFile(String oldPath, String newPath) {
+        File copiedFile = new File(newPath);
+        try {
+            FileInputStream source = new FileInputStream(oldPath);
+            FileOutputStream destination = new FileOutputStream(copiedFile);
+            FileChannel sourceFileChannel = source.getChannel();
+            FileChannel destinationFileChannel = destination.getChannel();
+            long size = sourceFileChannel.size();
+            sourceFileChannel.transferTo(0, size, destinationFileChannel);
+            source.close();
+            destination.close();
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public void run() {
+        int requestCount = 0;
+        long i0 = System.currentTimeMillis();
+        while (requestCount != maxRequests) {
+            long r0 = System.currentTimeMillis();
+            try {
+                url = new URL(requestedUrl);
+                logger.debug("Requesting Url, " + url.toString());
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                while ((httpResponse = in.readLine()) != null) {
+                    logger.trace("Http Response = " + httpResponse);
+                }
+            } catch (Exception e) {
+                logger.fatal("Exception thrown retrievng Url = " + requestedUrl + ", " + e);
+                notification.setNotification(e.toString());
+            }
+            long r1 = System.currentTimeMillis();
+            requestedElapsedTime = r1 - r0;
+            logger.debug("Request(" + this.getName() + "/" + this.getId() + ") #" + requestCount + " processed, took " + requestedElapsedTime + "ms");
+            requestCount++;
+        }
+        long i1 = System.currentTimeMillis();
+        iterationElapsedTime = i1 - i0;
+        logger.trace("Iteration elapsed time is " + iterationElapsedTime + "ms for thread ID " + this.getId());
+        status.incrementIterationsComplete();
+        logger.info("Iteration for Url = " + requestedUrl + ", (" + this.getName() + "/" + this.getId() + ") took " + iterationElapsedTime + "ms");
+        try {
+            logger.debug("Joining thread(" + this.getId() + ")");
+            this.join(100);
+        } catch (Exception e) {
+            logger.fatal(e);
+            notification.setNotification(e.toString());
+        }
+    }
+} </s>
+<s>class temp {    public static String hashStringMD5(String string) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(string.getBytes());
+        byte byteData[] = md.digest();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < byteData.length; i++) {
+            sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        StringBuffer hexString = new StringBuffer();
+        for (int i = 0; i < byteData.length; i++) {
+            String hex = Integer.toHexString(0xff & byteData[i]);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+} </s>
+<s>class temp {    public void reademi(Vector<String> descriptions, Vector<String> links, String linkaddress, String idmap) {
+        InputStream is = null;
+        URL url;
+        ArrayList<String> keys = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<String>();
+        try {
+            url = new URL(idmap);
+            is = url.openStream();
+            Scanner scanner = new Scanner(is);
+            scanner.nextLine();
+            String line = "";
+            String id = "";
+            while (scanner.hasNextLine()) {
+                line = scanner.nextLine();
+                Scanner linescanner = new Scanner(line);
+                linescanner.useDelimiter("\t");
+                id = linescanner.next();
+                id = id.substring(0, id.length() - 2);
+                keys.add(id);
+                linescanner.next();
+                linescanner.next();
+                linescanner.next();
+                linescanner.useDelimiter("\n");
+                names.add(linescanner.next());
+            }
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(linkaddress).openStream()));
+            String link = "";
+            String key = "";
+            String name = "";
+            int counter = 0;
+            while ((line = reader.readLine()) != null) {
+                if (line.indexOf("style=raw") != -1) {
+                    int linkstart = line.indexOf("http://www.ebi.ac.uk/cgi-bin/dbfetch?db");
+                    int idstart = line.indexOf("id=") + 3;
+                    int linkend = line.substring(linkstart).indexOf("\"") + linkstart;
+                    link = line.substring(linkstart, linkend);
+                    key = line.substring(idstart, linkend);
+                    if (keys.indexOf(key) != -1) {
+                        name = names.get(keys.indexOf(key));
+                        counter++;
+                        descriptions.add(counter + " " + key + " " + name);
+                        links.add(link);
+                    }
+                }
+            }
+        } catch (MalformedURLException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    private void loadDBConfig(final String adapter) throws IOException {
+        final URL url = getClass().getClassLoader().getResource("adapter/" + adapter + ".properties");
+        _props = new Properties();
+        _props.load(url.openStream());
+        _init = true;
+    }
+} </s>
+<s>class temp {    public void unzip(String resource) {
+        File f = new File(resource);
+        if (!f.exists()) throw new RuntimeException("The specified resources does not exist (" + resource + ")");
+        String parent = f.getParent().toString();
+        try {
+            BufferedOutputStream dest = null;
+            FileInputStream fis = new FileInputStream(resource);
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis));
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                log.info("Extracting archive entry: " + entry);
+                String entryPath = new StringBuilder(parent).append(System.getProperty("file.separator")).append(entry.getName()).toString();
+                if (entry.isDirectory()) {
+                    log.info("Creating directory: " + entryPath);
+                    (new File(entryPath)).mkdir();
+                    continue;
+                }
+                int count;
+                byte data[] = new byte[BUFFER];
+                FileOutputStream fos = new FileOutputStream(entryPath);
+                dest = new BufferedOutputStream(fos, BUFFER);
+                while ((count = zis.read(data, 0, BUFFER)) != -1) dest.write(data, 0, count);
+                dest.flush();
+                dest.close();
+            }
+            zis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static Reader createReader(TreeLogger logger, URL url) throws UnableToCompleteException {
+        try {
+            return new InputStreamReader(url.openStream());
+        } catch (IOException e) {
+            logger.log(TreeLogger.ERROR, "Unable to open resource: " + url, e);
+            throw new UnableToCompleteException();
+        }
+    }
+} </s>
+<s>class temp {    private InputStream callService(String text) {
+        InputStream in = null;
+        try {
+            URL url = new URL(SERVLET_URL);
+            URLConnection conn = url.openConnection();
+            HttpURLConnection httpConn = (HttpURLConnection) conn;
+            httpConn.setRequestMethod("POST");
+            httpConn.setDoInput(true);
+            httpConn.setDoOutput(true);
+            httpConn.connect();
+            DataOutputStream dataStream = new DataOutputStream(conn.getOutputStream());
+            dataStream.writeBytes(text);
+            dataStream.flush();
+            dataStream.close();
+            int responseCode = httpConn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                in = httpConn.getInputStream();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return in;
+    }
+} </s>
+<s>class temp {    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        long startTime = System.currentTimeMillis();
+        boolean validClient = true;
+        boolean validSession = false;
+        String sessionKey = req.getParameter("sid");
+        String storedKey = CLIENT_SESSION_KEYS.get(req.getRemoteAddr());
+        if (sessionKey != null && storedKey != null && sessionKey.equals(storedKey)) validSession = true;
+        DataStore ds = DataStore.getConnection();
+        if (IPV6_DETECTED) {
+            boolean doneWarning;
+            synchronized (SJQServlet.class) {
+                doneWarning = IPV6_WARNED;
+                if (!IPV6_WARNED) IPV6_WARNED = true;
+            }
+            if (!doneWarning) LOG.warn("IPv6 interface detected; client restriction settings ignored [restrictions do not support IPv6 addresses]");
+        } else {
+            String[] clntRestrictions = ds.getSetting("ValidClients", "").split(";");
+            List<IPMatcher> matchers = new ArrayList<IPMatcher>();
+            if (clntRestrictions.length == 1 && clntRestrictions[0].trim().length() == 0) {
+                LOG.warn("All client connections are being accepted and processed, please consider setting up client restrictions in SJQ settings");
+            } else {
+                for (String s : clntRestrictions) {
+                    s = s.trim();
+                    try {
+                        matchers.add(new IPMatcher(s));
+                    } catch (IPMatcherException e) {
+                        LOG.error("Invalid client restriction settings; client restrictions ignored!", e);
+                        matchers.clear();
+                        break;
+                    }
+                }
+                validClient = matchers.size() > 0 ? false : true;
+                for (IPMatcher m : matchers) {
+                    try {
+                        if (m.match(req.getRemoteAddr())) {
+                            validClient = true;
+                            break;
+                        }
+                    } catch (IPMatcherException e) {
+                        LOG.error("IPMatcherException", e);
+                    }
+                }
+            }
+        }
+        String clntProto = req.getParameter("proto");
+        if (clntProto == null || Integer.parseInt(clntProto) != SJQ_PROTO) throw new RuntimeException("Server is speaking protocol '" + SJQ_PROTO + "', but client is speaking protocol '" + clntProto + "'; install a client version that matches the server protocol version!");
+        resp.setHeader("Content-Type", "text/plain");
+        resp.setDateHeader("Expires", 0);
+        resp.setDateHeader("Last-Modified", System.currentTimeMillis());
+        resp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        resp.setHeader("Pragma", "no-cache");
+        String cmd = req.getParameter("cmd");
+        if (cmd == null) {
+            DataStore.returnConnection(ds);
+            return;
+        }
+        ActiveClientList list = ActiveClientList.getInstance();
+        BufferedWriter bw = new BufferedWriter(resp.getWriter());
+        if (cmd.equals("pop")) {
+            if (!validClient) {
+                LOG.warn("Client IP rejected: " + req.getRemoteAddr());
+                notAuthorized(resp, bw);
+            } else {
+                list.add(req.getRemoteHost());
+                ClientParser clnt = new ClientParser(new StringReader(ds.getClientConf(req.getRemoteHost())));
+                String offDay = clnt.getGlobalOption("OFFDAY");
+                String offHour = clnt.getGlobalOption("OFFHOUR");
+                Calendar now = Calendar.getInstance();
+                if (RangeInterpreter.inRange(now.get(Calendar.DAY_OF_WEEK), 1, 7, offDay) || RangeInterpreter.inRange(now.get(Calendar.HOUR_OF_DAY), 0, 23, offHour)) {
+                    LOG.warn("Client '" + req.getRemoteAddr() + "' currently disabled via OFFDAY/OFFHOUR settings.");
+                    bw.write("null");
+                } else {
+                    Task t = TaskQueue.getInstance().pop(req.getRemoteHost(), getPopCandidates(req.getRemoteHost(), clnt));
+                    if (t == null) bw.write("null"); else {
+                        t.setResourcesUsed(Integer.parseInt(clnt.getTask(t.getTaskId()).getOption("RESOURCES")));
+                        Object obj = null;
+                        if (t.getObjType().equals("media")) obj = Butler.SageApi.mediaFileAPI.GetMediaFileForID(Integer.parseInt(t.getObjId())); else if (t.getObjType().equals("sysmsg")) obj = SystemMessageUtils.getSysMsg(t.getObjId());
+                        ClientTask cTask = clnt.getTask(t.getTaskId());
+                        JSONObject jobj = cTask.toJSONObject(obj);
+                        String objType = null;
+                        try {
+                            if (jobj != null) objType = jobj.getString(Task.JSON_OBJ_TYPE);
+                        } catch (JSONException e) {
+                            throw new RuntimeException("Invalid ClienTask JSON object conversion!");
+                        }
+                        if (obj == null || jobj == null) {
+                            LOG.error("Source object has disappeared! [" + t.getObjType() + "/" + t.getObjId() + "]");
+                            TaskQueue.getInstance().updateTask(t.getObjId(), t.getTaskId(), Task.State.FAILED, t.getObjType());
+                            bw.write("null");
+                        } else if (objType.equals("media")) {
+                            try {
+                                long ratio = calcRatio(jobj.getString(Task.JSON_OBJ_ID), jobj.getString(Task.JSON_NORECORDING));
+                                if (ratio > 0 && new FieldTimeUntilNextRecording(null, "<=", ratio + "S").run()) {
+                                    LOG.info("Client '" + req.getRemoteAddr() + "' cannot pop task '" + t.getObjType() + "/" + t.getTaskId() + "/" + t.getObjId() + "'; :NORECORDING option prevents running of this task");
+                                    TaskQueue.getInstance().pushBack(t);
+                                    bw.write("null");
+                                } else bw.write(jobj.toString());
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else bw.write(jobj.toString());
+                    }
+                }
+            }
+        } else if (cmd.equals("update")) {
+            if (!validClient) {
+                LOG.warn("Client IP rejected: " + req.getRemoteAddr());
+                notAuthorized(resp, bw);
+            } else {
+                list.add(req.getRemoteHost());
+                try {
+                    Task t = new Task(new JSONObject(req.getParameter("data")));
+                    TaskQueue.getInstance().updateTask(t);
+                } catch (JSONException e) {
+                    throw new RuntimeException("Input error; client '" + req.getRemoteHost() + "', CMD: update", e);
+                }
+            }
+        } else if (cmd.equals("showQ")) {
+            if (validSession) bw.write(TaskQueue.getInstance().toJSONArray().toString()); else notAuthorized(resp, bw);
+        } else if (cmd.equals("log")) {
+            if (validSession) {
+                String mediaId = req.getParameter("m");
+                String taskId = req.getParameter("t");
+                String objType = req.getParameter("o");
+                if ((mediaId != null && !mediaId.equals("0")) && (taskId != null && !taskId.equals("0"))) bw.write(ds.readLog(mediaId, taskId, objType)); else {
+                    BufferedReader r = new BufferedReader(new FileReader("sjq.log"));
+                    String line;
+                    while ((line = r.readLine()) != null) bw.write(line + "\n");
+                    r.close();
+                }
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("appState")) {
+            if (validSession) bw.write(Butler.dumpAppTrace()); else notAuthorized(resp, bw);
+        } else if (cmd.equals("writeLog")) {
+            if (!validClient) {
+                LOG.warn("Client IP reject: " + req.getRemoteAddr());
+                notAuthorized(resp, bw);
+            } else {
+                String mediaId = req.getParameter("m");
+                String taskId;
+                if (!mediaId.equals("-1")) taskId = req.getParameter("t"); else taskId = req.getRemoteHost();
+                String objType = req.getParameter("o");
+                if (!mediaId.equals("0") && Boolean.parseBoolean(ds.getSetting("IgnoreTaskOutput", "false"))) {
+                    LOG.info("Dropping task output as per settings");
+                    DataStore.returnConnection(ds);
+                    return;
+                }
+                String data = req.getParameter("data");
+                String[] msg = StringUtils.splitByWholeSeparator(data, "\r\n");
+                if (msg == null || msg.length == 1) msg = StringUtils.split(data, '\r');
+                if (msg == null || msg.length == 1) msg = StringUtils.split(data, '\n');
+                long now = System.currentTimeMillis();
+                for (String line : msg) ds.logForTaskClient(mediaId, taskId, line, now, objType);
+                if (msg.length > 0) ds.flushLogs();
+            }
+        } else if (cmd.equals("ruleset")) {
+            if (validSession) bw.write(ds.getSetting("ruleset", "")); else notAuthorized(resp, bw);
+        } else if (cmd.equals("saveRuleset")) {
+            if (validSession) {
+                ds.setSetting("ruleset", req.getParameter("data"));
+                bw.write("Success");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("getClients")) {
+            if (validSession) bw.write(ActiveClientList.getInstance().toJSONArray().toString()); else notAuthorized(resp, bw);
+        } else if (cmd.equals("loadClnt")) {
+            if (validSession) bw.write(ds.getClientConf(req.getParameter("id"))); else notAuthorized(resp, bw);
+        } else if (cmd.equals("saveClnt")) {
+            if (validSession) {
+                if (ds.saveClientConf(req.getParameter("id"), req.getParameter("data"))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("history")) {
+            if (validSession) {
+                int start, limit;
+                try {
+                    start = Integer.parseInt(req.getParameter("start"));
+                    limit = Integer.parseInt(req.getParameter("limit"));
+                } catch (NumberFormatException e) {
+                    start = 0;
+                    limit = -1;
+                }
+                bw.write(ds.getJobHistory(Integer.parseInt(req.getParameter("t")), start, limit, req.getParameter("sort")).toString());
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("getSrvSetting")) {
+            if (validSession) bw.write(ds.getSetting(req.getParameter("var"), "")); else notAuthorized(resp, bw);
+        } else if (cmd.equals("setSrvSetting")) {
+            if (validSession) {
+                ds.setSetting(req.getParameter("var"), req.getParameter("val"));
+                bw.write("Success");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("setFileCleaner")) {
+            if (validSession) {
+                ds.setSetting("DelRegex", req.getParameter("orphan"));
+                ds.setSetting("IfRegex", req.getParameter("parent"));
+                ds.setSetting("IgnoreRegex", req.getParameter("ignore"));
+                new Thread(new FileCleaner()).start();
+                bw.write("Success");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("getFileCleanerSettings")) {
+            if (validSession) {
+                bw.write(ds.getSetting("DelRegex", "") + "\n");
+                bw.write(ds.getSetting("IfRegex", "") + "\n");
+                bw.write(ds.getSetting("IgnoreRegex", ""));
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("writeSrvSettings")) {
+            if (validSession) {
+                try {
+                    ds.setSettings(new JSONObject(req.getParameter("data")));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+                bw.write("Success");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("readSrvSettings")) {
+            if (validSession) bw.write(ds.readSettings().toString()); else notAuthorized(resp, bw);
+        } else if (cmd.equals("login")) {
+            String pwd = ds.getSetting("password", "");
+            try {
+                MessageDigest msg = MessageDigest.getInstance("MD5");
+                msg.update(req.getParameter("password").getBytes());
+                String userPwd = new String(msg.digest());
+                if (pwd.length() > 0 && pwd.equals(userPwd)) {
+                    bw.write("Success");
+                    int key = new java.util.Random().nextInt();
+                    resp.addHeader("SJQ-Session-Token", Integer.toString(key));
+                    CLIENT_SESSION_KEYS.put(req.getRemoteAddr(), Integer.toString(key));
+                } else bw.write("BadPassword");
+            } catch (NoSuchAlgorithmException e) {
+                bw.write(e.getLocalizedMessage());
+            }
+        } else if (cmd.equals("editPwd")) {
+            try {
+                MessageDigest msg = MessageDigest.getInstance("MD5");
+                String curPwd = ds.getSetting("password", "");
+                String oldPwd = req.getParameter("old");
+                msg.update(oldPwd.getBytes());
+                oldPwd = new String(msg.digest());
+                msg.reset();
+                String newPwd = req.getParameter("new");
+                String confPwd = req.getParameter("conf");
+                if (!curPwd.equals(oldPwd)) bw.write("BadOld"); else if (!newPwd.equals(confPwd) || newPwd.length() == 0) bw.write("BadNew"); else {
+                    msg.update(newPwd.getBytes());
+                    newPwd = new String(msg.digest());
+                    ds.setSetting("password", newPwd);
+                    bw.write("Success");
+                }
+            } catch (NoSuchAlgorithmException e) {
+                bw.write(e.getLocalizedMessage());
+            }
+        } else if (cmd.equals("runStats")) {
+            if (validSession) {
+                JSONObject o = new JSONObject();
+                try {
+                    o.put("last", Long.parseLong(ds.getSetting("LastRun", "0")));
+                    o.put("next", Long.parseLong(ds.getSetting("NextRun", "0")));
+                    bw.write(o.toString());
+                } catch (JSONException e) {
+                    bw.write(e.getLocalizedMessage());
+                }
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("runQLoader")) {
+            if (validSession) {
+                Butler.wakeQueueLoader();
+                bw.write("Success");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("delActiveQ")) {
+            if (validSession) {
+                if (TaskQueue.getInstance().delete(req.getParameter("m"), req.getParameter("t"))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("clearActiveQ")) {
+            if (validSession) {
+                if (TaskQueue.getInstance().clear()) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("editPri")) {
+            if (validSession) {
+                try {
+                    int priority = Integer.parseInt(req.getParameter("p"));
+                    if (TaskQueue.getInstance().editPriority(req.getParameter("m"), req.getParameter("t"), priority)) bw.write("Success"); else bw.write("Failed");
+                } catch (NumberFormatException e) {
+                    bw.write("Failed");
+                }
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("clearHistory")) {
+            if (validSession) {
+                if (ds.clear(Integer.parseInt(req.getParameter("t")))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("delHistRow")) {
+            if (validSession) {
+                if (ds.delTask(req.getParameter("m"), req.getParameter("t"), Integer.parseInt(req.getParameter("y")), req.getParameter("o"))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("rmLog")) {
+            if (validSession) {
+                String mid = req.getParameter("m");
+                String tid = req.getParameter("t");
+                String oid = req.getParameter("o");
+                if (mid.equals("0") && tid.equals("0") && oid.equals("null")) {
+                    bw.write("Failed: Can't delete server log file (sjq.log) while SageTV is running!");
+                } else if (ds.clearLog(mid, tid, oid)) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("qryMediaFile")) {
+            if (validSession) {
+                JSONArray jarr = new JSONArray();
+                MediaFileAPI.List mediaList = Butler.SageApi.mediaFileAPI.GetMediaFiles(ds.getMediaMask());
+                String qry = req.getParameter("q");
+                int max = Integer.parseInt(req.getParameter("m"));
+                for (MediaFileAPI.MediaFile mf : mediaList) {
+                    if ((qry.matches("\\d+") && Integer.toString(mf.GetMediaFileID()).startsWith(qry)) || mf.GetMediaTitle().matches(".*" + Pattern.quote(qry) + ".*") || fileSegmentMatches(mf, qry)) {
+                        JSONObject o = new JSONObject();
+                        try {
+                            o.put("value", mf.GetFileForSegment(0).getAbsolutePath());
+                            String subtitle = null;
+                            if (mf.GetMediaFileAiring() != null && mf.GetMediaFileAiring().GetShow() != null) subtitle = mf.GetMediaFileAiring().GetShow().GetShowEpisode();
+                            String display;
+                            if (subtitle != null && subtitle.length() > 0) display = mf.GetMediaTitle() + ": " + subtitle; else display = mf.GetMediaTitle();
+                            o.put("display", mf.GetMediaFileID() + " - " + display);
+                            jarr.put(o);
+                            if (jarr.length() >= max) break;
+                        } catch (JSONException e) {
+                            e.printStackTrace(System.out);
+                        }
+                    }
+                }
+                bw.write(jarr.toString());
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("debugMediaFile")) {
+            if (validSession) {
+                if (Butler.debugQueueLoader(req.getParameter("f"))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("killTask")) {
+            if (validSession) {
+                if (TaskQueue.getInstance().killTask(req.getParameter("m"), req.getParameter("t"), req.getParameter("o"))) bw.write("Success"); else bw.write("Failed");
+            } else notAuthorized(resp, bw);
+        } else if (cmd.equals("keepAlive")) {
+            bw.write(Boolean.toString(!TaskQueue.getInstance().isTaskKilled(req.getParameter("m"), req.getParameter("t"), req.getParameter("o"))));
+        }
+        bw.close();
+        DataStore.returnConnection(ds);
+        LOG.info("Servlet POST request completed [" + (System.currentTimeMillis() - startTime) + "ms]");
+        return;
+    }
+} </s>
+<s>class temp {        public void readFully(String urlS) throws Exception {
+            URL url = new URL(urlS);
+            URLConnection conn = url.openConnection();
+            InputStream is = conn.getInputStream();
+            byte[] data = new byte[10240];
+            int b = is.read(data);
+            while (b > 0) {
+                size += b;
+                b = is.read(data);
+            }
+            is.close();
+        }
+} </s>
+<s>class temp {    private static void writeBinaryFile(String filename, String target) throws IOException {
+        File outputFile = new File(target);
+        AgentFilesystem.forceDir(outputFile.getParent());
+        FileOutputStream output = new FileOutputStream(new File(target));
+        FileInputStream inputStream = new FileInputStream(filename);
+        byte[] buffer = new byte[4096];
+        int bytesRead = 0;
+        while ((bytesRead = inputStream.read(buffer)) > -1) output.write(buffer, 0, bytesRead);
+        inputStream.close();
+        output.close();
+    }
+} </s>
+<s>class temp {    public static String getFileContentFromPlugin(String path) {
+        URL url = getURLFromPlugin(path);
+        StringBuffer sb = new StringBuffer();
+        try {
+            Scanner scanner = new Scanner(url.openStream());
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                sb.append(line + "\n");
+            }
+            scanner.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+        return sb.toString();
+    }
+} </s>
+<s>class temp {    public static boolean copyFile(File sourceFile, File destFile) {
+        FileChannel srcChannel = null;
+        FileChannel dstChannel = null;
+        try {
+            srcChannel = new FileInputStream(sourceFile).getChannel();
+            dstChannel = new FileOutputStream(destFile).getChannel();
+            long pos = 0;
+            long count = srcChannel.size();
+            if (count > MAX_BLOCK_SIZE) {
+                count = MAX_BLOCK_SIZE;
+            }
+            long transferred = Long.MAX_VALUE;
+            while (transferred > 0) {
+                transferred = dstChannel.transferFrom(srcChannel, pos, count);
+                pos = transferred;
+            }
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if (srcChannel != null) {
+                try {
+                    srcChannel.close();
+                } catch (IOException e) {
+                }
+            }
+            if (dstChannel != null) {
+                try {
+                    dstChannel.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        return true;
+    }
+} </s>
+<s>class temp {    public boolean synch(boolean verbose) {
+        try {
+            this.verbose = verbose;
+            if (verbose) System.out.println(" -- Synchronizing: " + destDir + " to " + urlStr);
+            URLConnection urc = new URL(urlStr + "/" + MANIFEST).openConnection();
+            InputStream is = urc.getInputStream();
+            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+            while (true) {
+                String str = r.readLine();
+                if (str == null) {
+                    break;
+                }
+                dealWith(str);
+            }
+            is.close();
+        } catch (Exception ex) {
+            System.out.println("Synchronization of " + destDir + " failed.");
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+} </s>
+<s>class temp {    private void dealWith(String line) throws Exception {
+        if (line.startsWith("#") || (line.length() == 0)) {
+            return;
+        }
+        String sarr[];
+        sarr = StringUtil.split(line, '\t');
+        String path = destDir + File.separator + sarr[0];
+        boolean copyFile = true;
+        if (sarr.length == 2) {
+            try {
+                String serverHash = sarr[1];
+                String fileHash = loadFileHash(destDir + File.separator + sarr[0]);
+                if (fileHash != null) {
+                    if (serverHash.equalsIgnoreCase(fileHash)) {
+                        copyFile = false;
+                    } else {
+                        if (verbose) {
+                            System.out.println(" -- " + sarr[0] + " has changed");
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.out.println(ex.getMessage());
+                System.exit(2);
+            }
+        }
+        if (copyFile) {
+            int idx = path.lastIndexOf('/');
+            if (idx > 0) {
+                String dir = path.substring(0, idx);
+                File f = new File(dir);
+                f.mkdirs();
+            }
+            FileOutputStream os = new FileOutputStream(path);
+            byte buf[] = new byte[1024];
+            URLConnection urc = new URL(urlStr + "/" + sarr[0]).openConnection();
+            InputStream is = urc.getInputStream();
+            boolean done = false;
+            while (!done) {
+                int read = is.read(buf, 0, 1024);
+                if (read == -1) {
+                    done = true;
+                } else {
+                    os.write(buf, 0, read);
+                }
+            }
+            os.close();
+            is.close();
+            if (verbose) {
+                System.out.println(" -- Copied: " + sarr[0]);
+            }
+        }
+    }
+} </s>
+<s>class temp {    public Bitmap retrieveBitmap(String urlString) {
+        Log.d(Constants.LOG_TAG, "making HTTP trip for image:" + urlString);
+        Bitmap bitmap = null;
+        try {
+            URL url = new URL(urlString);
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(5000);
+            bitmap = BitmapFactory.decodeStream(conn.getInputStream());
+        } catch (MalformedURLException e) {
+            Log.e(Constants.LOG_TAG, "Exception loading image, malformed URL", e);
+        } catch (IOException e) {
+            Log.e(Constants.LOG_TAG, "Exception loading image, IO error", e);
+        }
+        return bitmap;
+    }
+} </s>

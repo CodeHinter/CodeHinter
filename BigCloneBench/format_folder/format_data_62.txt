@@ -1,0 +1,3624 @@
+<s>class temp {    public static Dictionary loadManifestFrom(BaseData bundledata) throws BundleException {
+        URL url = bundledata.getEntry(Constants.OSGI_BUNDLE_MANIFEST);
+        if (url == null) return null;
+        try {
+            return Headers.parseManifest(url.openStream());
+        } catch (IOException e) {
+            throw new BundleException(NLS.bind(EclipseAdaptorMsg.ECLIPSE_DATA_ERROR_READING_MANIFEST, bundledata.getLocation()), e);
+        }
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    public Long processAddCompany(Company companyBean, Long holdingId) {
+        PreparedStatement ps = null;
+        DatabaseAdapter dbDyn = null;
+        try {
+            dbDyn = DatabaseAdapter.getInstance();
+            CustomSequenceType seq = new CustomSequenceType();
+            seq.setSequenceName("seq_WM_LIST_COMPANY");
+            seq.setTableName("WM_LIST_COMPANY");
+            seq.setColumnName("ID_FIRM");
+            Long sequenceValue = dbDyn.getSequenceNextValue(seq);
+            ps = dbDyn.prepareStatement("insert into WM_LIST_COMPANY (" + "	ID_FIRM, " + "	full_name, " + "	short_name, " + "	address, " + "	chief, " + "	buh, " + "	url, " + "	short_info, " + "   is_deleted" + ")values " + (dbDyn.getIsNeedUpdateBracket() ? "(" : "") + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "   0 " + (dbDyn.getIsNeedUpdateBracket() ? ")" : ""));
+            int num = 1;
+            RsetTools.setLong(ps, num++, sequenceValue);
+            ps.setString(num++, companyBean.getName());
+            ps.setString(num++, companyBean.getShortName());
+            ps.setString(num++, companyBean.getAddress());
+            ps.setString(num++, companyBean.getCeo());
+            ps.setString(num++, companyBean.getCfo());
+            ps.setString(num++, companyBean.getWebsite());
+            ps.setString(num++, companyBean.getInfo());
+            int i1 = ps.executeUpdate();
+            if (log.isDebugEnabled()) log.debug("Count of inserted records - " + i1);
+            if (holdingId != null) {
+                InternalDaoFactory.getInternalHoldingDao().setRelateHoldingCompany(dbDyn, holdingId, sequenceValue);
+            }
+            dbDyn.commit();
+            return sequenceValue;
+        } catch (Exception e) {
+            try {
+                if (dbDyn != null) dbDyn.rollback();
+            } catch (Exception e001) {
+            }
+            String es = "Error add new company";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        } finally {
+            DatabaseManager.close(dbDyn, ps);
+            dbDyn = null;
+            ps = null;
+        }
+    }
+} </s>
+<s>class temp {    public Long processAddCompany(Company companyBean, String userLogin, Long holdingId, AuthSession authSession) {
+        if (authSession == null) {
+            return null;
+        }
+        PreparedStatement ps = null;
+        DatabaseAdapter dbDyn = null;
+        try {
+            dbDyn = DatabaseAdapter.getInstance();
+            CustomSequenceType seq = new CustomSequenceType();
+            seq.setSequenceName("seq_WM_LIST_COMPANY");
+            seq.setTableName("WM_LIST_COMPANY");
+            seq.setColumnName("ID_FIRM");
+            Long sequenceValue = dbDyn.getSequenceNextValue(seq);
+            ps = dbDyn.prepareStatement("insert into WM_LIST_COMPANY (" + "	ID_FIRM, " + "	full_name, " + "	short_name, " + "	address, " + "	telefon_buh, " + "	telefon_chief, " + "	chief, " + "	buh, " + "	fax, " + "	email, " + "	icq, " + "	short_client_info, " + "	url, " + "	short_info, " + "is_deleted" + ")" + (dbDyn.getIsNeedUpdateBracket() ? "(" : "") + " select " + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?," + "	?,0 from WM_AUTH_USER " + "where USER_LOGIN=? " + (dbDyn.getIsNeedUpdateBracket() ? ")" : ""));
+            int num = 1;
+            RsetTools.setLong(ps, num++, sequenceValue);
+            ps.setString(num++, companyBean.getName());
+            ps.setString(num++, companyBean.getShortName());
+            ps.setString(num++, companyBean.getAddress());
+            ps.setString(num++, "");
+            ps.setString(num++, "");
+            ps.setString(num++, companyBean.getCeo());
+            ps.setString(num++, companyBean.getCfo());
+            ps.setString(num++, "");
+            ps.setString(num++, "");
+            RsetTools.setLong(ps, num++, null);
+            ps.setString(num++, "");
+            ps.setString(num++, companyBean.getWebsite());
+            ps.setString(num++, companyBean.getInfo());
+            ps.setString(num++, userLogin);
+            int i1 = ps.executeUpdate();
+            if (log.isDebugEnabled()) log.debug("Count of inserted records - " + i1);
+            if (holdingId != null) {
+                InternalDaoFactory.getInternalHoldingDao().setRelateHoldingCompany(dbDyn, holdingId, sequenceValue);
+            }
+            dbDyn.commit();
+            return sequenceValue;
+        } catch (Exception e) {
+            try {
+                if (dbDyn != null) dbDyn.rollback();
+            } catch (Exception e001) {
+            }
+            String es = "Error add new company";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        } finally {
+            DatabaseManager.close(dbDyn, ps);
+            dbDyn = null;
+            ps = null;
+        }
+    }
+} </s>
+<s>class temp {    public void processSaveCompany(Company companyBean, AuthSession authSession) {
+        if (authSession == null) {
+            return;
+        }
+        DatabaseAdapter dbDyn = null;
+        PreparedStatement ps = null;
+        try {
+            dbDyn = DatabaseAdapter.getInstance();
+            String sql = "UPDATE WM_LIST_COMPANY " + "SET " + "	full_name = ?, " + "	short_name = ?, " + "	address = ?, " + "	telefon_buh = ?, " + "	telefon_chief = ?, " + "	chief = ?, " + "	buh = ?, " + "	fax = ?, " + "	email = ?, " + "	icq = ?, " + "	short_client_info = ?, " + "	url = ?, " + "	short_info = ? " + "WHERE ID_FIRM = ? and ID_FIRM in ";
+            switch(dbDyn.getFamaly()) {
+                case DatabaseManager.MYSQL_FAMALY:
+                    String idList = authSession.getGrantedCompanyId();
+                    sql += " (" + idList + ") ";
+                    break;
+                default:
+                    sql += "(select z1.ID_FIRM from v$_read_list_firm z1 where z1.user_login = ?)";
+                    break;
+            }
+            ps = dbDyn.prepareStatement(sql);
+            int num = 1;
+            ps.setString(num++, companyBean.getName());
+            ps.setString(num++, companyBean.getShortName());
+            ps.setString(num++, companyBean.getAddress());
+            ps.setString(num++, "");
+            ps.setString(num++, "");
+            ps.setString(num++, companyBean.getCeo());
+            ps.setString(num++, companyBean.getCfo());
+            ps.setString(num++, "");
+            ps.setString(num++, "");
+            RsetTools.setLong(ps, num++, null);
+            ps.setString(num++, "");
+            ps.setString(num++, companyBean.getWebsite());
+            ps.setString(num++, companyBean.getInfo());
+            RsetTools.setLong(ps, num++, companyBean.getId());
+            switch(dbDyn.getFamaly()) {
+                case DatabaseManager.MYSQL_FAMALY:
+                    break;
+                default:
+                    ps.setString(num++, authSession.getUserLogin());
+                    break;
+            }
+            int i1 = ps.executeUpdate();
+            if (log.isDebugEnabled()) log.debug("Count of updated record - " + i1);
+            dbDyn.commit();
+        } catch (Exception e) {
+            try {
+                if (dbDyn != null) dbDyn.rollback();
+            } catch (Exception e001) {
+            }
+            String es = "Error save company";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        } finally {
+            DatabaseManager.close(dbDyn, ps);
+            dbDyn = null;
+            ps = null;
+        }
+    }
+} </s>
+<s>class temp {    public void processDeleteCompany(Company companyBean, AuthSession authSession) {
+        if (authSession == null) {
+            return;
+        }
+        DatabaseAdapter dbDyn = null;
+        PreparedStatement ps = null;
+        try {
+            dbDyn = DatabaseAdapter.getInstance();
+            if (companyBean.getId() == null) throw new IllegalArgumentException("companyId is null");
+            String sql = "update WM_LIST_COMPANY set is_deleted = 1 " + "where  ID_FIRM = ? and ID_FIRM in ";
+            switch(dbDyn.getFamaly()) {
+                case DatabaseManager.MYSQL_FAMALY:
+                    String idList = authSession.getGrantedCompanyId();
+                    sql += " (" + idList + ") ";
+                    break;
+                default:
+                    sql += "(select z1.ID_FIRM from v$_read_list_firm z1 where z1.user_login = ?)";
+                    break;
+            }
+            ps = dbDyn.prepareStatement(sql);
+            RsetTools.setLong(ps, 1, companyBean.getId());
+            switch(dbDyn.getFamaly()) {
+                case DatabaseManager.MYSQL_FAMALY:
+                    break;
+                default:
+                    ps.setString(2, authSession.getUserLogin());
+                    break;
+            }
+            int i1 = ps.executeUpdate();
+            if (log.isDebugEnabled()) log.debug("Count of deleted records - " + i1);
+            dbDyn.commit();
+        } catch (Exception e) {
+            try {
+                if (dbDyn != null) dbDyn.rollback();
+            } catch (Exception e001) {
+            }
+            String es = "Error delete company";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        } finally {
+            DatabaseManager.close(dbDyn, ps);
+            dbDyn = null;
+            ps = null;
+        }
+    }
+} </s>
+<s>class temp {    public static Image getImage(URL url) throws IOException {
+        InputStream is = null;
+        try {
+            is = url.openStream();
+            Image img = getImage(is);
+            img.setUrl(url);
+            return img;
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {public static String md5(String text) {
+        MessageDigest msgDigest = null;
+        try {
+            msgDigest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("System doesn't support MD5 algorithm.");
+        }
+        try {
+            msgDigest.update(text.getBytes(AlipayConfig.input_charset));
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("System doesn't support your  EncodingException.");
+        }
+        byte[] bytes = msgDigest.digest();
+        String md5Str = new String(encodeHex(bytes));
+        return md5Str;
+    }} </s>
+<s>class temp {    public void readCatalog(Catalog catalog, String fileUrl) throws MalformedURLException, IOException, CatalogException {
+        URL url = null;
+        try {
+            url = new URL(fileUrl);
+        } catch (MalformedURLException e) {
+            url = new URL("file:///" + fileUrl);
+        }
+        debug = catalog.getCatalogManager().debug;
+        try {
+            URLConnection urlCon = url.openConnection();
+            readCatalog(catalog, urlCon.getInputStream());
+        } catch (FileNotFoundException e) {
+            catalog.getCatalogManager().debug.message(1, "Failed to load catalog, file not found", url.toString());
+        }
+    }
+} </s>
+<s>class temp {    public synchronized String encrypt(String plaintext) throws ServiceRuntimeException {
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new ServiceRuntimeException(e.getMessage());
+        }
+        try {
+            md.update(plaintext.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceRuntimeException(e.getMessage());
+        }
+        byte raw[] = md.digest();
+        String hash = (new BASE64Encoder()).encode(raw);
+        return hash;
+    }
+} </s>
+<s>class temp {    private HTMLDocument fetchDocument(String urlString) throws MalformedURLException, IOException {
+        try {
+            URL url = new URL(urlString);
+            HTMLEditorKit kit = new HTMLEditorKit();
+            doc = (HTMLDocument) kit.createDefaultDocument();
+            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+            URLConnection con = url.openConnection();
+            con.setConnectTimeout(5000);
+            con.connect();
+            Reader reader = new InputStreamReader(con.getInputStream());
+            kit.read(reader, doc, 0);
+        } catch (BadLocationException e) {
+            logger.error(e.getLocalizedMessage());
+        }
+        return doc;
+    }
+} </s>
+<s>class temp {    private void updateService(int nodeID, String interfaceIP, int serviceID, String notifyFlag) throws ServletException {
+        Connection connection = null;
+        final DBUtils d = new DBUtils(getClass());
+        try {
+            connection = Vault.getDbConnection();
+            d.watch(connection);
+            PreparedStatement stmt = connection.prepareStatement(UPDATE_SERVICE);
+            d.watch(stmt);
+            stmt.setString(1, notifyFlag);
+            stmt.setInt(2, nodeID);
+            stmt.setString(3, interfaceIP);
+            stmt.setInt(4, serviceID);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException sqlEx) {
+                throw new ServletException("Couldn't roll back update to service " + serviceID + " on interface " + interfaceIP + " notify as " + notifyFlag + " in the database.", sqlEx);
+            }
+            throw new ServletException("Error when updating to service " + serviceID + " on interface " + interfaceIP + " notify as " + notifyFlag + " in the database.", e);
+        } finally {
+            d.cleanUp();
+        }
+    }
+} </s>
+<s>class temp {    private void bubbleSort(int[] mas) {
+        boolean t = true;
+        int temp = 0;
+        while (t) {
+            t = false;
+            for (int i = 0; i < mas.length - 1; i++) {
+                if (mas[i] > mas[i + 1]) {
+                    temp = mas[i];
+                    mas[i] = mas[i + 1];
+                    mas[i + 1] = temp;
+                    t = true;
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void run() {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            log.trace("passing in cookies: ", cookies);
+            connection.setRequestProperty("Cookie", cookies);
+            connection.getContent();
+        } catch (Exception e) {
+            log.error(e);
+        }
+    }
+} </s>
+<s>class temp {    static void copy(String src, String dest) throws IOException {
+        File ifp = new File(src);
+        File ofp = new File(dest);
+        if (ifp.exists() == false) {
+            throw new IOException("file '" + src + "' does not exist");
+        }
+        FileInputStream fis = new FileInputStream(ifp);
+        FileOutputStream fos = new FileOutputStream(ofp);
+        byte[] b = new byte[1024];
+        while (fis.read(b) > 0) fos.write(b);
+        fis.close();
+        fos.close();
+    }
+} </s>
+<s>class temp {    public void importarHistoricoDeCotacoesDosPapeis(File[] pArquivosTXT, boolean pApagarDadosImportadosAnteriormente, Andamento pAndamento) throws FileNotFoundException, SQLException {
+        if (pApagarDadosImportadosAnteriormente) {
+            Statement stmtLimpezaInicialDestino = conDestino.createStatement();
+            String sql = "TRUNCATE TABLE TMP_TB_COTACAO_AVISTA_LOTE_PDR";
+            stmtLimpezaInicialDestino.executeUpdate(sql);
+            sql = "TRUNCATE TABLE TMP_TB_COTACAO_OUTROS_MERCADOS";
+            stmtLimpezaInicialDestino.executeUpdate(sql);
+        }
+        final int TAMANHO_DO_REGISTRO = 245;
+        long TAMANHO_DOS_METADADOS_DO_ARQUIVO = 2 * TAMANHO_DO_REGISTRO;
+        long tamanhoDosArquivos = 0;
+        for (File arquivoTXT : pArquivosTXT) {
+            long tamanhoDoArquivo = arquivoTXT.length();
+            tamanhoDosArquivos += tamanhoDoArquivo;
+        }
+        int quantidadeEstimadaDeRegistros = (int) ((tamanhoDosArquivos - (pArquivosTXT.length * TAMANHO_DOS_METADADOS_DO_ARQUIVO)) / TAMANHO_DO_REGISTRO);
+        String sqlMercadoAVistaLotePadrao = "INSERT INTO TMP_TB_COTACAO_AVISTA_LOTE_PDR(DATA_PREGAO, CODBDI, CODNEG, TPMERC, NOMRES, ESPECI, PRAZOT, MODREF, PREABE, PREMAX, PREMIN, PREMED, PREULT, PREOFC, PREOFV, TOTNEG, QUATOT, VOLTOT, PREEXE, INDOPC, DATVEN, FATCOT, PTOEXE, CODISI, DISMES) VALUES(:DATA_PREGAO, :CODBDI, :CODNEG, :TPMERC, :NOMRES, :ESPECI, :PRAZOT, :MODREF, :PREABE, :PREMAX, :PREMIN, :PREMED, :PREULT, :PREOFC, :PREOFV, :TOTNEG, :QUATOT, :VOLTOT, :PREEXE, :INDOPC, :DATVEN, :FATCOT, :PTOEXE, :CODISI, :DISMES)";
+        OraclePreparedStatement stmtDestinoMercadoAVistaLotePadrao = (OraclePreparedStatement) conDestino.prepareStatement(sqlMercadoAVistaLotePadrao);
+        stmtDestinoMercadoAVistaLotePadrao.setExecuteBatch(COMANDOS_POR_LOTE);
+        String sqlOutrosMercados = "INSERT INTO TMP_TB_COTACAO_OUTROS_MERCADOS(DATA_PREGAO, CODBDI, CODNEG, TPMERC, NOMRES, ESPECI, PRAZOT, MODREF, PREABE, PREMAX, PREMIN, PREMED, PREULT, PREOFC, PREOFV, TOTNEG, QUATOT, VOLTOT, PREEXE, INDOPC, DATVEN, FATCOT, PTOEXE, CODISI, DISMES) VALUES(:DATA_PREGAO, :CODBDI, :CODNEG, :TPMERC, :NOMRES, :ESPECI, :PRAZOT, :MODREF, :PREABE, :PREMAX, :PREMIN, :PREMED, :PREULT, :PREOFC, :PREOFV, :TOTNEG, :QUATOT, :VOLTOT, :PREEXE, :INDOPC, :DATVEN, :FATCOT, :PTOEXE, :CODISI, :DISMES)";
+        OraclePreparedStatement stmtDestinoOutrosMercados = (OraclePreparedStatement) conDestino.prepareStatement(sqlOutrosMercados);
+        stmtDestinoOutrosMercados.setExecuteBatch(COMANDOS_POR_LOTE);
+        int quantidadeDeRegistrosImportadosDosArquivos = 0;
+        Scanner in = null;
+        int numeroDoRegistro = -1;
+        try {
+            for (File arquivoTXT : pArquivosTXT) {
+                int quantidadeDeRegistrosImportadosDoArquivoAtual = 0;
+                int vDATA_PREGAO;
+                try {
+                    in = new Scanner(new FileInputStream(arquivoTXT), Constantes.CONJUNTO_DE_CARACTERES_DOS_ARQUIVOS_TEXTO_DA_BOVESPA.name());
+                    String registro;
+                    numeroDoRegistro = 0;
+                    while (in.hasNextLine()) {
+                        ++numeroDoRegistro;
+                        registro = in.nextLine();
+                        if (registro.length() != TAMANHO_DO_REGISTRO) throw new ProblemaNaImportacaoDeArquivo();
+                        if (registro.startsWith("01")) {
+                            stmtDestinoMercadoAVistaLotePadrao.clearParameters();
+                            stmtDestinoOutrosMercados.clearParameters();
+                            vDATA_PREGAO = Integer.parseInt(registro.substring(2, 10).trim());
+                            int vCODBDI = Integer.parseInt(registro.substring(10, 12).trim());
+                            String vCODNEG = registro.substring(12, 24).trim();
+                            int vTPMERC = Integer.parseInt(registro.substring(24, 27).trim());
+                            String vNOMRES = registro.substring(27, 39).trim();
+                            String vESPECI = registro.substring(39, 49).trim();
+                            String vPRAZOT = registro.substring(49, 52).trim();
+                            String vMODREF = registro.substring(52, 56).trim();
+                            BigDecimal vPREABE = obterBigDecimal(registro.substring(56, 69).trim(), 13, 2);
+                            BigDecimal vPREMAX = obterBigDecimal(registro.substring(69, 82).trim(), 13, 2);
+                            BigDecimal vPREMIN = obterBigDecimal(registro.substring(82, 95).trim(), 13, 2);
+                            BigDecimal vPREMED = obterBigDecimal(registro.substring(95, 108).trim(), 13, 2);
+                            BigDecimal vPREULT = obterBigDecimal(registro.substring(108, 121).trim(), 13, 2);
+                            BigDecimal vPREOFC = obterBigDecimal(registro.substring(121, 134).trim(), 13, 2);
+                            BigDecimal vPREOFV = obterBigDecimal(registro.substring(134, 147).trim(), 13, 2);
+                            int vTOTNEG = Integer.parseInt(registro.substring(147, 152).trim());
+                            BigDecimal vQUATOT = new BigDecimal(registro.substring(152, 170).trim());
+                            BigDecimal vVOLTOT = obterBigDecimal(registro.substring(170, 188).trim(), 18, 2);
+                            BigDecimal vPREEXE = obterBigDecimal(registro.substring(188, 201).trim(), 13, 2);
+                            int vINDOPC = Integer.parseInt(registro.substring(201, 202).trim());
+                            int vDATVEN = Integer.parseInt(registro.substring(202, 210).trim());
+                            int vFATCOT = Integer.parseInt(registro.substring(210, 217).trim());
+                            BigDecimal vPTOEXE = obterBigDecimal(registro.substring(217, 230).trim(), 13, 6);
+                            String vCODISI = registro.substring(230, 242).trim();
+                            int vDISMES = Integer.parseInt(registro.substring(242, 245).trim());
+                            boolean mercadoAVistaLotePadrao = (vTPMERC == 10 && vCODBDI == 2);
+                            OraclePreparedStatement stmtDestino;
+                            if (mercadoAVistaLotePadrao) {
+                                stmtDestino = stmtDestinoMercadoAVistaLotePadrao;
+                            } else {
+                                stmtDestino = stmtDestinoOutrosMercados;
+                            }
+                            stmtDestino.setIntAtName("DATA_PREGAO", vDATA_PREGAO);
+                            stmtDestino.setIntAtName("CODBDI", vCODBDI);
+                            stmtDestino.setStringAtName("CODNEG", vCODNEG);
+                            stmtDestino.setIntAtName("TPMERC", vTPMERC);
+                            stmtDestino.setStringAtName("NOMRES", vNOMRES);
+                            stmtDestino.setStringAtName("ESPECI", vESPECI);
+                            stmtDestino.setStringAtName("PRAZOT", vPRAZOT);
+                            stmtDestino.setStringAtName("MODREF", vMODREF);
+                            stmtDestino.setBigDecimalAtName("PREABE", vPREABE);
+                            stmtDestino.setBigDecimalAtName("PREMAX", vPREMAX);
+                            stmtDestino.setBigDecimalAtName("PREMIN", vPREMIN);
+                            stmtDestino.setBigDecimalAtName("PREMED", vPREMED);
+                            stmtDestino.setBigDecimalAtName("PREULT", vPREULT);
+                            stmtDestino.setBigDecimalAtName("PREOFC", vPREOFC);
+                            stmtDestino.setBigDecimalAtName("PREOFV", vPREOFV);
+                            stmtDestino.setIntAtName("TOTNEG", vTOTNEG);
+                            stmtDestino.setBigDecimalAtName("QUATOT", vQUATOT);
+                            stmtDestino.setBigDecimalAtName("VOLTOT", vVOLTOT);
+                            stmtDestino.setBigDecimalAtName("PREEXE", vPREEXE);
+                            stmtDestino.setIntAtName("INDOPC", vINDOPC);
+                            stmtDestino.setIntAtName("DATVEN", vDATVEN);
+                            stmtDestino.setIntAtName("FATCOT", vFATCOT);
+                            stmtDestino.setBigDecimalAtName("PTOEXE", vPTOEXE);
+                            stmtDestino.setStringAtName("CODISI", vCODISI);
+                            stmtDestino.setIntAtName("DISMES", vDISMES);
+                            int contagemDasInsercoes = stmtDestino.executeUpdate();
+                            quantidadeDeRegistrosImportadosDoArquivoAtual++;
+                            quantidadeDeRegistrosImportadosDosArquivos++;
+                        } else if (registro.startsWith("99")) {
+                            BigDecimal totalDeRegistros = obterBigDecimal(registro.substring(31, 42).trim(), 11, 0);
+                            assert (totalDeRegistros.intValue() - 2) == quantidadeDeRegistrosImportadosDoArquivoAtual : "Quantidade de registros divergente";
+                            break;
+                        }
+                        double percentualCompleto = (double) quantidadeDeRegistrosImportadosDosArquivos / quantidadeEstimadaDeRegistros * 100;
+                        pAndamento.setPercentualCompleto((int) percentualCompleto);
+                    }
+                    conDestino.commit();
+                } catch (Exception ex) {
+                    conDestino.rollback();
+                    ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+                    problemaDetalhado.nomeDoArquivo = arquivoTXT.getName();
+                    problemaDetalhado.linhaProblematicaDoArquivo = numeroDoRegistro;
+                    problemaDetalhado.detalhesSobreOProblema = ex;
+                    throw problemaDetalhado;
+                } finally {
+                    in.close();
+                }
+            }
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            stmtDestinoMercadoAVistaLotePadrao.close();
+            stmtDestinoOutrosMercados.close();
+        }
+    }
+} </s>
+<s>class temp {    public void importarHistoricoDeProventos(File pArquivoXLS, boolean pFiltrarPelaDataDeCorteDoCabecalho, Andamento pAndamento) throws IOException, SQLException, InvalidFormatException {
+        int iLinha = -1;
+        String nomeDaColuna = "";
+        Statement stmtLimpezaInicialDestino = null;
+        OraclePreparedStatement stmtDestino = null;
+        try {
+            Workbook arquivo = WorkbookFactory.create(new FileInputStream(pArquivoXLS));
+            Sheet plan1 = arquivo.getSheetAt(0);
+            int QUANTIDADE_DE_REGISTROS_DE_METADADOS = 2;
+            int quantidadeDeRegistrosEstimada = plan1.getPhysicalNumberOfRows() - QUANTIDADE_DE_REGISTROS_DE_METADADOS;
+            String vNomeDePregao, vTipoDaAcao, vDataDaAprovacao, vTipoDoProvento, vDataDoUltimoPrecoCom;
+            BigDecimal vValorDoProvento, vUltimoPrecoCom, vProventoPorPreco;
+            int vProventoPor1Ou1000Acoes, vPrecoPor1Ou1000Acoes;
+            java.sql.Date vUltimoDiaCom;
+            DateFormat formatadorData = new SimpleDateFormat("yyyyMMdd");
+            DateFormat formatadorPadraoData = DateFormat.getDateInstance();
+            Row registro;
+            Cell celula;
+            java.util.Date dataLimite = plan1.getRow(0).getCell(CampoDaPlanilhaDosProventosEmDinheiro.NOME_DE_PREGAO.ordinal()).getDateCellValue();
+            Cell celulaUltimoDiaCom;
+            java.util.Date tmpUltimoDiaCom;
+            stmtLimpezaInicialDestino = conDestino.createStatement();
+            String sql = "TRUNCATE TABLE TMP_TB_PROVENTO_EM_DINHEIRO";
+            stmtLimpezaInicialDestino.executeUpdate(sql);
+            sql = "INSERT INTO TMP_TB_PROVENTO_EM_DINHEIRO(NOME_DE_PREGAO, TIPO_DA_ACAO, DATA_DA_APROVACAO, VALOR_DO_PROVENTO, PROVENTO_POR_1_OU_1000_ACOES, TIPO_DO_PROVENTO, ULTIMO_DIA_COM, DATA_DO_ULTIMO_PRECO_COM, ULTIMO_PRECO_COM, PRECO_POR_1_OU_1000_ACOES, PERC_PROVENTO_POR_PRECO) VALUES(:NOME_DE_PREGAO, :TIPO_DA_ACAO, :DATA_DA_APROVACAO, :VALOR_DO_PROVENTO, :PROVENTO_POR_1_OU_1000_ACOES, :TIPO_DO_PROVENTO, :ULTIMO_DIA_COM, :DATA_DO_ULTIMO_PRECO_COM, :ULTIMO_PRECO_COM, :PRECO_POR_1_OU_1000_ACOES, :PERC_PROVENTO_POR_PRECO)";
+            stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+            stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+            int quantidadeDeRegistrosImportados = 0;
+            final int NUMERO_DA_LINHA_INICIAL = 1;
+            for (iLinha = NUMERO_DA_LINHA_INICIAL; true; iLinha++) {
+                registro = plan1.getRow(iLinha);
+                if (registro != null) {
+                    nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.ULTIMO_DIA_COM.toString();
+                    celulaUltimoDiaCom = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.ULTIMO_DIA_COM.ordinal());
+                    if (celulaUltimoDiaCom != null) {
+                        if (celulaUltimoDiaCom.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+                            tmpUltimoDiaCom = celulaUltimoDiaCom.getDateCellValue();
+                            if (tmpUltimoDiaCom.compareTo(dataLimite) <= 0 || !pFiltrarPelaDataDeCorteDoCabecalho) {
+                                vUltimoDiaCom = new java.sql.Date(celulaUltimoDiaCom.getDateCellValue().getTime());
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.NOME_DE_PREGAO.toString();
+                                vNomeDePregao = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.NOME_DE_PREGAO.ordinal()).getStringCellValue().trim();
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.TIPO_DA_ACAO.toString();
+                                vTipoDaAcao = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.TIPO_DA_ACAO.ordinal()).getStringCellValue().trim();
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.DATA_DA_APROVACAO.toString();
+                                celula = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.DATA_DA_APROVACAO.ordinal());
+                                try {
+                                    java.util.Date tmpDataDaAprovacao;
+                                    if (celula.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+                                        tmpDataDaAprovacao = celula.getDateCellValue();
+                                    } else {
+                                        tmpDataDaAprovacao = formatadorPadraoData.parse(celula.getStringCellValue());
+                                    }
+                                    vDataDaAprovacao = formatadorData.format(tmpDataDaAprovacao);
+                                } catch (ParseException ex) {
+                                    vDataDaAprovacao = celula.getStringCellValue();
+                                }
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.VALOR_DO_PROVENTO.toString();
+                                vValorDoProvento = new BigDecimal(String.valueOf(registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.VALOR_DO_PROVENTO.ordinal()).getNumericCellValue()));
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.PROVENTO_POR_1_OU_1000_ACOES.toString();
+                                vProventoPor1Ou1000Acoes = (int) registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.PROVENTO_POR_1_OU_1000_ACOES.ordinal()).getNumericCellValue();
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.TIPO_DO_PROVENTO.toString();
+                                vTipoDoProvento = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.TIPO_DO_PROVENTO.ordinal()).getStringCellValue().trim();
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.DATA_DO_ULTIMO_PRECO_COM.toString();
+                                celula = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.DATA_DO_ULTIMO_PRECO_COM.ordinal());
+                                if (celula != null) {
+                                    try {
+                                        java.util.Date tmpDataDoUltimoPrecoCom;
+                                        if (celula.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+                                            tmpDataDoUltimoPrecoCom = celula.getDateCellValue();
+                                        } else {
+                                            tmpDataDoUltimoPrecoCom = formatadorPadraoData.parse(celula.getStringCellValue());
+                                        }
+                                        vDataDoUltimoPrecoCom = formatadorData.format(tmpDataDoUltimoPrecoCom);
+                                    } catch (ParseException ex) {
+                                        vDataDoUltimoPrecoCom = celula.getStringCellValue().trim();
+                                    }
+                                } else {
+                                    vDataDoUltimoPrecoCom = "";
+                                }
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.ULTIMO_PRECO_COM.toString();
+                                vUltimoPrecoCom = new BigDecimal(String.valueOf(registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.ULTIMO_PRECO_COM.ordinal()).getNumericCellValue()));
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.PRECO_POR_1_OU_1000_ACOES.toString();
+                                vPrecoPor1Ou1000Acoes = (int) registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.PRECO_POR_1_OU_1000_ACOES.ordinal()).getNumericCellValue();
+                                nomeDaColuna = CampoDaPlanilhaDosProventosEmDinheiro.PROVENTO_POR_PRECO.toString();
+                                celula = registro.getCell(CampoDaPlanilhaDosProventosEmDinheiro.PROVENTO_POR_PRECO.ordinal());
+                                if (celula != null && celula.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+                                    vProventoPorPreco = new BigDecimal(String.valueOf(celula.getNumericCellValue()));
+                                } else {
+                                    vProventoPorPreco = null;
+                                }
+                                stmtDestino.clearParameters();
+                                stmtDestino.setStringAtName("NOME_DE_PREGAO", vNomeDePregao);
+                                stmtDestino.setStringAtName("TIPO_DA_ACAO", vTipoDaAcao);
+                                stmtDestino.setStringAtName("DATA_DA_APROVACAO", vDataDaAprovacao);
+                                stmtDestino.setBigDecimalAtName("VALOR_DO_PROVENTO", vValorDoProvento);
+                                stmtDestino.setIntAtName("PROVENTO_POR_1_OU_1000_ACOES", vProventoPor1Ou1000Acoes);
+                                stmtDestino.setStringAtName("TIPO_DO_PROVENTO", vTipoDoProvento);
+                                stmtDestino.setDateAtName("ULTIMO_DIA_COM", vUltimoDiaCom);
+                                stmtDestino.setStringAtName("DATA_DO_ULTIMO_PRECO_COM", vDataDoUltimoPrecoCom);
+                                stmtDestino.setBigDecimalAtName("ULTIMO_PRECO_COM", vUltimoPrecoCom);
+                                stmtDestino.setIntAtName("PRECO_POR_1_OU_1000_ACOES", vPrecoPor1Ou1000Acoes);
+                                stmtDestino.setBigDecimalAtName("PERC_PROVENTO_POR_PRECO", vProventoPorPreco);
+                                int contagemDasInsercoes = stmtDestino.executeUpdate();
+                                quantidadeDeRegistrosImportados++;
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                    double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosEstimada * 100;
+                    pAndamento.setPercentualCompleto((int) percentualCompleto);
+                } else {
+                    break;
+                }
+            }
+            conDestino.commit();
+        } catch (Exception ex) {
+            conDestino.rollback();
+            ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+            problemaDetalhado.nomeDoArquivo = pArquivoXLS.getName();
+            problemaDetalhado.linhaProblematicaDoArquivo = iLinha + 1;
+            problemaDetalhado.colunaProblematicaDoArquivo = nomeDaColuna;
+            problemaDetalhado.detalhesSobreOProblema = ex;
+            throw problemaDetalhado;
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            if (stmtLimpezaInicialDestino != null && (!stmtLimpezaInicialDestino.isClosed())) {
+                stmtLimpezaInicialDestino.close();
+            }
+            if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                stmtDestino.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void importarBancoDeDadosDARI(File pArquivoXLS, Andamento pAndamento) throws IOException, SQLException, InvalidFormatException {
+        final String ABA_VALOR_DE_MERCADO = "Valor de Mercado";
+        final int COLUNA_DATA = 1, COLUNA_ANO = 6, COLUNA_VALOR_DE_MERCADO_DIARIO_EM_BILHOES_DE_REAIS = 2, COLUNA_VALOR_DE_MERCADO_DIARIO_EM_BILHOES_DE_DOLARES = 3, COLUNA_VALOR_DE_MERCADO_ANUAL_EM_BILHOES_DE_REAIS = 7, COLUNA_VALOR_DE_MERCADO_ANUAL_EM_BILHOES_DE_DOLARES = 8;
+        final BigDecimal BILHAO = new BigDecimal("1000000000");
+        int iLinha = -1;
+        Statement stmtLimpezaInicialDestino = null;
+        OraclePreparedStatement stmtDestino = null;
+        try {
+            Workbook arquivo = WorkbookFactory.create(new FileInputStream(pArquivoXLS));
+            Sheet planilhaValorDeMercado = arquivo.getSheet(ABA_VALOR_DE_MERCADO);
+            int QUANTIDADE_DE_REGISTROS_DE_METADADOS = 7;
+            final Calendar DATA_INICIAL = Calendar.getInstance();
+            DATA_INICIAL.setTime(planilhaValorDeMercado.getRow(QUANTIDADE_DE_REGISTROS_DE_METADADOS).getCell(COLUNA_DATA).getDateCellValue());
+            final int ANO_DA_DATA_INICIAL = DATA_INICIAL.get(Calendar.YEAR);
+            final int ANO_INICIAL = Integer.parseInt(planilhaValorDeMercado.getRow(QUANTIDADE_DE_REGISTROS_DE_METADADOS).getCell(COLUNA_ANO).getStringCellValue());
+            final int ANO_FINAL = Calendar.getInstance().get(Calendar.YEAR);
+            Row registro;
+            int quantidadeDeRegistrosAnuaisEstimada = (ANO_FINAL - ANO_INICIAL + 1), quantidadeDeRegistrosDiariosEstimada = (planilhaValorDeMercado.getPhysicalNumberOfRows() - QUANTIDADE_DE_REGISTROS_DE_METADADOS);
+            final int quantidadeDeRegistrosEstimada = quantidadeDeRegistrosAnuaisEstimada + quantidadeDeRegistrosDiariosEstimada;
+            int vAno;
+            BigDecimal vValorDeMercadoEmReais, vValorDeMercadoEmDolares;
+            Cell celulaDoAno, celulaDoValorDeMercadoEmReais, celulaDoValorDeMercadoEmDolares;
+            stmtLimpezaInicialDestino = conDestino.createStatement();
+            String sql = "TRUNCATE TABLE TMP_TB_VALOR_MERCADO_BOLSA";
+            stmtLimpezaInicialDestino.executeUpdate(sql);
+            sql = "INSERT INTO TMP_TB_VALOR_MERCADO_BOLSA(DATA, VALOR_DE_MERCADO_REAL, VALOR_DE_MERCADO_DOLAR) VALUES(:DATA, :VALOR_DE_MERCADO_REAL, :VALOR_DE_MERCADO_DOLAR)";
+            stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+            stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+            int quantidadeDeRegistrosImportados = 0;
+            Calendar calendario = Calendar.getInstance();
+            calendario.clear();
+            calendario.set(Calendar.MONTH, Calendar.DECEMBER);
+            calendario.set(Calendar.DAY_OF_MONTH, 31);
+            for (iLinha = QUANTIDADE_DE_REGISTROS_DE_METADADOS; true; iLinha++) {
+                registro = planilhaValorDeMercado.getRow(iLinha);
+                celulaDoAno = registro.getCell(COLUNA_ANO);
+                String anoTmp = celulaDoAno.getStringCellValue();
+                if (anoTmp != null && anoTmp.length() > 0) {
+                    vAno = Integer.parseInt(anoTmp);
+                    if (vAno < ANO_DA_DATA_INICIAL) {
+                        celulaDoValorDeMercadoEmReais = registro.getCell(COLUNA_VALOR_DE_MERCADO_ANUAL_EM_BILHOES_DE_REAIS);
+                        celulaDoValorDeMercadoEmDolares = registro.getCell(COLUNA_VALOR_DE_MERCADO_ANUAL_EM_BILHOES_DE_DOLARES);
+                    } else {
+                        break;
+                    }
+                    calendario.set(Calendar.YEAR, vAno);
+                    java.sql.Date vUltimoDiaDoAno = new java.sql.Date(calendario.getTimeInMillis());
+                    vValorDeMercadoEmReais = new BigDecimal(celulaDoValorDeMercadoEmReais.getNumericCellValue()).multiply(BILHAO).setScale(0, RoundingMode.DOWN);
+                    vValorDeMercadoEmDolares = new BigDecimal(celulaDoValorDeMercadoEmDolares.getNumericCellValue()).multiply(BILHAO).setScale(0, RoundingMode.DOWN);
+                    stmtDestino.clearParameters();
+                    stmtDestino.setDateAtName("DATA", vUltimoDiaDoAno);
+                    stmtDestino.setBigDecimalAtName("VALOR_DE_MERCADO_REAL", vValorDeMercadoEmReais);
+                    stmtDestino.setBigDecimalAtName("VALOR_DE_MERCADO_DOLAR", vValorDeMercadoEmDolares);
+                    int contagemDasInsercoes = stmtDestino.executeUpdate();
+                    quantidadeDeRegistrosImportados++;
+                } else {
+                    break;
+                }
+                double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosEstimada * 100;
+                pAndamento.setPercentualCompleto((int) percentualCompleto);
+            }
+            java.util.Date dataAnterior = null;
+            String dataTmp;
+            final DateFormat formatadorDeData_ddMMyyyy = new SimpleDateFormat("dd/MM/yyyy", Constantes.IDIOMA_PORTUGUES_BRASILEIRO);
+            final DateFormat formatadorDeData_ddMMMyyyy = new SimpleDateFormat("dd/MMM/yyyy", Constantes.IDIOMA_PORTUGUES_BRASILEIRO);
+            Cell celulaDaData;
+            for (iLinha = QUANTIDADE_DE_REGISTROS_DE_METADADOS; true; iLinha++) {
+                registro = planilhaValorDeMercado.getRow(iLinha);
+                if (registro != null) {
+                    celulaDaData = registro.getCell(COLUNA_DATA);
+                    java.util.Date data;
+                    if (celulaDaData.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+                        data = celulaDaData.getDateCellValue();
+                    } else {
+                        dataTmp = celulaDaData.getStringCellValue();
+                        try {
+                            data = formatadorDeData_ddMMyyyy.parse(dataTmp);
+                        } catch (ParseException ex) {
+                            data = formatadorDeData_ddMMMyyyy.parse(dataTmp);
+                        }
+                    }
+                    if (dataAnterior == null || data.after(dataAnterior)) {
+                        celulaDoValorDeMercadoEmReais = registro.getCell(COLUNA_VALOR_DE_MERCADO_DIARIO_EM_BILHOES_DE_REAIS);
+                        celulaDoValorDeMercadoEmDolares = registro.getCell(COLUNA_VALOR_DE_MERCADO_DIARIO_EM_BILHOES_DE_DOLARES);
+                        java.sql.Date vData = new java.sql.Date(data.getTime());
+                        vValorDeMercadoEmReais = new BigDecimal(celulaDoValorDeMercadoEmReais.getNumericCellValue()).multiply(BILHAO).setScale(0, RoundingMode.DOWN);
+                        vValorDeMercadoEmDolares = new BigDecimal(celulaDoValorDeMercadoEmDolares.getNumericCellValue()).multiply(BILHAO).setScale(0, RoundingMode.DOWN);
+                        stmtDestino.clearParameters();
+                        stmtDestino.setDateAtName("DATA", vData);
+                        stmtDestino.setBigDecimalAtName("VALOR_DE_MERCADO_REAL", vValorDeMercadoEmReais);
+                        stmtDestino.setBigDecimalAtName("VALOR_DE_MERCADO_DOLAR", vValorDeMercadoEmDolares);
+                        int contagemDasInsercoes = stmtDestino.executeUpdate();
+                        quantidadeDeRegistrosImportados++;
+                        double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosEstimada * 100;
+                        pAndamento.setPercentualCompleto((int) percentualCompleto);
+                    }
+                    dataAnterior = data;
+                } else {
+                    break;
+                }
+            }
+            conDestino.commit();
+        } catch (Exception ex) {
+            conDestino.rollback();
+            ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+            problemaDetalhado.nomeDoArquivo = pArquivoXLS.getName();
+            problemaDetalhado.linhaProblematicaDoArquivo = iLinha;
+            problemaDetalhado.detalhesSobreOProblema = ex;
+            throw problemaDetalhado;
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            if (stmtLimpezaInicialDestino != null && (!stmtLimpezaInicialDestino.isClosed())) {
+                stmtLimpezaInicialDestino.close();
+            }
+            if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                stmtDestino.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void importarHistoricoDeCotacoesDoDolar(Andamento pAndamento) throws FileNotFoundException, SQLException, Exception {
+        pAndamento.delimitarIntervaloDeVariacao(0, 49);
+        WSValorSerieVO[] cotacoesPendentesDoDolar = obterCotacoesPendentesDoDolar(pAndamento);
+        pAndamento.delimitarIntervaloDeVariacao(50, 100);
+        if (cotacoesPendentesDoDolar != null && cotacoesPendentesDoDolar.length > 0) {
+            String sql = "INSERT INTO tmp_TB_COTACAO_DOLAR(DATA, PRECO) VALUES(:DATA, :PRECO)";
+            OraclePreparedStatement stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+            stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+            int quantidadeDeRegistrosASeremImportados = cotacoesPendentesDoDolar.length;
+            try {
+                int quantidadeDeRegistrosImportados = 0;
+                int numeroDoRegistro = 0;
+                for (WSValorSerieVO cotacaoPendenteDoDolar : cotacoesPendentesDoDolar) {
+                    ++numeroDoRegistro;
+                    stmtDestino.clearParameters();
+                    int ano = cotacaoPendenteDoDolar.getAno(), mes = cotacaoPendenteDoDolar.getMes() - 1, dia = cotacaoPendenteDoDolar.getDia();
+                    Calendar calendario = Calendar.getInstance();
+                    calendario.clear();
+                    calendario.set(ano, mes, dia);
+                    java.sql.Date vDATA = new java.sql.Date(calendario.getTimeInMillis());
+                    BigDecimal vPRECO = cotacaoPendenteDoDolar.getValor();
+                    stmtDestino.setDateAtName("DATA", vDATA);
+                    stmtDestino.setBigDecimalAtName("PRECO", vPRECO);
+                    int contagemDasInsercoes = stmtDestino.executeUpdate();
+                    quantidadeDeRegistrosImportados++;
+                    double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosASeremImportados * 100;
+                    pAndamento.setPercentualCompleto((int) percentualCompleto);
+                }
+                conDestino.commit();
+            } catch (Exception ex) {
+                conDestino.rollback();
+                throw ex;
+            } finally {
+                if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                    stmtDestino.close();
+                }
+            }
+        }
+        pAndamento.setPercentualCompleto(100);
+    }
+} </s>
+<s>class temp {    public void importarHistoricoDoPIB(Andamento pAndamento) throws FileNotFoundException, SQLException, Exception {
+        pAndamento.delimitarIntervaloDeVariacao(0, 49);
+        PIB[] valoresPendentesDoPIB = obterValoresPendentesDoPIB(pAndamento);
+        pAndamento.delimitarIntervaloDeVariacao(50, 100);
+        if (valoresPendentesDoPIB != null && valoresPendentesDoPIB.length > 0) {
+            String sql = "INSERT INTO tmp_TB_PIB(ULTIMO_DIA_DO_MES, PIB_ACUM_12MESES_REAL, PIB_ACUM_12MESES_DOLAR) VALUES(:ULTIMO_DIA_DO_MES, :PIB_ACUM_12MESES_REAL, :PIB_ACUM_12MESES_DOLAR)";
+            OraclePreparedStatement stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+            stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+            int quantidadeDeRegistrosASeremImportados = valoresPendentesDoPIB.length;
+            try {
+                int quantidadeDeRegistrosImportados = 0;
+                int numeroDoRegistro = 0;
+                final BigDecimal MILHAO = new BigDecimal("1000000");
+                for (PIB valorPendenteDoPIB : valoresPendentesDoPIB) {
+                    ++numeroDoRegistro;
+                    stmtDestino.clearParameters();
+                    java.sql.Date vULTIMO_DIA_DO_MES = new java.sql.Date(obterUltimoDiaDoMes(valorPendenteDoPIB.mesEAno).getTime());
+                    BigDecimal vPIB_ACUM_12MESES_REAL = valorPendenteDoPIB.valorDoPIBEmReais.multiply(MILHAO).setScale(0, RoundingMode.DOWN);
+                    BigDecimal vPIB_ACUM_12MESES_DOLAR = valorPendenteDoPIB.valorDoPIBEmDolares.multiply(MILHAO).setScale(0, RoundingMode.DOWN);
+                    stmtDestino.setDateAtName("ULTIMO_DIA_DO_MES", vULTIMO_DIA_DO_MES);
+                    stmtDestino.setBigDecimalAtName("PIB_ACUM_12MESES_REAL", vPIB_ACUM_12MESES_REAL);
+                    stmtDestino.setBigDecimalAtName("PIB_ACUM_12MESES_DOLAR", vPIB_ACUM_12MESES_DOLAR);
+                    int contagemDasInsercoes = stmtDestino.executeUpdate();
+                    quantidadeDeRegistrosImportados++;
+                    double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosASeremImportados * 100;
+                    pAndamento.setPercentualCompleto((int) percentualCompleto);
+                }
+                conDestino.commit();
+            } catch (Exception ex) {
+                conDestino.rollback();
+                throw ex;
+            } finally {
+                if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                    stmtDestino.close();
+                }
+            }
+        }
+        pAndamento.setPercentualCompleto(100);
+    }
+} </s>
+<s>class temp {    public void importarSetor(File pArquivoXLS, String pCabecalhoSetor, Andamento pAndamento) throws FileNotFoundException, IOException, SQLException, InvalidFormatException {
+        int iLinha = -1;
+        Statement stmtLimpezaInicialDestino = null;
+        OraclePreparedStatement stmtDestino = null;
+        try {
+            Workbook arquivo = WorkbookFactory.create(new FileInputStream(pArquivoXLS));
+            Sheet plan1 = arquivo.getSheetAt(0);
+            int QUANTIDADE_DE_REGISTROS_DE_CABECALHO = 7;
+            int QUANTIDADE_DE_REGISTROS_DE_RODAPE = 14;
+            int QUANTIDADE_DE_REGISTROS_DE_METADADOS = QUANTIDADE_DE_REGISTROS_DE_CABECALHO + QUANTIDADE_DE_REGISTROS_DE_RODAPE;
+            int quantidadeDeRegistrosEstimada = plan1.getPhysicalNumberOfRows() - QUANTIDADE_DE_REGISTROS_DE_METADADOS;
+            String vSetor = "", vSubsetor = "", vSegmento = "";
+            LinhaDaPlanilhaDosSetores registroAtual;
+            int vPapeisPorSegmento = 0;
+            stmtLimpezaInicialDestino = conDestino.createStatement();
+            String sql = "TRUNCATE TABLE TMP_TB_SETOR_SUBSETOR_SEGMENTO";
+            stmtLimpezaInicialDestino.executeUpdate(sql);
+            sql = "INSERT INTO TMP_TB_SETOR_SUBSETOR_SEGMENTO(SIGLA_EMPRESA, NOME_SETOR, NOME_SUBSETOR, NOME_SEGMENTO) VALUES(:SIGLA_EMPRESA, :NOME_SETOR, :NOME_SUBSETOR, :NOME_SEGMENTO)";
+            stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+            stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+            int quantidadeDeRegistrosImportados = 0;
+            iLinha = 8;
+            while (true) {
+                registroAtual = new LinhaDaPlanilhaDosSetores(plan1.getRow(iLinha));
+                if (registroAtual.nomeDoSetor.length() > 0 && !registroAtual.nomeDoSetor.equalsIgnoreCase(pCabecalhoSetor)) {
+                    if (registroAtual.nomeDoSubsetor.equalsIgnoreCase("")) {
+                        break;
+                    } else {
+                        vSetor = registroAtual.nomeDoSetor;
+                        vSubsetor = null;
+                        vSegmento = null;
+                    }
+                }
+                if (registroAtual.nomeDoSubsetor.length() > 0 && !registroAtual.nomeDoSetor.equalsIgnoreCase(pCabecalhoSetor)) {
+                    vSubsetor = registroAtual.nomeDoSubsetor;
+                    vSegmento = null;
+                }
+                String nomeDoSegmento = registroAtual.nomeDoSegmentoOuDaEmpresa;
+                if (nomeDoSegmento.length() > 0 && !registroAtual.nomeDoSetor.equalsIgnoreCase(pCabecalhoSetor) && registroAtual.siglaDaEmpresa.equals("")) {
+                    if (vSegmento != null && vPapeisPorSegmento == 0) {
+                        vSegmento = vSegmento + " " + nomeDoSegmento;
+                    } else {
+                        vSegmento = nomeDoSegmento;
+                    }
+                    vPapeisPorSegmento = 0;
+                }
+                String nomeDaEmpresa = registroAtual.nomeDoSegmentoOuDaEmpresa;
+                if (registroAtual.siglaDaEmpresa.length() == 4 && !registroAtual.nomeDoSetor.equalsIgnoreCase(pCabecalhoSetor) && !nomeDaEmpresa.equals("")) {
+                    String vCodneg = registroAtual.siglaDaEmpresa;
+                    stmtDestino.clearParameters();
+                    stmtDestino.setStringAtName("SIGLA_EMPRESA", vCodneg);
+                    stmtDestino.setStringAtName("NOME_SETOR", vSetor);
+                    stmtDestino.setStringAtName("NOME_SUBSETOR", vSubsetor);
+                    stmtDestino.setStringAtName("NOME_SEGMENTO", vSegmento);
+                    int contagemDasInsercoes = stmtDestino.executeUpdate();
+                    quantidadeDeRegistrosImportados++;
+                    vPapeisPorSegmento++;
+                }
+                iLinha++;
+                double percentualCompleto = (double) quantidadeDeRegistrosImportados / quantidadeDeRegistrosEstimada * 100;
+                pAndamento.setPercentualCompleto((int) percentualCompleto);
+            }
+            conDestino.commit();
+        } catch (Exception ex) {
+            conDestino.rollback();
+            ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+            problemaDetalhado.nomeDoArquivo = pArquivoXLS.getName();
+            problemaDetalhado.linhaProblematicaDoArquivo = iLinha;
+            problemaDetalhado.detalhesSobreOProblema = ex;
+            throw problemaDetalhado;
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            if (stmtLimpezaInicialDestino != null && (!stmtLimpezaInicialDestino.isClosed())) {
+                stmtLimpezaInicialDestino.close();
+            }
+            if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                stmtDestino.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void importarEmpresasAbertas(File pArquivoTXT, Andamento pAndamento) throws FileNotFoundException, SQLException {
+        int numeroDoRegistro = -1;
+        Scanner in = null;
+        Statement stmtLimpezaInicialDestino = conDestino.createStatement();
+        String sql = "TRUNCATE TABLE TMP_TB_CIA_ABERTA";
+        stmtLimpezaInicialDestino.executeUpdate(sql);
+        sql = "INSERT INTO TMP_TB_CIA_ABERTA(CODIGO_CVM, DENOMINACAO_SOCIAL, DENOMINACAO_COMERCIAL, LOGRADOURO, COMPLEMENTO, BAIRRO, CEP, MUNICIPIO, UF, DDD, TELEFONE, FAX, DENOMINACAO_ANTERIOR, SETOR_ATIVIDADE, CNPJ, DRI, AUDITOR, QUANT_DE_ACOES_ORDINARIAS, QUANT_DE_ACOES_PREF, SITUACAO, DATA_DA_SITUACAO, TIPO_PAPEL1, TIPO_PAPEL2, TIPO_PAPEL3, TIPO_PAPEL4, TIPO_PAPEL5, TIPO_PAPEL6, CONTROLE_ACIONARIO, DATA_DE_REGISTRO, DATA_DO_CANCELAMENTO, MERCADO, BOLSA1, BOLSA2, BOLSA3, BOLSA4, BOLSA5, BOLSA6, BOLSA7, BOLSA8, BOLSA9, MOTIVO_DO_CANCELAMENTO, PATRIMONIO_LIQUIDO, DATA_DO_PATRIMONIO, E_MAIL, NOME_SETOR_ATIVIDADE, DATA_DA_ACAO, TIPO_NEGOCIO1, TIPO_NEGOCIO2, TIPO_NEGOCIO3, TIPO_NEGOCIO4, TIPO_NEGOCIO5, TIPO_NEGOCIO6, TIPO_MERCADO1, TIPO_MERCADO2, TIPO_MERCADO3, TIPO_MERCADO4, TIPO_MERCADO5, TIPO_MERCADO6) VALUES(:CODIGO_CVM, :DENOMINACAO_SOCIAL, :DENOMINACAO_COMERCIAL, :LOGRADOURO, :COMPLEMENTO, :BAIRRO, :CEP, :MUNICIPIO, :UF, :DDD, :TELEFONE, :FAX, :DENOMINACAO_ANTERIOR, :SETOR_ATIVIDADE, :CNPJ, :DRI, :AUDITOR, :QUANT_DE_ACOES_ORDINARIAS, :QUANT_DE_ACOES_PREF, :SITUACAO, :DATA_DA_SITUACAO, :TIPO_PAPEL1, :TIPO_PAPEL2, :TIPO_PAPEL3, :TIPO_PAPEL4, :TIPO_PAPEL5, :TIPO_PAPEL6, :CONTROLE_ACIONARIO, :DATA_DE_REGISTRO, :DATA_DO_CANCELAMENTO, :MERCADO, :BOLSA1, :BOLSA2, :BOLSA3, :BOLSA4, :BOLSA5, :BOLSA6, :BOLSA7, :BOLSA8, :BOLSA9, :MOTIVO_DO_CANCELAMENTO, :PATRIMONIO_LIQUIDO, :DATA_DO_PATRIMONIO, :E_MAIL, :NOME_SETOR_ATIVIDADE, :DATA_DA_ACAO, :TIPO_NEGOCIO1, :TIPO_NEGOCIO2, :TIPO_NEGOCIO3, :TIPO_NEGOCIO4, :TIPO_NEGOCIO5, :TIPO_NEGOCIO6, :TIPO_MERCADO1, :TIPO_MERCADO2, :TIPO_MERCADO3, :TIPO_MERCADO4, :TIPO_MERCADO5, :TIPO_MERCADO6)";
+        OraclePreparedStatement stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+        stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+        final int TAMANHO_DO_CABECALHO_DO_ARQUIVO = 707;
+        final int TAMANHO_DO_RODAPE_DO_ARQUIVO = 0;
+        final int TAMANHO_DOS_METADADOS_DO_ARQUIVO = TAMANHO_DO_CABECALHO_DO_ARQUIVO + TAMANHO_DO_RODAPE_DO_ARQUIVO;
+        final int TAMANHO_MEDIO_POR_REGISTRO = 659;
+        long tamanhoDosArquivos = pArquivoTXT.length();
+        int quantidadeDeRegistrosEstimada = (int) (tamanhoDosArquivos - TAMANHO_DOS_METADADOS_DO_ARQUIVO) / TAMANHO_MEDIO_POR_REGISTRO;
+        try {
+            in = new Scanner(new FileInputStream(pArquivoTXT), Constantes.CONJUNTO_DE_CARACTERES_DO_ARQUIVO_TEXTO_DA_CVM.name());
+            int quantidadeDeRegistrosImportada = 0;
+            String registro;
+            String[] campos;
+            in.nextLine();
+            numeroDoRegistro = 0;
+            int vCODIGO_CVM;
+            String vDENOMINACAO_SOCIAL, vDENOMINACAO_COMERCIAL, vLOGRADOURO, vCOMPLEMENTO, vBAIRRO;
+            BigDecimal vCEP;
+            String vMUNICIPIO, vUF;
+            BigDecimal vDDD, vTELEFONE, vFAX;
+            String vDENOMINACAO_ANTERIOR, vSETOR_ATIVIDADE;
+            BigDecimal vCNPJ;
+            String vDRI, vAUDITOR;
+            BigDecimal vQUANT_DE_ACOES_ORDINARIAS, vQUANT_DE_ACOES_PREF;
+            String vSITUACAO;
+            java.sql.Date vDATA_DA_SITUACAO;
+            String vTIPO_PAPEL1, vTIPO_PAPEL2, vTIPO_PAPEL3, vTIPO_PAPEL4, vTIPO_PAPEL5, vTIPO_PAPEL6, vCONTROLE_ACIONARIO;
+            java.sql.Date vDATA_DE_REGISTRO, vDATA_DO_CANCELAMENTO;
+            String vMERCADO, vBOLSA1, vBOLSA2, vBOLSA3, vBOLSA4, vBOLSA5, vBOLSA6, vBOLSA7, vBOLSA8, vBOLSA9, vMOTIVO_DO_CANCELAMENTO;
+            BigDecimal vPATRIMONIO_LIQUIDO;
+            java.sql.Date vDATA_DO_PATRIMONIO;
+            String vE_MAIL, vNOME_SETOR_ATIVIDADE;
+            java.sql.Date vDATA_DA_ACAO;
+            String vTIPO_NEGOCIO1, vTIPO_NEGOCIO2, vTIPO_NEGOCIO3, vTIPO_NEGOCIO4, vTIPO_NEGOCIO5, vTIPO_NEGOCIO6, vTIPO_MERCADO1, vTIPO_MERCADO2, vTIPO_MERCADO3, vTIPO_MERCADO4, vTIPO_MERCADO5, vTIPO_MERCADO6;
+            final int QTDE_CAMPOS = CampoDoArquivoDasEmpresasAbertas.values().length;
+            final String SEPARADOR_DE_CAMPOS_DO_REGISTRO = ";";
+            while (in.hasNextLine()) {
+                ++numeroDoRegistro;
+                registro = in.nextLine();
+                stmtDestino.clearParameters();
+                ArrayList<String> camposTmp = new ArrayList<String>(QTDE_CAMPOS);
+                StringBuilder campoTmp = new StringBuilder();
+                char[] registroTmp = registro.toCharArray();
+                char c;
+                boolean houveMesclagemDeCampos = false;
+                boolean campoIniciaComEspacoEmBranco, campoPossuiConteudo, registroComExcessoDeDelimitadores;
+                int quantidadeDeDelimitadoresEncontrados = (registro.length() - registro.replace(SEPARADOR_DE_CAMPOS_DO_REGISTRO, "").length());
+                registroComExcessoDeDelimitadores = (quantidadeDeDelimitadoresEncontrados > (QTDE_CAMPOS - 1));
+                for (int idxCaractere = 0; idxCaractere < registroTmp.length; idxCaractere++) {
+                    c = registroTmp[idxCaractere];
+                    if (c == SEPARADOR_DE_CAMPOS_DO_REGISTRO.charAt(0)) {
+                        campoPossuiConteudo = (campoTmp.length() > 0 && campoTmp.toString().trim().length() > 0);
+                        if (campoPossuiConteudo) {
+                            String campoAnterior = null;
+                            if (camposTmp.size() > 0) {
+                                campoAnterior = camposTmp.get(camposTmp.size() - 1);
+                            }
+                            campoIniciaComEspacoEmBranco = campoTmp.toString().startsWith(" ");
+                            if (campoAnterior != null && campoIniciaComEspacoEmBranco && registroComExcessoDeDelimitadores) {
+                                camposTmp.set(camposTmp.size() - 1, (campoAnterior + campoTmp.toString()).trim());
+                                houveMesclagemDeCampos = true;
+                            } else {
+                                camposTmp.add(campoTmp.toString().trim());
+                            }
+                        } else {
+                            camposTmp.add(null);
+                        }
+                        campoTmp.setLength(0);
+                    } else {
+                        campoTmp.append(c);
+                    }
+                }
+                if (registro.endsWith(SEPARADOR_DE_CAMPOS_DO_REGISTRO)) {
+                    camposTmp.add(null);
+                }
+                if (houveMesclagemDeCampos && camposTmp.size() < QTDE_CAMPOS) {
+                    camposTmp.add(CampoDoArquivoDasEmpresasAbertas.COMPLEMENTO.ordinal(), null);
+                }
+                campos = camposTmp.toArray(new String[camposTmp.size()]);
+                int quantidadeDeCamposEncontradosIncluindoOsVazios = campos.length;
+                if (quantidadeDeCamposEncontradosIncluindoOsVazios != QTDE_CAMPOS) {
+                    throw new CampoMalDelimitadoEmRegistroDoArquivoImportado(registro);
+                }
+                vCODIGO_CVM = Integer.parseInt(campos[CampoDoArquivoDasEmpresasAbertas.CODIGO_CVM.ordinal()]);
+                vDENOMINACAO_SOCIAL = campos[CampoDoArquivoDasEmpresasAbertas.DENOMINACAO_SOCIAL.ordinal()];
+                vDENOMINACAO_COMERCIAL = campos[CampoDoArquivoDasEmpresasAbertas.DENOMINACAO_COMERCIAL.ordinal()];
+                vLOGRADOURO = campos[CampoDoArquivoDasEmpresasAbertas.LOGRADOURO.ordinal()];
+                vCOMPLEMENTO = campos[CampoDoArquivoDasEmpresasAbertas.COMPLEMENTO.ordinal()];
+                vBAIRRO = campos[CampoDoArquivoDasEmpresasAbertas.BAIRRO.ordinal()];
+                String cepTmp = campos[CampoDoArquivoDasEmpresasAbertas.CEP.ordinal()];
+                if (cepTmp != null && cepTmp.trim().length() > 0) {
+                    vCEP = new BigDecimal(cepTmp);
+                } else {
+                    vCEP = null;
+                }
+                vMUNICIPIO = campos[CampoDoArquivoDasEmpresasAbertas.MUNICIPIO.ordinal()];
+                vUF = campos[CampoDoArquivoDasEmpresasAbertas.UF.ordinal()];
+                String dddTmp = campos[CampoDoArquivoDasEmpresasAbertas.DDD.ordinal()], foneTmp = campos[CampoDoArquivoDasEmpresasAbertas.TELEFONE.ordinal()], dddFone = "";
+                if (dddTmp != null && dddTmp.trim().length() > 0) {
+                    dddFone = dddFone + dddTmp;
+                }
+                if (foneTmp != null && foneTmp.trim().length() > 0) {
+                    dddFone = dddFone + foneTmp;
+                }
+                if (dddFone != null && dddFone.trim().length() > 0) {
+                    dddFone = new BigDecimal(dddFone).toString();
+                    if (dddFone.length() > 10 && dddFone.endsWith("0")) {
+                        dddFone = dddFone.substring(0, 10);
+                    }
+                    vDDD = new BigDecimal(dddFone.substring(0, 2));
+                    vTELEFONE = new BigDecimal(dddFone.substring(2));
+                } else {
+                    vDDD = null;
+                    vTELEFONE = null;
+                }
+                String faxTmp = campos[CampoDoArquivoDasEmpresasAbertas.FAX.ordinal()];
+                if (faxTmp != null && faxTmp.trim().length() > 0) {
+                    vFAX = new BigDecimal(faxTmp);
+                } else {
+                    vFAX = null;
+                }
+                vDENOMINACAO_ANTERIOR = campos[CampoDoArquivoDasEmpresasAbertas.DENOMINACAO_ANTERIOR.ordinal()];
+                vSETOR_ATIVIDADE = campos[CampoDoArquivoDasEmpresasAbertas.SETOR_ATIVIDADE.ordinal()];
+                String cnpjTmp = campos[CampoDoArquivoDasEmpresasAbertas.CNPJ.ordinal()];
+                if (cnpjTmp != null && cnpjTmp.trim().length() > 0) {
+                    vCNPJ = new BigDecimal(cnpjTmp);
+                } else {
+                    vCNPJ = null;
+                }
+                vDRI = campos[CampoDoArquivoDasEmpresasAbertas.DRI.ordinal()];
+                vAUDITOR = campos[CampoDoArquivoDasEmpresasAbertas.AUDITOR.ordinal()];
+                String qtdeAcoesON = campos[CampoDoArquivoDasEmpresasAbertas.QUANT_DE_ACOES_ORDINARIAS.ordinal()];
+                if (qtdeAcoesON != null && qtdeAcoesON.trim().length() > 0) {
+                    vQUANT_DE_ACOES_ORDINARIAS = new BigDecimal(qtdeAcoesON);
+                } else {
+                    vQUANT_DE_ACOES_ORDINARIAS = null;
+                }
+                String qtdeAcoesPN = campos[CampoDoArquivoDasEmpresasAbertas.QUANT_DE_ACOES_PREF.ordinal()];
+                if (qtdeAcoesPN != null && qtdeAcoesPN.trim().length() > 0) {
+                    vQUANT_DE_ACOES_PREF = new BigDecimal(qtdeAcoesPN);
+                } else {
+                    vQUANT_DE_ACOES_PREF = null;
+                }
+                vSITUACAO = campos[CampoDoArquivoDasEmpresasAbertas.SITUACAO.ordinal()];
+                String dataDaSituacaoTmp = campos[CampoDoArquivoDasEmpresasAbertas.DATA_DA_SITUACAO.ordinal()];
+                String[] partesDaData = dataDaSituacaoTmp.trim().split("/");
+                int dia = Integer.parseInt(partesDaData[0]), mes = Integer.parseInt(partesDaData[1]) - 1, ano = Integer.parseInt(partesDaData[2]);
+                Calendar calendario = Calendar.getInstance();
+                calendario.clear();
+                calendario.set(ano, mes, dia);
+                vDATA_DA_SITUACAO = new java.sql.Date(calendario.getTimeInMillis());
+                vTIPO_PAPEL1 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL1.ordinal()];
+                vTIPO_PAPEL2 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL2.ordinal()];
+                vTIPO_PAPEL3 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL3.ordinal()];
+                vTIPO_PAPEL4 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL4.ordinal()];
+                vTIPO_PAPEL5 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL5.ordinal()];
+                vTIPO_PAPEL6 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_PAPEL6.ordinal()];
+                vCONTROLE_ACIONARIO = campos[CampoDoArquivoDasEmpresasAbertas.CONTROLE_ACIONARIO.ordinal()];
+                String dataDeRegistroTmp = campos[CampoDoArquivoDasEmpresasAbertas.DATA_DE_REGISTRO.ordinal()];
+                partesDaData = dataDeRegistroTmp.trim().split("/");
+                dia = Integer.parseInt(partesDaData[0]);
+                mes = Integer.parseInt(partesDaData[1]) - 1;
+                ano = Integer.parseInt(partesDaData[2]);
+                calendario = Calendar.getInstance();
+                calendario.clear();
+                calendario.set(ano, mes, dia);
+                vDATA_DE_REGISTRO = new java.sql.Date(calendario.getTimeInMillis());
+                String dataDoCancelamentoTmp = campos[CampoDoArquivoDasEmpresasAbertas.DATA_DO_CANCELAMENTO.ordinal()];
+                if (dataDoCancelamentoTmp != null && dataDoCancelamentoTmp.trim().length() > 0) {
+                    partesDaData = dataDoCancelamentoTmp.trim().split("/");
+                    dia = Integer.parseInt(partesDaData[0]);
+                    mes = Integer.parseInt(partesDaData[1]) - 1;
+                    ano = Integer.parseInt(partesDaData[2]);
+                    calendario = Calendar.getInstance();
+                    calendario.clear();
+                    calendario.set(ano, mes, dia);
+                    vDATA_DO_CANCELAMENTO = new java.sql.Date(calendario.getTimeInMillis());
+                } else {
+                    vDATA_DO_CANCELAMENTO = null;
+                }
+                vMERCADO = campos[CampoDoArquivoDasEmpresasAbertas.MERCADO.ordinal()];
+                vBOLSA1 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA1.ordinal()];
+                vBOLSA2 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA2.ordinal()];
+                vBOLSA3 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA3.ordinal()];
+                vBOLSA4 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA4.ordinal()];
+                vBOLSA5 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA5.ordinal()];
+                vBOLSA6 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA6.ordinal()];
+                vBOLSA7 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA7.ordinal()];
+                vBOLSA8 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA8.ordinal()];
+                vBOLSA9 = campos[CampoDoArquivoDasEmpresasAbertas.BOLSA9.ordinal()];
+                vMOTIVO_DO_CANCELAMENTO = campos[CampoDoArquivoDasEmpresasAbertas.MOTIVO_DO_CANCELAMENTO.ordinal()];
+                String patrimonioLiquidoTmp = campos[CampoDoArquivoDasEmpresasAbertas.PATRIMONIO_LIQUIDO.ordinal()];
+                if (patrimonioLiquidoTmp != null && patrimonioLiquidoTmp.trim().length() > 0) {
+                    vPATRIMONIO_LIQUIDO = new BigDecimal(patrimonioLiquidoTmp);
+                } else {
+                    vPATRIMONIO_LIQUIDO = null;
+                }
+                String dataDoPatrimonioTmp = campos[CampoDoArquivoDasEmpresasAbertas.DATA_DO_PATRIMONIO.ordinal()];
+                if (dataDoPatrimonioTmp != null && dataDoPatrimonioTmp.trim().length() > 0) {
+                    partesDaData = dataDoPatrimonioTmp.trim().split("/");
+                    dia = Integer.parseInt(partesDaData[0]);
+                    mes = Integer.parseInt(partesDaData[1]) - 1;
+                    ano = Integer.parseInt(partesDaData[2]);
+                    calendario = Calendar.getInstance();
+                    calendario.clear();
+                    calendario.set(ano, mes, dia);
+                    vDATA_DO_PATRIMONIO = new java.sql.Date(calendario.getTimeInMillis());
+                } else {
+                    vDATA_DO_PATRIMONIO = null;
+                }
+                vE_MAIL = campos[CampoDoArquivoDasEmpresasAbertas.E_MAIL.ordinal()];
+                vNOME_SETOR_ATIVIDADE = campos[CampoDoArquivoDasEmpresasAbertas.NOME_SETOR_ATIVIDADE.ordinal()];
+                String dataDaAcaoTmp = campos[CampoDoArquivoDasEmpresasAbertas.DATA_DA_ACAO.ordinal()];
+                if (dataDaAcaoTmp != null && dataDaAcaoTmp.trim().length() > 0) {
+                    partesDaData = dataDaAcaoTmp.trim().split("/");
+                    dia = Integer.parseInt(partesDaData[0]);
+                    mes = Integer.parseInt(partesDaData[1]) - 1;
+                    ano = Integer.parseInt(partesDaData[2]);
+                    calendario = Calendar.getInstance();
+                    calendario.clear();
+                    calendario.set(ano, mes, dia);
+                    vDATA_DA_ACAO = new java.sql.Date(calendario.getTimeInMillis());
+                } else {
+                    vDATA_DA_ACAO = null;
+                }
+                vTIPO_NEGOCIO1 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO1.ordinal()];
+                vTIPO_NEGOCIO2 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO2.ordinal()];
+                vTIPO_NEGOCIO3 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO3.ordinal()];
+                vTIPO_NEGOCIO4 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO4.ordinal()];
+                vTIPO_NEGOCIO5 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO5.ordinal()];
+                vTIPO_NEGOCIO6 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_NEGOCIO6.ordinal()];
+                vTIPO_MERCADO1 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO1.ordinal()];
+                vTIPO_MERCADO2 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO2.ordinal()];
+                vTIPO_MERCADO3 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO3.ordinal()];
+                vTIPO_MERCADO4 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO4.ordinal()];
+                vTIPO_MERCADO5 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO5.ordinal()];
+                vTIPO_MERCADO6 = campos[CampoDoArquivoDasEmpresasAbertas.TIPO_MERCADO6.ordinal()];
+                stmtDestino.setIntAtName("CODIGO_CVM", vCODIGO_CVM);
+                stmtDestino.setStringAtName("DENOMINACAO_SOCIAL", vDENOMINACAO_SOCIAL);
+                stmtDestino.setStringAtName("DENOMINACAO_COMERCIAL", vDENOMINACAO_COMERCIAL);
+                stmtDestino.setStringAtName("LOGRADOURO", vLOGRADOURO);
+                stmtDestino.setStringAtName("COMPLEMENTO", vCOMPLEMENTO);
+                stmtDestino.setStringAtName("BAIRRO", vBAIRRO);
+                stmtDestino.setBigDecimalAtName("CEP", vCEP);
+                stmtDestino.setStringAtName("MUNICIPIO", vMUNICIPIO);
+                stmtDestino.setStringAtName("UF", vUF);
+                stmtDestino.setBigDecimalAtName("DDD", vDDD);
+                stmtDestino.setBigDecimalAtName("TELEFONE", vTELEFONE);
+                stmtDestino.setBigDecimalAtName("FAX", vFAX);
+                stmtDestino.setStringAtName("DENOMINACAO_ANTERIOR", vDENOMINACAO_ANTERIOR);
+                stmtDestino.setStringAtName("SETOR_ATIVIDADE", vSETOR_ATIVIDADE);
+                stmtDestino.setBigDecimalAtName("CNPJ", vCNPJ);
+                stmtDestino.setStringAtName("DRI", vDRI);
+                stmtDestino.setStringAtName("AUDITOR", vAUDITOR);
+                stmtDestino.setBigDecimalAtName("QUANT_DE_ACOES_ORDINARIAS", vQUANT_DE_ACOES_ORDINARIAS);
+                stmtDestino.setBigDecimalAtName("QUANT_DE_ACOES_PREF", vQUANT_DE_ACOES_PREF);
+                stmtDestino.setStringAtName("SITUACAO", vSITUACAO);
+                stmtDestino.setDateAtName("DATA_DA_SITUACAO", vDATA_DA_SITUACAO);
+                stmtDestino.setStringAtName("TIPO_PAPEL1", vTIPO_PAPEL1);
+                stmtDestino.setStringAtName("TIPO_PAPEL2", vTIPO_PAPEL2);
+                stmtDestino.setStringAtName("TIPO_PAPEL3", vTIPO_PAPEL3);
+                stmtDestino.setStringAtName("TIPO_PAPEL4", vTIPO_PAPEL4);
+                stmtDestino.setStringAtName("TIPO_PAPEL5", vTIPO_PAPEL5);
+                stmtDestino.setStringAtName("TIPO_PAPEL6", vTIPO_PAPEL6);
+                stmtDestino.setStringAtName("CONTROLE_ACIONARIO", vCONTROLE_ACIONARIO);
+                stmtDestino.setDateAtName("DATA_DE_REGISTRO", vDATA_DE_REGISTRO);
+                stmtDestino.setDateAtName("DATA_DO_CANCELAMENTO", vDATA_DO_CANCELAMENTO);
+                stmtDestino.setStringAtName("MERCADO", vMERCADO);
+                stmtDestino.setStringAtName("BOLSA1", vBOLSA1);
+                stmtDestino.setStringAtName("BOLSA2", vBOLSA2);
+                stmtDestino.setStringAtName("BOLSA3", vBOLSA3);
+                stmtDestino.setStringAtName("BOLSA4", vBOLSA4);
+                stmtDestino.setStringAtName("BOLSA5", vBOLSA5);
+                stmtDestino.setStringAtName("BOLSA6", vBOLSA6);
+                stmtDestino.setStringAtName("BOLSA7", vBOLSA7);
+                stmtDestino.setStringAtName("BOLSA8", vBOLSA8);
+                stmtDestino.setStringAtName("BOLSA9", vBOLSA9);
+                stmtDestino.setStringAtName("MOTIVO_DO_CANCELAMENTO", vMOTIVO_DO_CANCELAMENTO);
+                stmtDestino.setBigDecimalAtName("PATRIMONIO_LIQUIDO", vPATRIMONIO_LIQUIDO);
+                stmtDestino.setDateAtName("DATA_DO_PATRIMONIO", vDATA_DO_PATRIMONIO);
+                stmtDestino.setStringAtName("E_MAIL", vE_MAIL);
+                stmtDestino.setStringAtName("NOME_SETOR_ATIVIDADE", vNOME_SETOR_ATIVIDADE);
+                stmtDestino.setDateAtName("DATA_DA_ACAO", vDATA_DA_ACAO);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO1", vTIPO_NEGOCIO1);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO2", vTIPO_NEGOCIO2);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO3", vTIPO_NEGOCIO3);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO4", vTIPO_NEGOCIO4);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO5", vTIPO_NEGOCIO5);
+                stmtDestino.setStringAtName("TIPO_NEGOCIO6", vTIPO_NEGOCIO6);
+                stmtDestino.setStringAtName("TIPO_MERCADO1", vTIPO_MERCADO1);
+                stmtDestino.setStringAtName("TIPO_MERCADO2", vTIPO_MERCADO2);
+                stmtDestino.setStringAtName("TIPO_MERCADO3", vTIPO_MERCADO3);
+                stmtDestino.setStringAtName("TIPO_MERCADO4", vTIPO_MERCADO4);
+                stmtDestino.setStringAtName("TIPO_MERCADO5", vTIPO_MERCADO5);
+                stmtDestino.setStringAtName("TIPO_MERCADO6", vTIPO_MERCADO6);
+                int contagemDasInsercoes = stmtDestino.executeUpdate();
+                quantidadeDeRegistrosImportada++;
+                double percentualCompleto = (double) quantidadeDeRegistrosImportada / quantidadeDeRegistrosEstimada * 100;
+                pAndamento.setPercentualCompleto((int) percentualCompleto);
+            }
+            conDestino.commit();
+        } catch (Exception ex) {
+            conDestino.rollback();
+            ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+            problemaDetalhado.nomeDoArquivo = pArquivoTXT.getName();
+            problemaDetalhado.linhaProblematicaDoArquivo = numeroDoRegistro;
+            problemaDetalhado.detalhesSobreOProblema = ex;
+            throw problemaDetalhado;
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            in.close();
+            if (stmtLimpezaInicialDestino != null && (!stmtLimpezaInicialDestino.isClosed())) {
+                stmtLimpezaInicialDestino.close();
+            }
+            if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                stmtDestino.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void importarEmissoresDosTitulosFinanceiros(File pArquivoTXT, Andamento pAndamento) throws FileNotFoundException, SQLException {
+        int numeroDoRegistro = -1;
+        Scanner in = null;
+        Statement stmtLimpezaInicialDestino = conDestino.createStatement();
+        String sql = "TRUNCATE TABLE TMP_TB_EMISSOR_TITULO";
+        stmtLimpezaInicialDestino.executeUpdate(sql);
+        sql = "INSERT INTO TMP_TB_EMISSOR_TITULO(SIGLA, NOME, CNPJ, DATA_CRIACAO) VALUES(:SIGLA, :NOME, :CNPJ, :DATA_CRIACAO)";
+        OraclePreparedStatement stmtDestino = (OraclePreparedStatement) conDestino.prepareStatement(sql);
+        stmtDestino.setExecuteBatch(COMANDOS_POR_LOTE);
+        final int TAMANHO_DO_CABECALHO_DO_ARQUIVO = 0;
+        final int TAMANHO_DO_RODAPE_DO_ARQUIVO = 0;
+        final int TAMANHO_DOS_METADADOS_DO_ARQUIVO = TAMANHO_DO_CABECALHO_DO_ARQUIVO + TAMANHO_DO_RODAPE_DO_ARQUIVO;
+        final int TAMANHO_MEDIO_POR_REGISTRO = 81;
+        long tamanhoDosArquivos = pArquivoTXT.length();
+        int quantidadeDeRegistrosEstimada = (int) (tamanhoDosArquivos - TAMANHO_DOS_METADADOS_DO_ARQUIVO) / TAMANHO_MEDIO_POR_REGISTRO;
+        String registro;
+        String[] campos;
+        try {
+            in = new Scanner(new FileInputStream(pArquivoTXT), Constantes.CONJUNTO_DE_CARACTERES_DOS_ARQUIVOS_TEXTO_DA_BOVESPA.name());
+            int quantidadeDeRegistrosImportada = 0;
+            numeroDoRegistro = 0;
+            String vSIGLA, vNOME;
+            BigDecimal vCNPJ;
+            java.sql.Date vDATA_CRIACAO;
+            final int QTDE_CAMPOS = CampoDoArquivoDosEmissoresDeTitulosFinanceiros.values().length;
+            final String SEPARADOR_DE_CAMPOS_DO_REGISTRO = ",";
+            final String DELIMITADOR_DE_CAMPOS_DO_REGISTRO = "\"";
+            while (in.hasNextLine()) {
+                ++numeroDoRegistro;
+                registro = in.nextLine();
+                stmtDestino.clearParameters();
+                registro = registro.substring(1, registro.length() - 1);
+                if (registro.endsWith(DELIMITADOR_DE_CAMPOS_DO_REGISTRO)) {
+                    registro = registro + " ";
+                }
+                campos = registro.split(DELIMITADOR_DE_CAMPOS_DO_REGISTRO + SEPARADOR_DE_CAMPOS_DO_REGISTRO + DELIMITADOR_DE_CAMPOS_DO_REGISTRO);
+                int quantidadeDeCamposEncontradosIncluindoOsVazios = campos.length;
+                if (quantidadeDeCamposEncontradosIncluindoOsVazios != QTDE_CAMPOS) {
+                    throw new CampoMalDelimitadoEmRegistroDoArquivoImportado(registro);
+                }
+                vSIGLA = campos[CampoDoArquivoDosEmissoresDeTitulosFinanceiros.SIGLA.ordinal()];
+                vNOME = campos[CampoDoArquivoDosEmissoresDeTitulosFinanceiros.NOME.ordinal()];
+                String cnpjTmp = campos[CampoDoArquivoDosEmissoresDeTitulosFinanceiros.CNPJ.ordinal()];
+                if (cnpjTmp != null && cnpjTmp.trim().length() > 0) {
+                    vCNPJ = new BigDecimal(cnpjTmp);
+                } else {
+                    vCNPJ = null;
+                }
+                String dataDaCriacaoTmp = campos[CampoDoArquivoDosEmissoresDeTitulosFinanceiros.DATA_CRIACAO.ordinal()];
+                if (dataDaCriacaoTmp != null && dataDaCriacaoTmp.trim().length() > 0) {
+                    int dia = Integer.parseInt(dataDaCriacaoTmp.substring(6, 8)), mes = Integer.parseInt(dataDaCriacaoTmp.substring(4, 6)) - 1, ano = Integer.parseInt(dataDaCriacaoTmp.substring(0, 4));
+                    Calendar calendario = Calendar.getInstance();
+                    calendario.clear();
+                    calendario.set(ano, mes, dia);
+                    vDATA_CRIACAO = new java.sql.Date(calendario.getTimeInMillis());
+                } else {
+                    vDATA_CRIACAO = null;
+                }
+                stmtDestino.setStringAtName("SIGLA", vSIGLA);
+                stmtDestino.setStringAtName("NOME", vNOME);
+                stmtDestino.setBigDecimalAtName("CNPJ", vCNPJ);
+                stmtDestino.setDateAtName("DATA_CRIACAO", vDATA_CRIACAO);
+                int contagemDasInsercoes = stmtDestino.executeUpdate();
+                quantidadeDeRegistrosImportada++;
+                double percentualCompleto = (double) quantidadeDeRegistrosImportada / quantidadeDeRegistrosEstimada * 100;
+                pAndamento.setPercentualCompleto((int) percentualCompleto);
+            }
+            conDestino.commit();
+        } catch (Exception ex) {
+            conDestino.rollback();
+            ProblemaNaImportacaoDeArquivo problemaDetalhado = new ProblemaNaImportacaoDeArquivo();
+            problemaDetalhado.nomeDoArquivo = pArquivoTXT.getName();
+            problemaDetalhado.linhaProblematicaDoArquivo = numeroDoRegistro;
+            problemaDetalhado.detalhesSobreOProblema = ex;
+            throw problemaDetalhado;
+        } finally {
+            pAndamento.setPercentualCompleto(100);
+            in.close();
+            if (stmtLimpezaInicialDestino != null && (!stmtLimpezaInicialDestino.isClosed())) {
+                stmtLimpezaInicialDestino.close();
+            }
+            if (stmtDestino != null && (!stmtDestino.isClosed())) {
+                stmtDestino.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void execute() throws BuildException {
+        Enumeration list = getIndividualTests();
+        String srcRptFile = "";
+        String destRptFile = "";
+        while (list.hasMoreElements()) {
+            J3DPerfUnitTest test = (J3DPerfUnitTest) list.nextElement();
+            if (test.shouldRun(getProject())) {
+                try {
+                    execute(test);
+                    try {
+                        srcRptFile = getProject().resolveFile(".").getAbsolutePath() + "\\" + test.getName() + ".txt";
+                        destRptFile = getProject().resolveFile(test.getName() + ".txt", new File(test.getTodir())).getAbsolutePath();
+                        FileChannel srcChannel = new FileInputStream(srcRptFile).getChannel();
+                        FileChannel dstChannel = new FileOutputStream(destRptFile).getChannel();
+                        dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+                        srcChannel.close();
+                        dstChannel.close();
+                        if (!srcRptFile.equals(destRptFile)) {
+                            new File(srcRptFile).delete();
+                        }
+                    } catch (IOException e) {
+                    }
+                } catch (BuildException e) {
+                    e.printStackTrace();
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void doVersionCheck(View view) {
+        view.showWaitCursor();
+        try {
+            URL url = new URL(jEdit.getProperty("version-check.url"));
+            InputStream in = url.openStream();
+            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+            String line;
+            String develBuild = null;
+            String stableBuild = null;
+            while ((line = bin.readLine()) != null) {
+                if (line.startsWith(".build")) develBuild = line.substring(6).trim(); else if (line.startsWith(".stablebuild")) stableBuild = line.substring(12).trim();
+            }
+            bin.close();
+            if (develBuild != null && stableBuild != null) {
+                doVersionCheck(view, stableBuild, develBuild);
+            }
+        } catch (IOException e) {
+            String[] args = { jEdit.getProperty("version-check.url"), e.toString() };
+            GUIUtilities.error(view, "read-error", args);
+        }
+        view.hideWaitCursor();
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    public static String convertStringToMD5(String toEnc) {
+        try {
+            MessageDigest mdEnc = MessageDigest.getInstance("MD5");
+            mdEnc.update(toEnc.getBytes(), 0, toEnc.length());
+            return new BigInteger(1, mdEnc.digest()).toString(16);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File inputFile, File outputFile) throws IOException {
+        BufferedInputStream fr = new BufferedInputStream(new FileInputStream(inputFile));
+        BufferedOutputStream fw = new BufferedOutputStream(new FileOutputStream(outputFile));
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = fr.read(buf)) >= 0) fw.write(buf, 0, n);
+        fr.close();
+        fw.close();
+    }
+} </s>
+<s>class temp {    public static void sort(float norm_abst[]) {
+        float temp;
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 7; j++) {
+                if (norm_abst[j] > norm_abst[j + 1]) {
+                    temp = norm_abst[j];
+                    norm_abst[j] = norm_abst[j + 1];
+                    norm_abst[j + 1] = temp;
+                }
+            }
+        }
+        printFixed(norm_abst[0]);
+        print(" ");
+        printFixed(norm_abst[1]);
+        print(" ");
+        printFixed(norm_abst[2]);
+        print(" ");
+        printFixed(norm_abst[3]);
+        print(" ");
+        printFixed(norm_abst[4]);
+        print(" ");
+        printFixed(norm_abst[5]);
+        print(" ");
+        printFixed(norm_abst[6]);
+        print(" ");
+        printFixed(norm_abst[7]);
+        print("\n");
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    ClassFile getClassFile(String name) throws IOException, ConstantPoolException {
+        URL url = getClass().getResource(name);
+        InputStream in = url.openStream();
+        try {
+            return ClassFile.read(in);
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    ClassFile getClassFile(String name) throws IOException, ConstantPoolException {
+        URL url = getClass().getResource(name);
+        InputStream in = url.openStream();
+        try {
+            return ClassFile.read(in);
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    private void execute(File file) throws IOException {
+        if (file == null) throw new RuntimeException("undefined file");
+        if (!file.exists()) throw new RuntimeException("file not found :" + file);
+        if (!file.isFile()) throw new RuntimeException("not a file :" + file);
+        String login = cfg.getProperty(GC_USERNAME);
+        String password = null;
+        if (cfg.containsKey(GC_PASSWORD)) {
+            password = cfg.getProperty(GC_PASSWORD);
+        } else {
+            password = new String(Base64.decode(cfg.getProperty(GC_PASSWORD64)));
+        }
+        PostMethod post = null;
+        try {
+            HttpClient client = new HttpClient();
+            post = new PostMethod("https://" + projectName + ".googlecode.com/files");
+            post.addRequestHeader("User-Agent", getClass().getName());
+            post.addRequestHeader("Authorization", "Basic " + Base64.encode(login + ":" + password));
+            List<Part> parts = new ArrayList<Part>();
+            String s = this.summary;
+            if (StringUtils.isBlank(s)) {
+                s = file.getName() + " (" + TimeUtils.toYYYYMMDD() + ")";
+            }
+            parts.add(new StringPart("summary", s));
+            for (String lbl : this.labels) {
+                if (StringUtils.isBlank(lbl)) continue;
+                parts.add(new StringPart("label", lbl.trim()));
+            }
+            parts.add(new FilePart("filename", file));
+            MultipartRequestEntity requestEntity = new MultipartRequestEntity(parts.toArray(new Part[parts.size()]), post.getParams());
+            post.setRequestEntity(requestEntity);
+            int status = client.executeMethod(post);
+            if (status != 201) {
+                throw new IOException("http status !=201 : " + post.getResponseBodyAsString());
+            } else {
+                IOUtils.copyTo(post.getResponseBodyAsStream(), new NullOutputStream());
+            }
+        } finally {
+            if (post != null) post.releaseConnection();
+        }
+    }
+} </s>
+<s>class temp {    public boolean verifySignature() {
+        try {
+            byte[] data = readFile(name + ".tmp1.bin");
+            if (data == null) return false;
+            if (data[data.length - 0x104] != 'N' || data[data.length - 0x103] != 'G' || data[data.length - 0x102] != 'I' || data[data.length - 0x101] != 'S') return false;
+            byte[] signature = new byte[0x100];
+            byte[] module = new byte[data.length - 0x104];
+            System.arraycopy(data, data.length - 0x100, signature, 0, 0x100);
+            System.arraycopy(data, 0, module, 0, data.length - 0x104);
+            BigIntegerEx power = new BigIntegerEx(BigIntegerEx.LITTLE_ENDIAN, new byte[] { 0x01, 0x00, 0x01, 0x00 });
+            BigIntegerEx mod = new BigIntegerEx(BigIntegerEx.LITTLE_ENDIAN, new byte[] { (byte) 0x6B, (byte) 0xCE, (byte) 0xF5, (byte) 0x2D, (byte) 0x2A, (byte) 0x7D, (byte) 0x7A, (byte) 0x67, (byte) 0x21, (byte) 0x21, (byte) 0x84, (byte) 0xC9, (byte) 0xBC, (byte) 0x25, (byte) 0xC7, (byte) 0xBC, (byte) 0xDF, (byte) 0x3D, (byte) 0x8F, (byte) 0xD9, (byte) 0x47, (byte) 0xBC, (byte) 0x45, (byte) 0x48, (byte) 0x8B, (byte) 0x22, (byte) 0x85, (byte) 0x3B, (byte) 0xC5, (byte) 0xC1, (byte) 0xF4, (byte) 0xF5, (byte) 0x3C, (byte) 0x0C, (byte) 0x49, (byte) 0xBB, (byte) 0x56, (byte) 0xE0, (byte) 0x3D, (byte) 0xBC, (byte) 0xA2, (byte) 0xD2, (byte) 0x35, (byte) 0xC1, (byte) 0xF0, (byte) 0x74, (byte) 0x2E, (byte) 0x15, (byte) 0x5A, (byte) 0x06, (byte) 0x8A, (byte) 0x68, (byte) 0x01, (byte) 0x9E, (byte) 0x60, (byte) 0x17, (byte) 0x70, (byte) 0x8B, (byte) 0xBD, (byte) 0xF8, (byte) 0xD5, (byte) 0xF9, (byte) 0x3A, (byte) 0xD3, (byte) 0x25, (byte) 0xB2, (byte) 0x66, (byte) 0x92, (byte) 0xBA, (byte) 0x43, (byte) 0x8A, (byte) 0x81, (byte) 0x52, (byte) 0x0F, (byte) 0x64, (byte) 0x98, (byte) 0xFF, (byte) 0x60, (byte) 0x37, (byte) 0xAF, (byte) 0xB4, (byte) 0x11, (byte) 0x8C, (byte) 0xF9, (byte) 0x2E, (byte) 0xC5, (byte) 0xEE, (byte) 0xCA, (byte) 0xB4, (byte) 0x41, (byte) 0x60, (byte) 0x3C, (byte) 0x7D, (byte) 0x02, (byte) 0xAF, (byte) 0xA1, (byte) 0x2B, (byte) 0x9B, (byte) 0x22, (byte) 0x4B, (byte) 0x3B, (byte) 0xFC, (byte) 0xD2, (byte) 0x5D, (byte) 0x73, (byte) 0xE9, (byte) 0x29, (byte) 0x34, (byte) 0x91, (byte) 0x85, (byte) 0x93, (byte) 0x4C, (byte) 0xBE, (byte) 0xBE, (byte) 0x73, (byte) 0xA9, (byte) 0xD2, (byte) 0x3B, (byte) 0x27, (byte) 0x7A, (byte) 0x47, (byte) 0x76, (byte) 0xEC, (byte) 0xB0, (byte) 0x28, (byte) 0xC9, (byte) 0xC1, (byte) 0xDA, (byte) 0xEE, (byte) 0xAA, (byte) 0xB3, (byte) 0x96, (byte) 0x9C, (byte) 0x1E, (byte) 0xF5, (byte) 0x6B, (byte) 0xF6, (byte) 0x64, (byte) 0xD8, (byte) 0x94, (byte) 0x2E, (byte) 0xF1, (byte) 0xF7, (byte) 0x14, (byte) 0x5F, (byte) 0xA0, (byte) 0xF1, (byte) 0xA3, (byte) 0xB9, (byte) 0xB1, (byte) 0xAA, (byte) 0x58, (byte) 0x97, (byte) 0xDC, (byte) 0x09, (byte) 0x17, (byte) 0x0C, (byte) 0x04, (byte) 0xD3, (byte) 0x8E, (byte) 0x02, (byte) 0x2C, (byte) 0x83, (byte) 0x8A, (byte) 0xD6, (byte) 0xAF, (byte) 0x7C, (byte) 0xFE, (byte) 0x83, (byte) 0x33, (byte) 0xC6, (byte) 0xA8, (byte) 0xC3, (byte) 0x84, (byte) 0xEF, (byte) 0x29, (byte) 0x06, (byte) 0xA9, (byte) 0xB7, (byte) 0x2D, (byte) 0x06, (byte) 0x0B, (byte) 0x0D, (byte) 0x6F, (byte) 0x70, (byte) 0x9E, (byte) 0x34, (byte) 0xA6, (byte) 0xC7, (byte) 0x31, (byte) 0xBE, (byte) 0x56, (byte) 0xDE, (byte) 0xDD, (byte) 0x02, (byte) 0x92, (byte) 0xF8, (byte) 0xA0, (byte) 0x58, (byte) 0x0B, (byte) 0xFC, (byte) 0xFA, (byte) 0xBA, (byte) 0x49, (byte) 0xB4, (byte) 0x48, (byte) 0xDB, (byte) 0xEC, (byte) 0x25, (byte) 0xF3, (byte) 0x18, (byte) 0x8F, (byte) 0x2D, (byte) 0xB3, (byte) 0xC0, (byte) 0xB8, (byte) 0xDD, (byte) 0xBC, (byte) 0xD6, (byte) 0xAA, (byte) 0xA6, (byte) 0xDB, (byte) 0x6F, (byte) 0x7D, (byte) 0x7D, (byte) 0x25, (byte) 0xA6, (byte) 0xCD, (byte) 0x39, (byte) 0x6D, (byte) 0xDA, (byte) 0x76, (byte) 0x0C, (byte) 0x79, (byte) 0xBF, (byte) 0x48, (byte) 0x25, (byte) 0xFC, (byte) 0x2D, (byte) 0xC5, (byte) 0xFA, (byte) 0x53, (byte) 0x9B, (byte) 0x4D, (byte) 0x60, (byte) 0xF4, (byte) 0xEF, (byte) 0xC7, (byte) 0xEA, (byte) 0xAC, (byte) 0xA1, (byte) 0x7B, (byte) 0x03, (byte) 0xF4, (byte) 0xAF, (byte) 0xC7 });
+            byte[] result = new BigIntegerEx(BigIntegerEx.LITTLE_ENDIAN, signature).modPow(power, mod).toByteArray();
+            byte[] digest;
+            byte[] properResult = new byte[0x100];
+            for (int i = 0; i < properResult.length; i++) properResult[i] = (byte) 0xBB;
+            MessageDigest md = MessageDigest.getInstance("SHA1");
+            md.update(module);
+            md.update("MAIEV.MOD".getBytes());
+            digest = md.digest();
+            System.arraycopy(digest, 0, properResult, 0, digest.length);
+            for (int i = 0; i < result.length; i++) if (result[i] != properResult[i]) return false;
+            return true;
+        } catch (Exception e) {
+            System.out.println("Failed to verify signature: " + e.toString());
+        }
+        return false;
+    }
+} </s>
+<s>class temp {    public void convert(File src, File dest) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(src));
+        DcmParser p = pfact.newDcmParser(in);
+        Dataset ds = fact.newDataset();
+        p.setDcmHandler(ds.getDcmHandler());
+        try {
+            FileFormat format = p.detectFileFormat();
+            if (format != FileFormat.ACRNEMA_STREAM) {
+                System.out.println("\n" + src + ": not an ACRNEMA stream!");
+                return;
+            }
+            p.parseDcmFile(format, Tags.PixelData);
+            if (ds.contains(Tags.StudyInstanceUID) || ds.contains(Tags.SeriesInstanceUID) || ds.contains(Tags.SOPInstanceUID) || ds.contains(Tags.SOPClassUID)) {
+                System.out.println("\n" + src + ": contains UIDs!" + " => probable already DICOM - do not convert");
+                return;
+            }
+            boolean hasPixelData = p.getReadTag() == Tags.PixelData;
+            boolean inflate = hasPixelData && ds.getInt(Tags.BitsAllocated, 0) == 12;
+            int pxlen = p.getReadLength();
+            if (hasPixelData) {
+                if (inflate) {
+                    ds.putUS(Tags.BitsAllocated, 16);
+                    pxlen = pxlen * 4 / 3;
+                }
+                if (pxlen != (ds.getInt(Tags.BitsAllocated, 0) >>> 3) * ds.getInt(Tags.Rows, 0) * ds.getInt(Tags.Columns, 0) * ds.getInt(Tags.NumberOfFrames, 1) * ds.getInt(Tags.NumberOfSamples, 1)) {
+                    System.out.println("\n" + src + ": mismatch pixel data length!" + " => do not convert");
+                    return;
+                }
+            }
+            ds.putUI(Tags.StudyInstanceUID, uid(studyUID));
+            ds.putUI(Tags.SeriesInstanceUID, uid(seriesUID));
+            ds.putUI(Tags.SOPInstanceUID, uid(instUID));
+            ds.putUI(Tags.SOPClassUID, classUID);
+            if (!ds.contains(Tags.NumberOfSamples)) {
+                ds.putUS(Tags.NumberOfSamples, 1);
+            }
+            if (!ds.contains(Tags.PhotometricInterpretation)) {
+                ds.putCS(Tags.PhotometricInterpretation, "MONOCHROME2");
+            }
+            if (fmi) {
+                ds.setFileMetaInfo(fact.newFileMetaInfo(ds, UIDs.ImplicitVRLittleEndian));
+            }
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+            } finally {
+                ds.writeFile(out, encodeParam());
+                if (hasPixelData) {
+                    if (!skipGroupLen) {
+                        out.write(PXDATA_GROUPLEN);
+                        int grlen = pxlen + 8;
+                        out.write((byte) grlen);
+                        out.write((byte) (grlen >> 8));
+                        out.write((byte) (grlen >> 16));
+                        out.write((byte) (grlen >> 24));
+                    }
+                    out.write(PXDATA_TAG);
+                    out.write((byte) pxlen);
+                    out.write((byte) (pxlen >> 8));
+                    out.write((byte) (pxlen >> 16));
+                    out.write((byte) (pxlen >> 24));
+                }
+                if (inflate) {
+                    int b2, b3;
+                    for (; pxlen > 0; pxlen -= 3) {
+                        out.write(in.read());
+                        b2 = in.read();
+                        b3 = in.read();
+                        out.write(b2 & 0x0f);
+                        out.write(b2 >> 4 | ((b3 & 0x0f) << 4));
+                        out.write(b3 >> 4);
+                    }
+                } else {
+                    for (; pxlen > 0; --pxlen) {
+                        out.write(in.read());
+                    }
+                }
+                out.close();
+            }
+            System.out.print('.');
+        } finally {
+            in.close();
+        }
+    }
+} </s>
+<s>class temp {    private String getHTML(String pageURL, String encoding, String dirPath) throws IOException {
+        StringBuilder pageHTML = new StringBuilder();
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(pageURL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", "MSIE 7.0");
+            connection.connect();
+            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), encoding));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                pageHTML.append(line);
+                pageHTML.append("\r\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+        if (dirPath != null) {
+            File file = new File(dirPath);
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+            bufferedWriter.write(pageHTML.toString());
+            bufferedWriter.close();
+        }
+        return pageHTML.toString();
+    }
+} </s>
+<s>class temp {    private static void readFileEntry(Zip64File zip64File, FileEntry fileEntry, File destFolder) {
+        FileOutputStream fileOut;
+        File target = new File(destFolder, fileEntry.getName());
+        File targetsParent = target.getParentFile();
+        if (targetsParent != null) {
+            targetsParent.mkdirs();
+        }
+        try {
+            fileOut = new FileOutputStream(target);
+            log.info("[readFileEntry] writing entry: " + fileEntry.getName() + " to file: " + target.getAbsolutePath());
+            EntryInputStream entryReader = zip64File.openEntryInputStream(fileEntry.getName());
+            IOUtils.copyLarge(entryReader, fileOut);
+            entryReader.close();
+            fileOut.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ZipException e) {
+            log.warning("ATTENTION PLEASE: Some strange, but obviously not serious ZipException occured! Extracted file '" + target.getName() + "' anyway! So don't Panic!" + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+} </s>
+<s>class temp {    public static File insertFileInto(File zipFile, File toInsert, String targetPath) {
+        Zip64File zip64File = null;
+        try {
+            boolean compress = false;
+            zip64File = new Zip64File(zipFile);
+            FileEntry testEntry = getFileEntry(zip64File, targetPath);
+            if (testEntry != null && testEntry.getMethod() == FileEntry.iMETHOD_DEFLATED) {
+                compress = true;
+            }
+            processAndCreateFolderEntries(zip64File, parseTargetPath(targetPath, toInsert), compress);
+            if (testEntry != null) {
+                log.info("[insertFileInto] Entry exists: " + testEntry.getName());
+                log.info("[insertFileInto] Will delete this entry before inserting: " + toInsert.getName());
+                if (!testEntry.isDirectory()) {
+                    zip64File.delete(testEntry.getName());
+                } else {
+                    log.info("[insertFileInto] Entry is a directory. " + "Will delete all files contained in this entry and insert " + toInsert.getName() + "and all nested files.");
+                    if (!targetPath.contains("/")) {
+                        targetPath = targetPath + "/";
+                    }
+                    deleteFileEntry(zip64File, testEntry);
+                    log.info("[insertFileInto] Entry successfully deleted.");
+                }
+                log.info("[insertFileInto] Writing new Entry: " + targetPath);
+                EntryOutputStream out = null;
+                if (!compress) {
+                    out = zip64File.openEntryOutputStream(targetPath, FileEntry.iMETHOD_STORED, new Date(toInsert.lastModified()));
+                } else {
+                    out = zip64File.openEntryOutputStream(targetPath, FileEntry.iMETHOD_DEFLATED, new Date(toInsert.lastModified()));
+                }
+                if (toInsert.isDirectory()) {
+                    out.flush();
+                    out.close();
+                    log.info("[insertFileInto] Finished writing entry: " + targetPath);
+                    List<String> containedPaths = normalizePaths(toInsert);
+                    List<File> containedFiles = listAllFilesAndFolders(toInsert, new ArrayList<File>());
+                    log.info("[insertFileInto] Added entry is a folder.");
+                    log.info("[insertFileInto] Adding all nested files: ");
+                    for (int i = 0; i < containedPaths.size(); i++) {
+                        File currentFile = containedFiles.get(i);
+                        String currentPath = targetPath.replace("/", "") + File.separator + containedPaths.get(i);
+                        EntryOutputStream loop_out = null;
+                        if (!compress) {
+                            loop_out = zip64File.openEntryOutputStream(currentPath, FileEntry.iMETHOD_STORED, new Date(currentFile.lastModified()));
+                        } else {
+                            loop_out = zip64File.openEntryOutputStream(currentPath, FileEntry.iMETHOD_DEFLATED, new Date(currentFile.lastModified()));
+                        }
+                        if (currentFile.isFile()) {
+                            InputStream loop_in = new FileInputStream(currentFile);
+                            IOUtils.copyLarge(loop_in, loop_out);
+                            loop_in.close();
+                        }
+                        log.info("[insertFileInto] Added: " + currentPath);
+                        loop_out.flush();
+                        loop_out.close();
+                    }
+                } else {
+                    InputStream in = new FileInputStream(toInsert);
+                    IOUtils.copyLarge(in, out);
+                    in.close();
+                    out.flush();
+                    out.close();
+                }
+            } else {
+                EntryOutputStream out = null;
+                if (!compress) {
+                    out = zip64File.openEntryOutputStream(targetPath, FileEntry.iMETHOD_STORED, new Date(toInsert.lastModified()));
+                } else {
+                    out = zip64File.openEntryOutputStream(targetPath, FileEntry.iMETHOD_DEFLATED, new Date(toInsert.lastModified()));
+                }
+                if (toInsert.isDirectory()) {
+                    out.flush();
+                    out.close();
+                    log.info("[insertFileInto] Finished writing entry: " + targetPath);
+                    List<String> containedPaths = normalizePaths(toInsert);
+                    List<File> containedFiles = listAllFilesAndFolders(toInsert, new ArrayList<File>());
+                    log.info("[insertFileInto] Added entry is a folder.");
+                    log.info("[insertFileInto] Adding all nested files: ");
+                    for (int i = 0; i < containedPaths.size(); i++) {
+                        File currentFile = containedFiles.get(i);
+                        String currentPath = targetPath.replace("/", "") + File.separator + containedPaths.get(i);
+                        EntryOutputStream loop_out = null;
+                        if (!compress) {
+                            loop_out = zip64File.openEntryOutputStream(currentPath, FileEntry.iMETHOD_STORED, new Date(currentFile.lastModified()));
+                        } else {
+                            loop_out = zip64File.openEntryOutputStream(currentPath, FileEntry.iMETHOD_DEFLATED, new Date(currentFile.lastModified()));
+                        }
+                        if (currentFile.isFile()) {
+                            InputStream loop_in = new FileInputStream(currentFile);
+                            IOUtils.copyLarge(loop_in, loop_out);
+                            loop_in.close();
+                        }
+                        log.info("[insertFileInto] Added: " + currentPath);
+                        loop_out.flush();
+                        loop_out.close();
+                    }
+                } else {
+                    InputStream in = new FileInputStream(toInsert);
+                    IOUtils.copyLarge(in, out);
+                    in.close();
+                    out.flush();
+                    out.close();
+                }
+            }
+            log.info("[insertFileInto] Done! Added " + toInsert.getName() + " to zip.");
+            zip64File.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new File(zip64File.getDiskFile().getFileName());
+    }
+} </s>
+<s>class temp {    private static FileEntry writeEntry(Zip64File zip64File, FileEntry targetPath, File toWrite, boolean compress) {
+        InputStream in = null;
+        EntryOutputStream out = null;
+        processAndCreateFolderEntries(zip64File, parseTargetPath(targetPath.getName(), toWrite), compress);
+        try {
+            if (!compress) {
+                out = zip64File.openEntryOutputStream(targetPath.getName(), FileEntry.iMETHOD_STORED, getFileDate(toWrite));
+            } else {
+                out = zip64File.openEntryOutputStream(targetPath.getName(), FileEntry.iMETHOD_DEFLATED, getFileDate(toWrite));
+            }
+            if (!targetPath.isDirectory()) {
+                in = new FileInputStream(toWrite);
+                IOUtils.copyLarge(in, out);
+                in.close();
+            }
+            out.flush();
+            out.close();
+            if (targetPath.isDirectory()) {
+                log.info("[createZip] Written folder entry to zip: " + targetPath.getName());
+            } else {
+                log.info("[createZip] Written file entry to zip: " + targetPath.getName());
+            }
+        } catch (FileNotFoundException e1) {
+            e1.printStackTrace();
+        } catch (ZipException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        return targetPath;
+    }
+} </s>
+<s>class temp {    public InputStream getDaoConfig(String connectionType) throws IOException {
+        URL url = null;
+        if (connectionType.equals(SQL.ORACLE)) {
+            url = DTSWFDBConfig.class.getResource("oracle.xml");
+        } else if (connectionType.equals(SQL.SQL2K)) {
+            url = DTSWFDBConfig.class.getResource("sql2k.xml");
+        } else if (connectionType.equals(SQL.CACHE)) {
+            url = DTSWFDBConfig.class.getResource("cache.xml");
+        }
+        return url.openStream();
+    }
+} </s>
+<s>class temp {    public static String crypt(String password, String salt) {
+        if (salt.startsWith(magic)) {
+            salt = salt.substring(magic.length());
+        }
+        int saltEnd = salt.indexOf('$');
+        if (saltEnd != -1) {
+            salt = salt.substring(0, saltEnd);
+        }
+        if (salt.length() > 8) {
+            salt = salt.substring(0, 8);
+        }
+        MessageDigest md5_1, md5_2;
+        try {
+            md5_1 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        md5_1.update(password.getBytes());
+        md5_1.update(magic.getBytes());
+        md5_1.update(salt.getBytes());
+        try {
+            md5_2 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        md5_2.update(password.getBytes());
+        md5_2.update(salt.getBytes());
+        md5_2.update(password.getBytes());
+        byte[] md5_2_digest = md5_2.digest();
+        int md5Size = md5_2_digest.length;
+        int pwLength = password.length();
+        for (int i = pwLength; i > 0; i -= md5Size) {
+            md5_1.update(md5_2_digest, 0, i > md5Size ? md5Size : i);
+        }
+        md5_2.reset();
+        byte[] pwBytes = password.getBytes();
+        for (int i = pwLength; i > 0; i >>= 1) {
+            if ((i & 1) == 1) {
+                md5_1.update((byte) 0);
+            } else {
+                md5_1.update(pwBytes[0]);
+            }
+        }
+        StringBuffer output = new StringBuffer(magic);
+        output.append(salt);
+        output.append("$");
+        byte[] md5_1_digest = md5_1.digest();
+        byte[] saltBytes = salt.getBytes();
+        for (int i = 0; i < 1000; i++) {
+            md5_2.reset();
+            if ((i & 1) == 1) {
+                md5_2.update(pwBytes);
+            } else {
+                md5_2.update(md5_1_digest);
+            }
+            if (i % 3 != 0) {
+                md5_2.update(saltBytes);
+            }
+            if (i % 7 != 0) {
+                md5_2.update(pwBytes);
+            }
+            if ((i & 1) != 0) {
+                md5_2.update(md5_1_digest);
+            } else {
+                md5_2.update(pwBytes);
+            }
+            md5_1_digest = md5_2.digest();
+        }
+        int value;
+        value = ((md5_1_digest[0] & 0xff) << 16) | ((md5_1_digest[6] & 0xff) << 8) | (md5_1_digest[12] & 0xff);
+        output.append(cryptTo64(value, 4));
+        value = ((md5_1_digest[1] & 0xff) << 16) | ((md5_1_digest[7] & 0xff) << 8) | (md5_1_digest[13] & 0xff);
+        output.append(cryptTo64(value, 4));
+        value = ((md5_1_digest[2] & 0xff) << 16) | ((md5_1_digest[8] & 0xff) << 8) | (md5_1_digest[14] & 0xff);
+        output.append(cryptTo64(value, 4));
+        value = ((md5_1_digest[3] & 0xff) << 16) | ((md5_1_digest[9] & 0xff) << 8) | (md5_1_digest[15] & 0xff);
+        output.append(cryptTo64(value, 4));
+        value = ((md5_1_digest[4] & 0xff) << 16) | ((md5_1_digest[10] & 0xff) << 8) | (md5_1_digest[5] & 0xff);
+        output.append(cryptTo64(value, 4));
+        value = md5_1_digest[11] & 0xff;
+        output.append(cryptTo64(value, 2));
+        md5_1 = null;
+        md5_2 = null;
+        md5_1_digest = null;
+        md5_2_digest = null;
+        pwBytes = null;
+        saltBytes = null;
+        password = salt = null;
+        return output.toString();
+    }
+} </s>
+<s>class temp {    protected String getRequestContent(String urlText) throws Exception {
+        URL url = new URL(urlText);
+        HttpURLConnection urlcon = (HttpURLConnection) url.openConnection();
+        urlcon.connect();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(urlcon.getInputStream()));
+        String line = reader.readLine();
+        reader.close();
+        urlcon.disconnect();
+        return line;
+    }
+} </s>
+<s>class temp {    public void fillTableValues() {
+        java.util.ArrayList cpool = newgen.presentation.NewGenMain.getAppletInstance().getCataloguingPool();
+        String xmlreq = AdministrationXMLGenerator.getInstance().getPoolChronologicalSubDivision("4", cpool);
+        System.out.println(xmlreq);
+        try {
+            java.net.URL url = new java.net.URL(ResourceBundle.getBundle("Administration").getString("ServerURL") + ResourceBundle.getBundle("Administration").getString("ServletSubPath") + "SubDivisionServlet");
+            java.net.URLConnection urlconn = (java.net.URLConnection) url.openConnection();
+            urlconn.setDoOutput(true);
+            java.io.OutputStream dos = urlconn.getOutputStream();
+            dos.write(xmlreq.getBytes());
+            java.io.InputStream ios = urlconn.getInputStream();
+            SAXBuilder saxb = new SAXBuilder();
+            Document retdoc = saxb.build(ios);
+            Element rootelement = retdoc.getRootElement();
+            java.util.List onelist = rootelement.getChildren();
+            for (int i = 0; i < onelist.size(); i++) {
+                Element rec = (Element) onelist.get(i);
+                Object[] r = new Object[7];
+                String[] chronolib = new String[2];
+                chronolib[0] = rec.getChild("ChronologicalSubDivisionId").getText();
+                chronolib[1] = rec.getChild("LibraryId").getText();
+                this.chronoid_libid.add(chronolib);
+                r[0] = rec.getChild("ChronologicalSubDivision").getText();
+                this.dtmSearch.addRow(r);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+} </s>
+<s>class temp {    private String encryptPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest encript = MessageDigest.getInstance("MD5");
+        encript.update(password.getBytes());
+        byte[] b = encript.digest();
+        int size = b.length;
+        StringBuffer h = new StringBuffer(size);
+        for (int i = 0; i < size; i++) {
+            h.append(b[i]);
+        }
+        return h.toString();
+    }
+} </s>
+<s>class temp {    public Configuration(URL url) {
+        InputStream in = null;
+        try {
+            load(in = url.openStream());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not load configuration from " + url, e);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static String getTextFromPart(Part part) {
+        try {
+            if (part != null && part.getBody() != null) {
+                InputStream in = part.getBody().getInputStream();
+                String mimeType = part.getMimeType();
+                if (mimeType != null && MimeUtility.mimeTypeMatches(mimeType, "text/*")) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    IOUtils.copy(in, out);
+                    in.close();
+                    in = null;
+                    String charset = getHeaderParameter(part.getContentType(), "charset");
+                    if (charset != null) {
+                        charset = CharsetUtil.toJavaCharset(charset);
+                    }
+                    if (charset == null) {
+                        charset = "ASCII";
+                    }
+                    String result = out.toString(charset);
+                    out.close();
+                    return result;
+                }
+            }
+        } catch (OutOfMemoryError oom) {
+            Log.e(Email.LOG_TAG, "Unable to getTextFromPart " + oom.toString());
+        } catch (Exception e) {
+            Log.e(Email.LOG_TAG, "Unable to getTextFromPart " + e.toString());
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public static Body decodeBody(InputStream in, String contentTransferEncoding) throws IOException {
+        if (contentTransferEncoding != null) {
+            contentTransferEncoding = MimeUtility.getHeaderParameter(contentTransferEncoding, null);
+            if ("quoted-printable".equalsIgnoreCase(contentTransferEncoding)) {
+                in = new QuotedPrintableInputStream(in);
+            } else if ("base64".equalsIgnoreCase(contentTransferEncoding)) {
+                in = new Base64InputStream(in);
+            }
+        }
+        BinaryTempFileBody tempBody = new BinaryTempFileBody();
+        OutputStream out = tempBody.getOutputStream();
+        IOUtils.copy(in, out);
+        out.close();
+        return tempBody;
+    }
+} </s>
+<s>class temp {        public Source resolve(String href, String base) throws TransformerException {
+            if (href.endsWith(".txt")) {
+                try {
+                    URL url = new URL(new URL(base), href);
+                    java.io.InputStream in = url.openConnection().getInputStream();
+                    java.io.InputStreamReader reader = new java.io.InputStreamReader(in, "iso-8859-1");
+                    StringBuffer sb = new StringBuffer();
+                    while (true) {
+                        int c = reader.read();
+                        if (c < 0) break;
+                        sb.append((char) c);
+                    }
+                    com.icl.saxon.expr.TextFragmentValue tree = new com.icl.saxon.expr.TextFragmentValue(sb.toString(), url.toString(), (com.icl.saxon.Controller) transformer);
+                    return tree.getFirst();
+                } catch (Exception err) {
+                    throw new TransformerException(err);
+                }
+            } else {
+                return null;
+            }
+        }
+} </s>
+<s>class temp {    public static byte[] encrypt(String string) {
+        java.security.MessageDigest messageDigest = null;
+        try {
+            messageDigest = java.security.MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException exc) {
+            logger.fatal(exc);
+            throw new RuntimeException();
+        }
+        messageDigest.reset();
+        messageDigest.update(string.getBytes());
+        return messageDigest.digest();
+    }
+} </s>
+<s>class temp {    public static void copyFile(File in, File out) {
+        if (!in.exists() || !in.canRead()) {
+            LOGGER.warn("Can't copy file : " + in);
+            return;
+        }
+        if (!out.getParentFile().exists()) {
+            if (!out.getParentFile().mkdirs()) {
+                LOGGER.info("Didn't create parent directories : " + out.getParentFile().getAbsolutePath());
+            }
+        }
+        if (!out.exists()) {
+            try {
+                out.createNewFile();
+            } catch (IOException e) {
+                LOGGER.error("Exception creating new file : " + out.getAbsolutePath(), e);
+            }
+        }
+        LOGGER.debug("Copying file : " + in + ", to : " + out);
+        FileChannel inChannel = null;
+        FileChannel outChannel = null;
+        FileInputStream fileInputStream = null;
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileInputStream = new FileInputStream(in);
+            inChannel = fileInputStream.getChannel();
+            fileOutputStream = new FileOutputStream(out);
+            outChannel = fileOutputStream.getChannel();
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } catch (Exception e) {
+            LOGGER.error("Exception copying file : " + in + ", to : " + out, e);
+        } finally {
+            close(fileInputStream);
+            close(fileOutputStream);
+            if (inChannel != null) {
+                try {
+                    inChannel.close();
+                } catch (Exception e) {
+                    LOGGER.error("Exception closing input channel : ", e);
+                }
+            }
+            if (outChannel != null) {
+                try {
+                    outChannel.close();
+                } catch (Exception e) {
+                    LOGGER.error("Exception closing output channel : ", e);
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public void loadSourceCode() {
+        if (getResourceName() != null) {
+            String filename = getResourceName() + ".java";
+            sourceCode = new String("<html><body bgcolor=\"#ffffff\"><pre>");
+            InputStream is;
+            InputStreamReader isr;
+            CodeViewer cv = new CodeViewer();
+            URL url;
+            try {
+                url = getClass().getResource(filename);
+                is = url.openStream();
+                isr = new InputStreamReader(is);
+                BufferedReader reader = new BufferedReader(isr);
+                String line = reader.readLine();
+                while (line != null) {
+                    sourceCode += cv.syntaxHighlight(line) + " \n ";
+                    line = reader.readLine();
+                }
+                sourceCode += new String("</pre></body></html>");
+            } catch (Exception ex) {
+                sourceCode = "Could not load file: " + filename;
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static SlimModCollection parseSlimModification(URL url) {
+        try {
+            Scanner scanner = new Scanner(url.openStream());
+            return parseSlimModification(scanner);
+        } catch (IOException e) {
+            throw new IllegalStateException("Error reading slim file: " + e.getMessage(), e);
+        }
+    }
+} </s>
+<s>class temp {    public Reader getReader() throws Exception {
+        if (url_base == null) {
+            return new FileReader(file);
+        } else {
+            URL url = new URL(url_base + file.getName());
+            return new InputStreamReader(url.openConnection().getInputStream());
+        }
+    }
+} </s>
+<s>class temp {    @SuppressWarnings("unchecked")
+    @Override
+    public synchronized void drop(DropTargetDropEvent arg0) {
+        Helper.log().debug("Dropped");
+        Transferable t = arg0.getTransferable();
+        try {
+            arg0.acceptDrop(arg0.getDropAction());
+            List<File> filelist = (List<File>) t.getTransferData(t.getTransferDataFlavors()[0]);
+            for (File file : filelist) {
+                Helper.log().debug(file.getAbsolutePath());
+                if (file.getName().toLowerCase().contains(".lnk")) {
+                    Helper.log().debug(file.getName() + " is a link");
+                    File target = new File(rp.getRoot().getFullPath() + "/" + file.getName());
+                    Helper.log().debug("I have opened the mayor at " + target.getAbsolutePath());
+                    FileOutputStream fo = new FileOutputStream(target);
+                    FileInputStream fi = new FileInputStream(file);
+                    int i = 0;
+                    while (fi.available() > 0) {
+                        fo.write(fi.read());
+                        System.out.print(".");
+                        i++;
+                    }
+                    Helper.log().debug(i + " bytes have been written to " + target.getAbsolutePath());
+                    fo.close();
+                    fi.close();
+                }
+            }
+            rp.redraw();
+        } catch (Throwable tr) {
+            tr.printStackTrace();
+        }
+        Helper.log().debug(arg0.getSource().toString());
+    }
+} </s>
+<s>class temp {    static HttpURLConnection connect(String url, String method, String contentType, String content, int timeoutMillis) throws ProtocolException, IOException, MalformedURLException, UnsupportedEncodingException {
+        HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
+        conn.setRequestMethod(method);
+        conn.setConnectTimeout(timeoutMillis);
+        byte[] bContent = null;
+        if (content != null && content.length() > 0) {
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", contentType);
+            bContent = content.getBytes("UTF-8");
+            conn.setFixedLengthStreamingMode(bContent.length);
+        }
+        conn.connect();
+        if (bContent != null) {
+            OutputStream os = conn.getOutputStream();
+            os.write(bContent);
+            os.flush();
+            os.close();
+        }
+        return conn;
+    }
+} </s>
+<s>class temp {    public ProgramMessageSymbol addProgramMessageSymbol(int programID, String name, byte[] bytecode) throws AdaptationException {
+        ProgramMessageSymbol programMessageSymbol = null;
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        InputStream stream = new ByteArrayInputStream(bytecode);
+        try {
+            String query = "INSERT INTO ProgramMessageSymbols(programID, name, " + "bytecode) VALUES ( ?, ?, ? )";
+            connection = DriverManager.getConnection(CONN_STR);
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, programID);
+            preparedStatement.setString(2, name);
+            preparedStatement.setBinaryStream(3, stream, bytecode.length);
+            log.info("INSERT INTO ProgramMessageSymbols(programID, name, " + "bytecode) VALUES (" + programID + ", '" + name + "', " + "<bytecode>)");
+            preparedStatement.executeUpdate();
+            statement = connection.createStatement();
+            query = "SELECT * FROM ProgramMessageSymbols WHERE " + "programID =  " + programID + " AND " + "name      = '" + name + "'";
+            resultSet = statement.executeQuery(query);
+            if (!resultSet.next()) {
+                connection.rollback();
+                String msg = "Attempt to add program message symbol failed.";
+                log.error(msg);
+                ;
+                throw new AdaptationException(msg);
+            }
+            programMessageSymbol = getProgramMessageSymbol(resultSet);
+            connection.commit();
+        } catch (SQLException ex) {
+            try {
+                connection.rollback();
+            } catch (Exception e) {
+            }
+            String msg = "SQLException in addProgramMessageSymbol";
+            log.error(msg, ex);
+            throw new AdaptationException(msg, ex);
+        } finally {
+            try {
+                resultSet.close();
+            } catch (Exception ex) {
+            }
+            try {
+                preparedStatement.close();
+            } catch (Exception ex) {
+            }
+            try {
+                statement.close();
+            } catch (Exception ex) {
+            }
+            try {
+                connection.close();
+            } catch (Exception ex) {
+            }
+        }
+        return programMessageSymbol;
+    }
+} </s>
+<s>class temp {    public ProgramMessageSymbol deleteProgramMessageSymbol(int id) throws AdaptationException {
+        ProgramMessageSymbol pmt = null;
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            String query = "SELECT * FROM ProgramMessageSymbols " + "WHERE id = " + id;
+            connection = DriverManager.getConnection(CONN_STR);
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(query);
+            if (!resultSet.next()) {
+                String msg = "Attempt to delete program message type " + "failed.";
+                log.error(msg);
+                ;
+                throw new AdaptationException(msg);
+            }
+            pmt = getProgramMessageSymbol(resultSet);
+            query = "DELETE FROM ProgramMessageSymbols " + "WHERE id = " + id;
+            statement.executeUpdate(query);
+            connection.commit();
+        } catch (SQLException ex) {
+            try {
+                connection.rollback();
+            } catch (Exception e) {
+            }
+            String msg = "SQLException in deleteProgramMessageSymbol";
+            log.error(msg, ex);
+            throw new AdaptationException(msg, ex);
+        } finally {
+            try {
+                resultSet.close();
+            } catch (Exception ex) {
+            }
+            try {
+                statement.close();
+            } catch (Exception ex) {
+            }
+            try {
+                connection.close();
+            } catch (Exception ex) {
+            }
+        }
+        return pmt;
+    }
+} </s>
+<s>class temp {    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        Git git = Git.getCurrent(req.getSession());
+        GitComponentReader gitReader = git.getComponentReader("warpinjector");
+        String id = req.getParameter("id");
+        GitElement element = gitReader.getElement(id);
+        String path = (String) element.getAttribute("targetdir");
+        File folder = new File(path);
+        PrintWriter out = helper.getPrintWriter(resp);
+        MessageBundle messageBundle = new MessageBundle("net.sf.warpcore.cms/servlets/InjectorServletMessages");
+        Locale locale = req.getLocale();
+        helper.header(out, messageBundle, locale);
+        if (git.getUser() == null) {
+            helper.notLoggedIn(out, messageBundle, locale);
+        } else {
+            try {
+                MultiPartRequest request = new MultiPartRequest(req);
+                FileInfo info = request.getFileInfo("userfile");
+                File file = info.getFile();
+                out.println("tempfile found: " + file.getPath() + "<br>");
+                String fileName = info.getFileName();
+                File target = new File(folder, fileName);
+                out.println("copying tempfile to: " + target.getPath() + "<br>");
+                FileInputStream fis = new FileInputStream(file);
+                FileOutputStream fos = new FileOutputStream(target);
+                byte buf[] = new byte[1024];
+                int n;
+                while ((n = fis.read(buf)) > 0) fos.write(buf, 0, n);
+                fis.close();
+                fos.close();
+                out.println("copy successful - deleting old tempfile<br>");
+                out.println("deletion result. " + file.delete() + "<p>");
+                out.println(messageBundle.getMessage("Done. The file {0} has been uploaded", new String[] { "'" + fileName + "'" }, locale));
+                out.println("<p><a href=\"" + req.getRequestURI() + "?id=" + req.getParameter("id") + "\">" + messageBundle.getMessage("Click here to import another file.", locale) + "</a>");
+            } catch (Exception ex) {
+                out.println(messageBundle.getMessage("An error occured: {0}", new String[] { ex.getMessage() }, locale));
+            }
+        }
+        helper.footer(out);
+    }
+} </s>
+<s>class temp {    public Configuration(URL url) {
+        InputStream in = null;
+        try {
+            load(in = url.openStream());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not load configuration from " + url, e);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void copyFile(File source, File target) {
+        try {
+            target.getParentFile().mkdirs();
+            byte[] buffer = new byte[4096];
+            int len = 0;
+            FileInputStream in = new FileInputStream(source);
+            FileOutputStream out = new FileOutputStream(target);
+            while ((len = in.read(buffer)) != -1) out.write(buffer, 0, len);
+            in.close();
+            out.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+} </s>
+<s>class temp {    private static boolean hardCopy(File sourceFile, File destinationFile, StringBuffer errorLog) {
+        boolean result = true;
+        try {
+            notifyCopyStart(destinationFile);
+            destinationFile.getParentFile().mkdirs();
+            byte[] buffer = new byte[4096];
+            int len = 0;
+            FileInputStream in = new FileInputStream(sourceFile);
+            FileOutputStream out = new FileOutputStream(destinationFile);
+            while ((len = in.read(buffer)) != -1) out.write(buffer, 0, len);
+            in.close();
+            out.close();
+        } catch (Exception e) {
+            result = false;
+            handleException("\n Error in method: copy!\n", e, errorLog);
+        } finally {
+            notifyCopyEnd(destinationFile);
+        }
+        return result;
+    }
+} </s>
+<s>class temp {    void bubbleSort(int[] a) {
+        int i = 0;
+        int j = a.length - 1;
+        int aux = 0;
+        int stop = 0;
+        while (stop == 0) {
+            stop = 1;
+            i = 0;
+            while (i < j) {
+                if (a[i] > a[i + 1]) {
+                    aux = a[i];
+                    a[i] = a[i + 1];
+                    a[i + 1] = aux;
+                    stop = 0;
+                }
+                i = i + 1;
+            }
+            j = j - 1;
+        }
+    }
+} </s>
+<s>class temp {    private static void readAndRewrite(File inFile, File outFile) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(new FileInputStream(inFile)));
+        DcmParser dcmParser = DcmParserFactory.getInstance().newDcmParser(iis);
+        Dataset ds = DcmObjectFactory.getInstance().newDataset();
+        dcmParser.setDcmHandler(ds.getDcmHandler());
+        dcmParser.parseDcmFile(null, Tags.PixelData);
+        PixelDataReader pdReader = pdFact.newReader(ds, iis, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        System.out.println("reading " + inFile + "...");
+        pdReader.readPixelData(false);
+        ImageOutputStream out = ImageIO.createImageOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
+        DcmEncodeParam dcmEncParam = DcmEncodeParam.IVR_LE;
+        ds.writeDataset(out, dcmEncParam);
+        ds.writeHeader(out, dcmEncParam, Tags.PixelData, dcmParser.getReadVR(), dcmParser.getReadLength());
+        System.out.println("writing " + outFile + "...");
+        PixelDataWriter pdWriter = pdFact.newWriter(pdReader.getPixelDataArray(), false, ds, out, dcmParser.getDcmDecodeParam().byteOrder, dcmParser.getReadVR());
+        pdWriter.writePixelData();
+        out.flush();
+        out.close();
+        System.out.println("done!");
+    }
+} </s>
+<s>class temp {    private void calculateCoverageAndSpecificity(String mainCat) throws IOException, JSONException {
+        for (String cat : Rules.categoryTree.get(mainCat)) {
+            for (String queryString : Rules.queries.get(cat)) {
+                String urlEncodedQueryString = URLEncoder.encode(queryString, "UTF-8");
+                URL url = new URL("http://boss.yahooapis.com/ysearch/web/v1/" + urlEncodedQueryString + "?appid=" + yahoo_ap_id + "&count=4&format=json&sites=" + site);
+                URLConnection con = url.openConnection();
+                String line;
+                StringBuilder builder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                while ((line = reader.readLine()) != null) {
+                    builder.append(line);
+                }
+                String response = builder.toString();
+                JSONObject json = new JSONObject(response);
+                JSONObject jsonObject = json.getJSONObject("ysearchresponse");
+                String totalhits = jsonObject.getString("totalhits");
+                long totalhitsLong = Long.parseLong(totalhits);
+                QueryInfo qinfo = new QueryInfo(queryString, totalhitsLong);
+                queryInfoMap.put(queryString, qinfo);
+                cov.put(cat, cov.get(cat) + totalhitsLong);
+                if (totalhitsLong == 0) {
+                    continue;
+                }
+                ja = jsonObject.getJSONArray("resultset_web");
+                for (int j = 0; j < ja.length(); j++) {
+                    JSONObject k = ja.getJSONObject(j);
+                    String dispurl = filterBold(k.getString("url"));
+                    qinfo.addUrl(dispurl);
+                }
+            }
+        }
+        calculateSpecificity(mainCat);
+    }
+} </s>
+<s>class temp {    public String useService(HashMap<String, String> input) {
+        String output = "";
+        if (input.size() < 1) {
+            return "";
+        }
+        String data = "";
+        try {
+            for (String key : input.keySet()) {
+                data += "&" + URLEncoder.encode(key, "UTF-8") + "=" + URLEncoder.encode(input.get(key), "UTF-8");
+            }
+            data = data.substring(1);
+            URL url = new URL(serviceUrl);
+            URLConnection conn = url.openConnection();
+            conn.setDoOutput(true);
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(data);
+            wr.flush();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            while ((line = rd.readLine()) != null) {
+                output += line;
+            }
+            wr.close();
+            rd.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return output;
+    }
+} </s>
+<s>class temp {    private void fileCopy(final File src, final File dest) throws IOException {
+        final FileChannel srcChannel = new FileInputStream(src).getChannel();
+        final FileChannel dstChannel = new FileOutputStream(dest).getChannel();
+        dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+        srcChannel.close();
+        dstChannel.close();
+    }
+} </s>
+<s>class temp {        @Override
+        public long getLastModified(final Resource arg0) {
+            try {
+                final ServletContext context = CContext.getInstance().getContext();
+                final URL url = context.getResource(arg0.getName());
+                final URLConnection conn = url.openConnection();
+                final long lm = conn.getLastModified();
+                try {
+                    conn.getInputStream().close();
+                } catch (final Exception ignore) {
+                    ;
+                }
+                return lm;
+            } catch (final Exception e) {
+                return 0;
+            }
+        }
+} </s>
+<s>class temp {        @Override
+        public InputStream getResourceStream(final String arg0) throws ResourceNotFoundException {
+            try {
+                final ServletContext context = CContext.getInstance().getContext();
+                final URL url = context.getResource(arg0);
+                return url.openStream();
+            } catch (final Exception e) {
+                return null;
+            }
+        }
+} </s>
+<s>class temp {    public void writeValue(Value v) throws IOException, SQLException {
+        int type = v.getType();
+        writeInt(type);
+        switch(type) {
+            case Value.NULL:
+                break;
+            case Value.BYTES:
+            case Value.JAVA_OBJECT:
+                writeBytes(v.getBytesNoCopy());
+                break;
+            case Value.UUID:
+                {
+                    ValueUuid uuid = (ValueUuid) v;
+                    writeLong(uuid.getHigh());
+                    writeLong(uuid.getLow());
+                    break;
+                }
+            case Value.BOOLEAN:
+                writeBoolean(v.getBoolean().booleanValue());
+                break;
+            case Value.BYTE:
+                writeByte(v.getByte());
+                break;
+            case Value.TIME:
+                writeLong(v.getTimeNoCopy().getTime());
+                break;
+            case Value.DATE:
+                writeLong(v.getDateNoCopy().getTime());
+                break;
+            case Value.TIMESTAMP:
+                {
+                    Timestamp ts = v.getTimestampNoCopy();
+                    writeLong(ts.getTime());
+                    writeInt(ts.getNanos());
+                    break;
+                }
+            case Value.DECIMAL:
+                writeString(v.getString());
+                break;
+            case Value.DOUBLE:
+                writeDouble(v.getDouble());
+                break;
+            case Value.FLOAT:
+                writeFloat(v.getFloat());
+                break;
+            case Value.INT:
+                writeInt(v.getInt());
+                break;
+            case Value.LONG:
+                writeLong(v.getLong());
+                break;
+            case Value.SHORT:
+                writeInt(v.getShort());
+                break;
+            case Value.STRING:
+            case Value.STRING_IGNORECASE:
+            case Value.STRING_FIXED:
+                writeString(v.getString());
+                break;
+            case Value.BLOB:
+                {
+                    long length = v.getPrecision();
+                    if (SysProperties.CHECK && length < 0) {
+                        Message.throwInternalError("length: " + length);
+                    }
+                    writeLong(length);
+                    InputStream in = v.getInputStream();
+                    long written = IOUtils.copyAndCloseInput(in, out);
+                    if (SysProperties.CHECK && written != length) {
+                        Message.throwInternalError("length:" + length + " written:" + written);
+                    }
+                    writeInt(LOB_MAGIC);
+                    break;
+                }
+            case Value.CLOB:
+                {
+                    long length = v.getPrecision();
+                    if (SysProperties.CHECK && length < 0) {
+                        Message.throwInternalError("length: " + length);
+                    }
+                    writeLong(length);
+                    Reader reader = v.getReader();
+                    java.io.OutputStream out2 = new java.io.FilterOutputStream(out) {
+
+                        public void flush() {
+                        }
+                    };
+                    Writer writer = new BufferedWriter(new OutputStreamWriter(out2, Constants.UTF8));
+                    long written = IOUtils.copyAndCloseInput(reader, writer);
+                    if (SysProperties.CHECK && written != length) {
+                        Message.throwInternalError("length:" + length + " written:" + written);
+                    }
+                    writer.flush();
+                    writeInt(LOB_MAGIC);
+                    break;
+                }
+            case Value.ARRAY:
+                {
+                    Value[] list = ((ValueArray) v).getList();
+                    writeInt(list.length);
+                    for (Value value : list) {
+                        writeValue(value);
+                    }
+                    break;
+                }
+            case Value.RESULT_SET:
+                {
+                    ResultSet rs = ((ValueResultSet) v).getResultSet();
+                    rs.beforeFirst();
+                    ResultSetMetaData meta = rs.getMetaData();
+                    int columnCount = meta.getColumnCount();
+                    writeInt(columnCount);
+                    for (int i = 0; i < columnCount; i++) {
+                        writeString(meta.getColumnName(i + 1));
+                        writeInt(meta.getColumnType(i + 1));
+                        writeInt(meta.getPrecision(i + 1));
+                        writeInt(meta.getScale(i + 1));
+                    }
+                    while (rs.next()) {
+                        writeBoolean(true);
+                        for (int i = 0; i < columnCount; i++) {
+                            int t = DataType.convertSQLTypeToValueType(meta.getColumnType(i + 1));
+                            Value val = DataType.readValue(session, rs, i + 1, t);
+                            writeValue(val);
+                        }
+                    }
+                    writeBoolean(false);
+                    rs.beforeFirst();
+                    break;
+                }
+            default:
+                Message.throwInternalError("type=" + type);
+        }
+    }
+} </s>
+<s>class temp {    public static String encrypt(String text) {
+        char[] toEncrypt = text.toCharArray();
+        StringBuffer hexString = new StringBuffer();
+        try {
+            MessageDigest dig = MessageDigest.getInstance("MD5");
+            dig.reset();
+            String pw = "";
+            for (int i = 0; i < toEncrypt.length; i++) {
+                pw += toEncrypt[i];
+            }
+            dig.update(pw.getBytes());
+            byte[] digest = dig.digest();
+            int digestLength = digest.length;
+            for (int i = 0; i < digestLength; i++) {
+                hexString.append(hexDigit(digest[i]));
+            }
+        } catch (java.security.NoSuchAlgorithmException ae) {
+            ae.printStackTrace();
+        }
+        return hexString.toString();
+    }
+} </s>
+<s>class temp {    protected ResourceManager(URL url, String s) {
+        try {
+            properties.load(url.openStream());
+            path = s;
+        } catch (Exception e) {
+            throw new Error(e.getMessage() + ": trying to load url \"" + url + "\"", e);
+        }
+    }
+} </s>
+<s>class temp {    @Override
+    public void onClick(View view) {
+        String ftpHostname = getFtpHostname();
+        String ftpUsername = getFtpUsername();
+        String ftpPassword = getFtpPassword();
+        int ftpPort = getFtpPort();
+        String dialogText = getString(R.string.testingFTPConnectionDialogHeaderText) + " " + ftpHostname;
+        ProgressDialog dialog = ProgressDialog.show(this, "", dialogText, true);
+        String result = "NOTHING??";
+        Log.i(TAG, "Test attempt login to " + ftpHostname + " as " + ftpUsername);
+        FTPClient ftpClient = new FTPClient();
+        try {
+            ftpClient.connect(ftpHostname, ftpPort);
+            ftpClient.login(ftpUsername, ftpPassword);
+            int reply = ftpClient.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                result = getString(R.string.testFTPConnectionDeniedString);
+                Log.w(TAG, result);
+            } else {
+                result = getString(R.string.testFTPSuccessString);
+                Log.i(TAG, result);
+            }
+        } catch (Exception ex) {
+            result = getString(R.string.testFTPFailString) + ex;
+            Log.w(TAG, result);
+        } finally {
+            try {
+                dialog.dismiss();
+                ftpClient.disconnect();
+            } catch (Exception e) {
+            }
+        }
+        Context context = getApplicationContext();
+        CharSequence text = result;
+        int duration = Toast.LENGTH_LONG;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+    }
+} </s>
+<s>class temp {    public void test_UseCache_HttpURLConnection_NoCached_GetOutputStream() throws Exception {
+        ResponseCache.setDefault(new MockNonCachedResponseCache());
+        uc = (HttpURLConnection) url.openConnection();
+        uc.setChunkedStreamingMode(10);
+        uc.setDoOutput(true);
+        uc.getOutputStream();
+        assertTrue(isGetCalled);
+        assertFalse(isPutCalled);
+        assertFalse(isAbortCalled);
+        uc.disconnect();
+    }
+} </s>
+<s>class temp {    private BibtexDatabase importSpiresEntries(String key, OutputPrinter frame) {
+        String url = constructUrl(key);
+        try {
+            HttpURLConnection conn = (HttpURLConnection) (new URL(url)).openConnection();
+            conn.setRequestProperty("User-Agent", "Jabref");
+            InputStream inputStream = conn.getInputStream();
+            SPIRESBibtexFilterReader reader = new SPIRESBibtexFilterReader(new InputStreamReader(inputStream));
+            ParserResult pr = BibtexParser.parse(reader);
+            return pr.getDatabase();
+        } catch (IOException e) {
+            frame.showMessage(Globals.lang("An Exception ocurred while accessing '%0'", url) + "\n\n" + e.toString(), Globals.lang(getKeyName()), JOptionPane.ERROR_MESSAGE);
+        } catch (RuntimeException e) {
+            frame.showMessage(Globals.lang("An Error occurred while fetching from SPIRES source (%0):", new String[] { url }) + "\n\n" + e.getMessage(), Globals.lang(getKeyName()), JOptionPane.ERROR_MESSAGE);
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public void connect(final URLConnectAdapter urlAdapter) {
+        if (this.connectSettings == null) {
+            throw new IllegalStateException("Invalid Connect Settings (is null)");
+        }
+        final HttpURLConnection httpConnection = (HttpURLConnection) urlAdapter.openConnection();
+        BufferedReader in;
+        try {
+            in = new BufferedReader(new InputStreamReader(httpConnection.getInputStream()));
+            final StringBuilder buf = new StringBuilder(200);
+            String str;
+            while ((str = in.readLine()) != null) {
+                buf.append(str);
+                buf.append('\n');
+            }
+            final ConnectResult result = new ConnectResult(httpConnection.getResponseCode(), buf.toString());
+            final Map<String, List<String>> headerFields = httpConnection.getHeaderFields();
+            for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
+                final String key = entry.getKey();
+                final List<String> val = entry.getValue();
+                if ((val != null) && (val.size() > 1)) {
+                    System.out.println("WARN: Invalid header value : " + key + " url=" + this.connectSettings.getUrl());
+                }
+                if (key != null) {
+                    result.addHeader(key, val.get(0), val);
+                } else {
+                    result.addHeader("Status", val.get(0), val);
+                }
+            }
+            this.lastResult = result;
+        } catch (IOException e) {
+            throw new ConnectException(e);
+        }
+    }
+} </s>
+<s>class temp {    private static String getDocumentAt(String urlString) {
+        StringBuffer html_text = new StringBuffer();
+        try {
+            URL url = new URL(urlString);
+            URLConnection conn = url.openConnection();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line = null;
+            while ((line = reader.readLine()) != null) html_text.append(line + "\n");
+            reader.close();
+        } catch (MalformedURLException e) {
+            System.out.println("  Ч  URL: " + urlString);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return html_text.toString();
+    }
+} </s>
+<s>class temp {    @Override
+    public InputStream getInputStream() {
+        if (assetPath != null) {
+            return buildInputStream();
+        } else {
+            try {
+                return url.openStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) {
+        if (args.length != 2) throw new IllegalArgumentException("Expected arguments: fileName log");
+        String fileName = args[0];
+        String logFile = args[1];
+        LineNumberReader reader = null;
+        PrintWriter writer = null;
+        try {
+            Reader reader0 = new FileReader(fileName);
+            reader = new LineNumberReader(reader0);
+            Writer writer0 = new FileWriter(logFile);
+            BufferedWriter writer1 = new BufferedWriter(writer0);
+            writer = new PrintWriter(writer1);
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+                if (line.length() >= 81) {
+                    writer.println("Analyzing Sudoku #" + reader.getLineNumber());
+                    System.out.println("Analyzing Sudoku #" + reader.getLineNumber());
+                    Grid grid = new Grid();
+                    for (int i = 0; i < 81; i++) {
+                        char ch = line.charAt(i);
+                        if (ch >= '1' && ch <= '9') {
+                            int value = (ch - '0');
+                            grid.setCellValue(i % 9, i / 9, value);
+                        }
+                    }
+                    Solver solver = new Solver(grid);
+                    solver.rebuildPotentialValues();
+                    try {
+                        Map<Rule, Integer> rules = solver.solve(null);
+                        Map<String, Integer> ruleNames = solver.toNamedList(rules);
+                        double difficulty = 0;
+                        String hardestRule = "";
+                        for (Rule rule : rules.keySet()) {
+                            if (rule.getDifficulty() > difficulty) {
+                                difficulty = rule.getDifficulty();
+                                hardestRule = rule.getName();
+                            }
+                        }
+                        for (String rule : ruleNames.keySet()) {
+                            int count = ruleNames.get(rule);
+                            writer.println(Integer.toString(count) + " " + rule);
+                            System.out.println(Integer.toString(count) + " " + rule);
+                        }
+                        writer.println("Hardest technique: " + hardestRule);
+                        System.out.println("Hardest technique: " + hardestRule);
+                        writer.println("Difficulty: " + difficulty);
+                        System.out.println("Difficulty: " + difficulty);
+                    } catch (UnsupportedOperationException ex) {
+                        writer.println("Failed !");
+                        System.out.println("Failed !");
+                    }
+                    writer.println();
+                    System.out.println();
+                    writer.flush();
+                } else System.out.println("Skipping incomplete line: " + line);
+                line = reader.readLine();
+            }
+            writer.close();
+            reader.close();
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (reader != null) reader.close();
+                if (writer != null) writer.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+        System.out.print("Finished.");
+    }
+} </s>
+<s>class temp {    @Test
+    public void testDocumentDownloadExcel() throws IOException {
+        if (uploadedExcelDocumentID == null) {
+            fail("Document Upload Test should run first");
+        }
+        String downloadLink = GoogleDownloadLinkGenerator.generateXlDownloadLink(uploadedExcelDocumentID);
+        URL url = new URL(downloadLink);
+        URLConnection urlConnection = url.openConnection();
+        urlConnection.connect();
+        InputStream input = url.openStream();
+        FileWriter fw = new FileWriter("tmpOutput.kb");
+        Reader reader = new InputStreamReader(input);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String strLine = "";
+        int count = 0;
+        while (count < 10000) {
+            strLine = bufferedReader.readLine();
+            if (strLine != null && strLine != "") {
+                fw.write(strLine);
+            }
+            count++;
+        }
+    }
+} </s>
+<s>class temp {    @Test
+    public void testDocumentDownloadKnowledgeBase() throws IOException {
+        if (uploadedKbDocumentID == null) {
+            fail("Document Upload Test should run first");
+        }
+        String downloadLink = GoogleDownloadLinkGenerator.generateTextDownloadLink(uploadedKbDocumentID);
+        URL url = new URL(downloadLink);
+        URLConnection urlConnection = url.openConnection();
+        urlConnection.connect();
+        InputStream input = url.openStream();
+        FileWriter fw = new FileWriter("tmpOutput.kb");
+        Reader reader = new InputStreamReader(input);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String strLine = "";
+        int count = 0;
+        while (count < 10000) {
+            strLine = bufferedReader.readLine();
+            if (strLine != null && strLine != "") {
+                fw.write(strLine);
+            }
+            count++;
+        }
+    }
+} </s>
+<s>class temp {    public String stringOfUrl(String addr) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        URL url = new URL(addr);
+        IOUtils.copy(url.openStream(), output);
+        return output.toString();
+    }
+} </s>
+<s>class temp {    public boolean crear() {
+        int result = 0;
+        String sql = "insert into ronda" + "(divisionxTorneo_idDivisionxTorneo, fechaRonda, nRonda, estado ) " + "values (?, ?, ?, ?)";
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            populatePreparedStatement(unaRonda);
+            result = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (result > 0);
+    }
+} </s>
+<s>class temp {    public boolean actEstadoEnBD(int idRonda) {
+        int intResult = 0;
+        String sql = "UPDATE ronda " + " SET estado = 1" + " WHERE numeroRonda = " + idRonda;
+        try {
+            connection = conexionBD.getConnection();
+            connection.setAutoCommit(false);
+            ps = connection.prepareStatement(sql);
+            intResult = ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exe) {
+                exe.printStackTrace();
+            }
+        } finally {
+            conexionBD.close(ps);
+            conexionBD.close(connection);
+        }
+        return (intResult > 0);
+    }
+} </s>
+<s>class temp {    public static void main(String[] args) throws IOException {
+        String zipPath = "C:\\test.zip";
+        CZipInputStream zip_in = null;
+        try {
+            byte[] c = new byte[1024];
+            int slen;
+            zip_in = new CZipInputStream(new FileInputStream(zipPath), "utf-8");
+            do {
+                ZipEntry file = zip_in.getNextEntry();
+                if (file == null) break;
+                String fileName = file.getName();
+                System.out.println(fileName);
+                String ext = fileName.substring(fileName.lastIndexOf("."));
+                long seed = new Date(System.currentTimeMillis()).getTime();
+                String newFileName = Long.toString(seed) + ext;
+                FileOutputStream out = new FileOutputStream(newFileName);
+                while ((slen = zip_in.read(c, 0, c.length)) != -1) out.write(c, 0, slen);
+                out.close();
+            } while (true);
+        } catch (ZipException zipe) {
+            zipe.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } finally {
+            zip_in.close();
+        }
+    }
+} </s>
+<s>class temp {    char[] DigestCalcHA1(String algorithm, String userName, String realm, String password, String nonce, String clientNonce) throws SaslException {
+        byte[] hash;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(userName.getBytes("UTF-8"));
+            md.update(":".getBytes("UTF-8"));
+            md.update(realm.getBytes("UTF-8"));
+            md.update(":".getBytes("UTF-8"));
+            md.update(password.getBytes("UTF-8"));
+            hash = md.digest();
+            if ("md5-sess".equals(algorithm)) {
+                md.update(hash);
+                md.update(":".getBytes("UTF-8"));
+                md.update(nonce.getBytes("UTF-8"));
+                md.update(":".getBytes("UTF-8"));
+                md.update(clientNonce.getBytes("UTF-8"));
+                hash = md.digest();
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("No provider found for MD5 hash", e);
+        } catch (UnsupportedEncodingException e) {
+            throw new SaslException("UTF-8 encoding not supported by platform.", e);
+        }
+        return convertToHex(hash);
+    }
+} </s>
+<s>class temp {    char[] DigestCalcResponse(char[] HA1, String serverNonce, String nonceCount, String clientNonce, String qop, String method, String digestUri, boolean clientResponseFlag) throws SaslException {
+        byte[] HA2;
+        byte[] respHash;
+        char[] HA2Hex;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            if (clientResponseFlag) md.update(method.getBytes("UTF-8"));
+            md.update(":".getBytes("UTF-8"));
+            md.update(digestUri.getBytes("UTF-8"));
+            if ("auth-int".equals(qop)) {
+                md.update(":".getBytes("UTF-8"));
+                md.update("00000000000000000000000000000000".getBytes("UTF-8"));
+            }
+            HA2 = md.digest();
+            HA2Hex = convertToHex(HA2);
+            md.update(new String(HA1).getBytes("UTF-8"));
+            md.update(":".getBytes("UTF-8"));
+            md.update(serverNonce.getBytes("UTF-8"));
+            md.update(":".getBytes("UTF-8"));
+            if (qop.length() > 0) {
+                md.update(nonceCount.getBytes("UTF-8"));
+                md.update(":".getBytes("UTF-8"));
+                md.update(clientNonce.getBytes("UTF-8"));
+                md.update(":".getBytes("UTF-8"));
+                md.update(qop.getBytes("UTF-8"));
+                md.update(":".getBytes("UTF-8"));
+            }
+            md.update(new String(HA2Hex).getBytes("UTF-8"));
+            respHash = md.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("No provider found for MD5 hash", e);
+        } catch (UnsupportedEncodingException e) {
+            throw new SaslException("UTF-8 encoding not supported by platform.", e);
+        }
+        return convertToHex(respHash);
+    }
+} </s>
+<s>class temp {    public static void doVersionCheck(View view) {
+        view.showWaitCursor();
+        try {
+            URL url = new URL(jEdit.getProperty("version-check.url"));
+            InputStream in = url.openStream();
+            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+            String line;
+            String develBuild = null;
+            String stableBuild = null;
+            while ((line = bin.readLine()) != null) {
+                if (line.startsWith(".build")) develBuild = line.substring(6).trim(); else if (line.startsWith(".stablebuild")) stableBuild = line.substring(12).trim();
+            }
+            bin.close();
+            if (develBuild != null && stableBuild != null) {
+                doVersionCheck(view, stableBuild, develBuild);
+            }
+        } catch (IOException e) {
+            String[] args = { jEdit.getProperty("version-check.url"), e.toString() };
+            GUIUtilities.error(view, "read-error", args);
+        }
+        view.hideWaitCursor();
+    }
+} </s>
+<s>class temp {    static final void executeUpdate(Collection<String> queries, DBConnector connector) throws IOException {
+        Connection con = null;
+        Statement st = null;
+        try {
+            con = connector.getDB();
+            con.setAutoCommit(false);
+            st = con.createStatement();
+            for (String s : queries) st.executeUpdate(s);
+            con.commit();
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+            throw new IOException(e.getMessage());
+        } finally {
+            if (st != null) {
+                try {
+                    st.close();
+                } catch (SQLException ignore) {
+                }
+            }
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException ignore) {
+                }
+            }
+        }
+    }
+} </s>
+<s>class temp {    public static String getHashedPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            digest.update(password.getBytes());
+            BigInteger hashedInt = new BigInteger(1, digest.digest());
+            return String.format("%1$032X", hashedInt);
+        } catch (NoSuchAlgorithmException nsae) {
+            System.err.println(nsae.getMessage());
+        }
+        return "";
+    }
+} </s>
+<s>class temp {    private void getRandomGUID(boolean secure) {
+        MessageDigest md5 = null;
+        StringBuffer sbValueBeforeMD5 = new StringBuffer();
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Error: " + e);
+        }
+        try {
+            long time = System.currentTimeMillis();
+            long rand = 0;
+            if (secure) {
+                rand = mySecureRand.nextLong();
+            } else {
+                rand = myRand.nextLong();
+            }
+            sbValueBeforeMD5.append(s_id);
+            sbValueBeforeMD5.append(":");
+            sbValueBeforeMD5.append(Long.toString(time));
+            sbValueBeforeMD5.append(":");
+            sbValueBeforeMD5.append(Long.toString(rand));
+            valueBeforeMD5 = sbValueBeforeMD5.toString();
+            md5.update(valueBeforeMD5.getBytes());
+            byte[] array = md5.digest();
+            StringBuffer sb = new StringBuffer();
+            for (int j = 0; j < array.length; ++j) {
+                int b = array[j] & 0xFF;
+                if (b < 0x10) sb.append('0');
+                sb.append(Integer.toHexString(b));
+            }
+            valueAfterMD5 = sb.toString();
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+        }
+    }
+} </s>
+<s>class temp {    public static String getMD5Str(String str) {
+        MessageDigest messageDigest = null;
+        try {
+            messageDigest = MessageDigest.getInstance("MD5");
+            messageDigest.reset();
+            messageDigest.update(str.getBytes("UTF-8"));
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("NoSuchAlgorithmException caught!");
+            System.exit(-1);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        byte[] byteArray = messageDigest.digest();
+        StringBuffer md5StrBuff = new StringBuffer();
+        for (int i = 0; i < byteArray.length; i++) {
+            if (Integer.toHexString(0xFF & byteArray[i]).length() == 1) md5StrBuff.append("0").append(Integer.toHexString(0xFF & byteArray[i])); else md5StrBuff.append(Integer.toHexString(0xFF & byteArray[i]));
+        }
+        return md5StrBuff.toString();
+    }
+} </s>
+<s>class temp {    private void downloadFile(String directory, String fileName) {
+        URL url = null;
+        String urlstr = updateURL + directory + fileName;
+        int position = 0;
+        try {
+            Logger.msg(threadName + "Download new file from " + urlstr);
+            url = new URL(urlstr);
+            URLConnection conn = url.openConnection();
+            BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(updateDirectory + System.getProperty("file.separator") + fileName));
+            int i = in.read();
+            while (i != -1) {
+                if (isInterrupted()) {
+                    setWasInterrupted();
+                    in.close();
+                    out.flush();
+                    out.close();
+                    interrupt();
+                    return;
+                }
+                out.write(i);
+                i = in.read();
+                position += 1;
+                if (position % 1000 == 0) {
+                    Enumeration<DownloadFilesListener> en = listener.elements();
+                    while (en.hasMoreElements()) {
+                        DownloadFilesListener currentListener = en.nextElement();
+                        currentListener.progress(1000);
+                    }
+                }
+            }
+            Enumeration<DownloadFilesListener> en = listener.elements();
+            while (en.hasMoreElements()) {
+                DownloadFilesListener currentListener = en.nextElement();
+                currentListener.progress(1000);
+            }
+            in.close();
+            out.flush();
+            out.close();
+            Logger.msg(threadName + "Saved file " + fileName + " to " + updateDirectory + System.getProperty("file.separator") + fileName);
+        } catch (Exception e) {
+            Logger.err(threadName + "Error (" + e.toString() + ")");
+        }
+    }
+} </s>
+<s>class temp {    public static String read(URL url) throws Exception {
+        String filename = Integer.toString(url.toString().hashCode());
+        boolean cached = false;
+        File dir = new File(Config.CACHE_PATH);
+        for (File file : dir.listFiles()) {
+            if (!file.isFile()) continue;
+            if (file.getName().equals(filename)) {
+                filename = file.getName();
+                cached = true;
+                break;
+            }
+        }
+        File file = new File(Config.CACHE_PATH, filename);
+        if (Config.USE_CACHE && cached) return read(file);
+        System.out.println(">> CACHE HIT FAILED.");
+        InputStream in = null;
+        try {
+            in = url.openStream();
+        } catch (Exception e) {
+            System.out.println(">> OPEN STREAM FAILED: " + url.toString());
+            return null;
+        }
+        String content = read(in);
+        save(file, content);
+        return content;
+    }
+} </s>
+<s>class temp {    public static FTPClient createConnection(String hostname, int port, char[] username, char[] password, String workingDirectory, FileSystemOptions fileSystemOptions) throws FileSystemException {
+        if (username == null) {
+            username = "anonymous".toCharArray();
+        }
+        if (password == null) {
+            password = "anonymous".toCharArray();
+        }
+        try {
+            final FTPClient client = new FTPClient();
+            String key = FtpFileSystemConfigBuilder.getInstance().getEntryParser(fileSystemOptions);
+            if (key != null) {
+                FTPClientConfig config = new FTPClientConfig(key);
+                String serverLanguageCode = FtpFileSystemConfigBuilder.getInstance().getServerLanguageCode(fileSystemOptions);
+                if (serverLanguageCode != null) {
+                    config.setServerLanguageCode(serverLanguageCode);
+                }
+                String defaultDateFormat = FtpFileSystemConfigBuilder.getInstance().getDefaultDateFormat(fileSystemOptions);
+                if (defaultDateFormat != null) {
+                    config.setDefaultDateFormatStr(defaultDateFormat);
+                }
+                String recentDateFormat = FtpFileSystemConfigBuilder.getInstance().getRecentDateFormat(fileSystemOptions);
+                if (recentDateFormat != null) {
+                    config.setRecentDateFormatStr(recentDateFormat);
+                }
+                String serverTimeZoneId = FtpFileSystemConfigBuilder.getInstance().getServerTimeZoneId(fileSystemOptions);
+                if (serverTimeZoneId != null) {
+                    config.setServerTimeZoneId(serverTimeZoneId);
+                }
+                String[] shortMonthNames = FtpFileSystemConfigBuilder.getInstance().getShortMonthNames(fileSystemOptions);
+                if (shortMonthNames != null) {
+                    StringBuffer shortMonthNamesStr = new StringBuffer(40);
+                    for (int i = 0; i < shortMonthNames.length; i++) {
+                        if (shortMonthNamesStr.length() > 0) {
+                            shortMonthNamesStr.append("|");
+                        }
+                        shortMonthNamesStr.append(shortMonthNames[i]);
+                    }
+                    config.setShortMonthNames(shortMonthNamesStr.toString());
+                }
+                client.configure(config);
+            }
+            FTPFileEntryParserFactory myFactory = FtpFileSystemConfigBuilder.getInstance().getEntryParserFactory(fileSystemOptions);
+            if (myFactory != null) {
+                client.setParserFactory(myFactory);
+            }
+            try {
+                client.connect(hostname, port);
+                int reply = client.getReplyCode();
+                if (!FTPReply.isPositiveCompletion(reply)) {
+                    throw new FileSystemException("vfs.provider.ftp/connect-rejected.error", hostname);
+                }
+                if (!client.login(UserAuthenticatorUtils.toString(username), UserAuthenticatorUtils.toString(password))) {
+                    throw new FileSystemException("vfs.provider.ftp/login.error", new Object[] { hostname, UserAuthenticatorUtils.toString(username) }, null);
+                }
+                if (!client.setFileType(FTP.BINARY_FILE_TYPE)) {
+                    throw new FileSystemException("vfs.provider.ftp/set-binary.error", hostname);
+                }
+                Integer dataTimeout = FtpFileSystemConfigBuilder.getInstance().getDataTimeout(fileSystemOptions);
+                if (dataTimeout != null) {
+                    client.setDataTimeout(dataTimeout.intValue());
+                }
+                Boolean userDirIsRoot = FtpFileSystemConfigBuilder.getInstance().getUserDirIsRoot(fileSystemOptions);
+                if (workingDirectory != null && (userDirIsRoot == null || !userDirIsRoot.booleanValue())) {
+                    if (!client.changeWorkingDirectory(workingDirectory)) {
+                        throw new FileSystemException("vfs.provider.ftp/change-work-directory.error", workingDirectory);
+                    }
+                }
+                Boolean passiveMode = FtpFileSystemConfigBuilder.getInstance().getPassiveMode(fileSystemOptions);
+                if (passiveMode != null && passiveMode.booleanValue()) {
+                    client.enterLocalPassiveMode();
+                }
+            } catch (final IOException e) {
+                if (client.isConnected()) {
+                    client.disconnect();
+                }
+                throw e;
+            }
+            return client;
+        } catch (final Exception exc) {
+            throw new FileSystemException("vfs.provider.ftp/connect.error", new Object[] { hostname }, exc);
+        }
+    }
+} </s>
+<s>class temp {    public String MD5(String text) {
+        try {
+            MessageDigest md;
+            md = MessageDigest.getInstance("MD5");
+            byte[] md5hash = new byte[32];
+            md.update(text.getBytes("iso-8859-1"), 0, text.length());
+            md5hash = md.digest();
+            return convertToHex(md5hash);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+        return null;
+    }
+} </s>
+<s>class temp {    public boolean saveVideoXMLOnWebserver() {
+        String text = "";
+        boolean erg = false;
+        try {
+            URL url = new URL("http://localhost:8080/virtPresenterVerwalter/videofile.jsp?id=" + this.getId());
+            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+            BufferedReader in = new BufferedReader(new InputStreamReader(http.getInputStream()));
+            String zeile = "";
+            while ((zeile = in.readLine()) != null) {
+                text += zeile + "\n";
+            }
+            in.close();
+            http.disconnect();
+            erg = saveVideoXMLOnWebserver(text);
+            System.err.println("Job " + this.getId() + " erfolgreich bearbeitet!");
+        } catch (MalformedURLException e) {
+            System.err.println("Job " + this.getId() + ": Konnte video.xml nicht erstellen. Verbindung konnte nicht aufgebaut werden.");
+            return false;
+        } catch (IOException e) {
+            System.err.println("Job " + this.getId() + ": Konnte video.xml nicht erstellen. Konnte Daten nicht lesen/schreiben.");
+            return false;
+        }
+        return erg;
+    }
+} </s>
+<s>class temp {    public boolean saveVideoXMLOnWebserver(String text) {
+        boolean error = false;
+        FTPClient ftp = new FTPClient();
+        try {
+            int reply;
+            ftp.connect(this.getWebserver().getUrl());
+            System.out.println("Connected to " + this.getWebserver().getUrl() + ".");
+            System.out.print(ftp.getReplyString());
+            reply = ftp.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                ftp.disconnect();
+                System.err.println("FTP server refused connection.");
+                return false;
+            }
+            if (!ftp.login(this.getWebserver().getFtpBenutzer(), this.getWebserver().getFtpPasswort())) {
+                System.err.println("FTP server: Login incorrect");
+            }
+            String tmpSeminarID = this.getSeminarID();
+            if (tmpSeminarID == null) tmpSeminarID = "unbekannt";
+            try {
+                ftp.changeWorkingDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/" + this.getId() + "/data");
+            } catch (Exception e) {
+                ftp.makeDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/" + this.getId() + "/data");
+                ftp.changeWorkingDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/" + this.getId() + "/data");
+            }
+            ftp.setFileType(FTP.BINARY_FILE_TYPE);
+            ByteArrayInputStream videoIn = new ByteArrayInputStream(text.getBytes());
+            ftp.enterLocalPassiveMode();
+            ftp.storeFile("video.xml", videoIn);
+            videoIn.close();
+            ftp.logout();
+            ftp.disconnect();
+        } catch (IOException e) {
+            System.err.println("Job " + this.getId() + ": Datei video.xml konnte nicht auf Webserver kopiert werden.");
+            error = true;
+            e.printStackTrace();
+        } finally {
+            if (ftp.isConnected()) {
+                try {
+                    ftp.disconnect();
+                } catch (IOException ioe) {
+                }
+            }
+        }
+        return error;
+    }
+} </s>
+<s>class temp {    public boolean saveLecturerecordingsXMLOnWebserver() {
+        boolean error = false;
+        FTPClient ftp = new FTPClient();
+        String lecture = "";
+        try {
+            URL url = new URL("http://localhost:8080/virtPresenterVerwalter/lecturerecordings.jsp?seminarid=" + this.getSeminarID());
+            HttpURLConnection http = (HttpURLConnection) url.openConnection();
+            BufferedReader in = new BufferedReader(new InputStreamReader(http.getInputStream()));
+            String zeile = "";
+            while ((zeile = in.readLine()) != null) {
+                lecture += zeile + "\n";
+            }
+            in.close();
+            http.disconnect();
+        } catch (Exception e) {
+            System.err.println("Konnte lecturerecordings.xml nicht lesen.");
+        }
+        try {
+            int reply;
+            ftp.connect(this.getWebserver().getUrl());
+            System.out.println("Connected to " + this.getWebserver().getUrl() + ".");
+            System.out.print(ftp.getReplyString());
+            reply = ftp.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(reply)) {
+                ftp.disconnect();
+                System.err.println("FTP server refused connection.");
+                return false;
+            }
+            if (!ftp.login(this.getWebserver().getFtpBenutzer(), this.getWebserver().getFtpPasswort())) {
+                System.err.println("FTP server: Login incorrect");
+            }
+            String tmpSeminarID = this.getSeminarID();
+            if (tmpSeminarID == null) tmpSeminarID = "unbekannt";
+            try {
+                ftp.changeWorkingDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/");
+            } catch (Exception e) {
+                ftp.makeDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/");
+                ftp.changeWorkingDirectory(this.getWebserver().getDefaultPath() + "/" + tmpSeminarID + "/lectures/");
+            }
+            ftp.setFileType(FTP.BINARY_FILE_TYPE);
+            ByteArrayInputStream lectureIn = new ByteArrayInputStream(lecture.getBytes());
+            System.err.println("FTP Verzeichnis: " + ftp.printWorkingDirectory());
+            ftp.storeFile("lecturerecordings.xml", lectureIn);
+            lectureIn.close();
+            ftp.logout();
+            ftp.disconnect();
+        } catch (IOException e) {
+            System.err.println("Job " + this.getId() + ": Datei lecturerecordings.xml konnte nicht auf Webserver kopiert werden.");
+            error = true;
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.err.println("Job " + this.getId() + ": Datei lecturerecordings.xml konnte nicht auf Webserver kopiert werden. (Kein Webserver zugewiesen)");
+            error = true;
+        } finally {
+            if (ftp.isConnected()) {
+                try {
+                    ftp.disconnect();
+                } catch (IOException ioe) {
+                }
+            }
+        }
+        return error;
+    }
+} </s>
