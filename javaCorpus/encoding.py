@@ -155,7 +155,7 @@ class Encoding:
 if __name__ == "__main__":
     enc = Encoding("javaCorpus_test.txt")
     enc.run()
-    enc = Encoding("javaCorpus_test.txt")
+    enc = Encoding("javaCorpus_dev.txt")
     enc.run()
-    enc = Encoding("javaCorpus_test.txt")
+    enc = Encoding("javaCorpus_train.txt")
     enc.run()
