@@ -70,8 +70,8 @@ class Encoding:
         for i in range(curr_idx, -1, -1):
             if batch[i][1] == batch[curr_idx][1] - 1:
                 return i
-        raise IndexError(f"Parent of {curr_idx} not found in list")
-
+        # raise IndexError(f"Parent of {curr_idx} not found in list")
+        return None
     # Construct a tree from a batch
 
     def constructTree(self, batch: List[List]) -> TreeNode:

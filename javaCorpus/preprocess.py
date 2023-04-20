@@ -27,17 +27,22 @@ class Prepossess:
             print("Error parsing Java code:")
             print(code)
             # loop over the syntax errors and print the error messages
-            for error in e.errors:
-                print("Exception message: "+ sys.argv[1], error)
+            # for error in e.errors:
+            #     print("Exception message: "+ sys.argv[1], error)
 
-    def print_ast(self, node, visited=set(), depth=0):
+    def print_ast(self, node, visited=None, depth=0):
+        if visited is None:
+            visited = set()
         indent = "  " * depth
         if id(node) in visited:
             return
         visited.add(id(node))
         if hasattr(node, "position") and node.position is not None:
             position = node.position
-            self.output.write(f"{indent}{type(node).__name__}{position}\n")
+            if type(node).__name__ != "Literal" and type(node).__name__ != "ClassReference" \
+            and type(node).__name__ != "MemberReference" and type(node).__name__ != "This":
+                # self.output.write(f"{indent}{type(node).__name__} {position}\n")
+                self.output.write(f"{indent}{type(node).__name__}\n")
         # else:
         #     self.output.write(f"{indent}{type(node).__name__}\n")
 
