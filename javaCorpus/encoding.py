@@ -8,6 +8,7 @@ import sys
 from typing import List
 import numpy as np
 from gensim.models import Word2Vec
+import pickle as pkl
 
 
 class TreeNode:
@@ -36,11 +37,12 @@ class TreeNode:
 
 
 class Encoding:
-    def __init__(self, filename, vector_size=128):
+    def __init__(self, filename, vector_size=32):
         self.filename = filename
         # vector_size for node encoding and position encoding
         # total encoding size = 2 * vector_size
         self.vector_size = vector_size
+        self.max_depth = 0
 
     # Parse the file to get the batches and corpus
     # example batch: [['FieldDeclaration', 1], ['VariableDeclarationFragment', 2]]
@@ -48,21 +50,26 @@ class Encoding:
     def parseFile(self):
         batches = []
         corpus = []
+        # count = 0
         with open(self.filename, "r") as f:
             temp = []
             temp_corpus = []
             for line in f:
+                # if count == 100:
+                #     break
+                # line = line.split('(')[0]+'\n'
                 if "=" not in line:
                     # parse the line to get its depth
                     # e.g. '  FieldDeclaration\n' -> ['FieldDeclaration', 2)]
-                    temp.append(
-                        [line.strip(), (len(line) - len(line.lstrip())) // 2 + 1]
-                    )
+                    current_line = [line.strip(), (len(line) - len(line.lstrip())) // 2 + 1]
+                    self.max_depth = max(current_line[1], self.max_depth)
+                    temp.append(current_line)
                     temp_corpus.append(line.strip())
-                else:
+                elif len(temp) > 0:
                     batches.append(temp)
                     corpus.append(temp_corpus)
                     temp = []
+        self.vector_size = (self.max_depth // 16 + 1) * 8
         return (batches, corpus)
 
     # A helper function to find the nearest parent of a node in a batch
@@ -85,7 +92,7 @@ class Encoding:
     def node2vec(self, corpus):
         # Train the Word2Vec model
         model = Word2Vec(
-            corpus, vector_size=self.vector_size, window=5, min_count=1, workers=4
+            corpus, vector_size = self.vector_size, window = 5, min_count = 1, workers = 16
         )
         # Print the most similar words to a given word
         return model
@@ -112,33 +119,43 @@ class Encoding:
             else:
                 padding = [0] * (self.vector_size - len(encodings[i]))
                 encodings[i].extend(padding)
-            encodings[i] += node_enc.wv[batch[i][0]].tolist()
+            # encodings[i] += node_enc.wv[batch[i][0]].tolist()
         # print(np.array(encodings).shape)
         return np.array(encodings)
 
     def run(self):
         batches, corpus = self.parseFile()
-        node_enc = self.node2vec(corpus)
+        print("parse file done. max_depth:", self.max_depth, "position size:", self.vector_size)
+        # node_enc = self.node2vec(corpus)
+        print("node2vec done")
         ret = []
         for batch in batches:
             tree = self.constructTree(batch)
-            ret.append(self.encode_tree(tree, batch, node_enc))
+            # ret.append(self.encode_tree(tree, batch, node_enc))
+            ret.append(self.encode_tree(tree, batch, 0))
 
         # padding each batch to the same shape``
-        max_rows = max(arr.shape[0] for arr in ret)
-        for i in range(len(ret)):
-            num_rows = ret[i].shape[0]
-            if num_rows < max_rows:
-                padding = ((0, max_rows - num_rows), (0, 0))
-                ret[i] = np.pad(ret[i], padding, mode="constant")
-        ret = np.array(ret)
+        # max_rows = max(arr.shape[0] for arr in ret)
+        # for i in range(len(ret)):
+        #     num_rows = ret[i].shape[0]
+        #     if num_rows < max_rows:
+        #         padding = ((0, max_rows - num_rows), (0, 0))
+        # ret[i] = np.pad(ret[i], padding, mode = "constant")
+        # ret = np.array(ret)
+        print("start saving files")
+        with open(self.filename.split('.')[0] + '.pkl', 'wb') as f:
+            pkl.dump(ret, f)
         # save the array to a text file with custom formatting
-        with open("enc.txt", "w") as f:
-            for i in range(ret.shape[0]):
-                np.savetxt(f, ret[i], fmt="%.3f")
-                f.write("\n")
+        # with open("enc.txt", "w") as f:
+        #     for i in range(ret.shape[0]):
+        #         np.savetxt(f, ret[i], fmt = "%.3f")
+        #         f.write("\n")
 
 
 if __name__ == "__main__":
-    enc = Encoding(sys.argv[1])
+    enc = Encoding("javaCorpus_test.txt")
+    enc.run()
+    enc = Encoding("javaCorpus_dev.txt")
+    enc.run()
+    enc = Encoding("javaCorpus_train.txt")
     enc.run()
