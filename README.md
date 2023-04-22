@@ -1,5 +1,10 @@
 # Code Hinter
 
+## Environment
+```shell
+pip install -r requirement
+```
+
 ## Preprocess Dataset
 ```shell
 cd javaCorpus
