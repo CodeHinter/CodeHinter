@@ -38,7 +38,7 @@ class TreeNode:
 
 
 class Encoding:
-    def __init__(self, filename, vector_size=0):
+    def __init__(self, filename, vector_size=40):
         self.filename = os.path.abspath(filename)
         # vector_size for node encoding and position encoding
         # total encoding size = 2 * vector_size

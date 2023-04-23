@@ -3,6 +3,11 @@ from typing import List
 import numpy as np
 from gensim.models import Word2Vec
 from io import StringIO
+import pickle as pkl
+import tensorflow as tf
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import json
+
 
 class Prepossess:
     def __init__(self, input, line):
@@ -15,7 +20,6 @@ class Prepossess:
         self.output = ""
         self.print_result(self.input)
         return self.output
-
 
     def print_result(self, code):
         try:
@@ -38,7 +42,9 @@ class Prepossess:
             # self.output.write(f"{indent}{type(node).__name__}\n")
             # print(f"{indent}{type(node).__name__}\n")
             position = node.position
-            if position.line <= self.line:
+            if position.line <= self.line and type(node).__name__ != "Literal" and type(
+                    node).__name__ != "ClassReference" \
+                    and type(node).__name__ != "MemberReference" and type(node).__name__ != "This":
                 self.output += f"{indent}{type(node).__name__}\n"
         # else:
         #     self.output.write(f"{indent}{type(node).__name__}\n")
@@ -81,7 +87,7 @@ class TreeNode:
 
 
 class Encoding:
-    def __init__(self, input, vector_size=32):
+    def __init__(self, input, vector_size=40):
         self.input = input
         self.vector_size = vector_size
 
@@ -131,11 +137,10 @@ class Encoding:
 
     def node2vec(self, corpus):
         # Train the Word2Vec model
-        model = Word2Vec(
-            corpus, vector_size=self.vector_size, window=5, min_count=1, workers=4
-        )
+        with open("./word2vec.pkl", "rb") as f:
+            word2vec = pkl.load(f)
         # Print the most similar words to a given word
-        return model
+        return word2vec
 
     # position encoding for a single node
     def encode_node(self, node):
@@ -159,7 +164,7 @@ class Encoding:
             else:
                 padding = [0] * (self.vector_size - len(encodings[i]))
                 encodings[i].extend(padding)
-            encodings[i] += node_enc.wv[batch[i][0]].tolist()
+            # encodings[i] += node_enc.wv[batch[i][0]].tolist()
         return np.array(encodings)
 
     def run(self):
@@ -168,7 +173,8 @@ class Encoding:
         ret = []
         for batch in batches:
             tree = self.constructTree(batch)
-            ret.append(self.encode_tree(tree, batch, node_enc))
+            # ret.append(self.encode_tree(tree, batch, node_enc))
+            ret.append(self.encode_tree(tree, batch, 0))
         # padding each batch to the same shape``
         max_rows = max(arr.shape[0] for arr in ret)
         for i in range(len(ret)):
@@ -178,32 +184,20 @@ class Encoding:
                     padding = ((0, max_rows - num_rows), (0, 0))
                     if ret[i].shape == (2, 2):  # handle (2, 2) case
                         padding = ((0, max_rows - num_rows - 1), (0, 0))
-                    ret[i] = np.pad(ret[i], padding, mode="constant")
-        ret = np.array(ret, dtype=object)
-        flag = True
-        enc = ""
-        count = 0
-        for i in range(ret.shape[0]):
-            count += 1
-            if count > 1:
-                break
-            if ret[i].shape[0] == 0 or not flag:
-                flag = False
-                continue
+                    ret[i] = np.pad(ret[i], padding, mode = "constant")
+        return np.array(ret)
 
-            # create a StringIO object to hold the formatted array
-            f = StringIO()
 
-            # write the formatted array to the StringIO object
-            np.savetxt(f, ret[i], fmt="%.3f")
+def get_onehot(data):
+    data_seq = data.split()
+    with open("./model/vob_map.json", "r") as m:
+        vob_map = json.load(m)
 
-            # get the contents of the StringIO object as a string
-            formatted_str = f.getvalue()
+    onehot_value = [vob_map[word] for word in data_seq]
+    onehot_encoding = [tf.one_hot(val, len(vob_map), on_value = 1.0, off_value = 0.0, axis = -1) for val in
+                       onehot_value]
+    return np.array([onehot_encoding])
 
-            enc += formatted_str
-            enc += "\n"
-
-        return enc
 
 if __name__ == "__main__":
     editor1_content = """
@@ -225,9 +219,26 @@ if __name__ == "__main__":
     }
 } 
     """
-    pre1 = Prepossess(editor1_content,100)
+    pre1 = Prepossess(editor1_content, 100)
     res1 = pre1.run().strip()
     print(res1)
-    enc1 = Encoding(res1 + "=\n")
-    encoding = enc1.run()
-    print(encoding)
+    enc1 = Encoding(res1 + "\n")
+    # position encoding
+    position_encoding = enc1.run()
+    print("position_encoding:", position_encoding.shape)
+    # onehot encoding
+    onehot_encoding = get_onehot(res1)
+    print("onehot_encoding:", onehot_encoding.shape)
+    # concate onehot and position
+    concatenated_encoding = np.concatenate((position_encoding,onehot_encoding),axis=2)
+    encoding_pad = pad_sequences(concatenated_encoding, maxlen = 512, padding = 'pre', truncating = 'pre').astype('float32')
+    print("encoding_pad:", encoding_pad.shape)
+
+    # load model
+    model = tf.keras.models.load_model("./model/mymodel_12")
+    model.summary()
+    prediction = model.predict(encoding_pad)
+    print(prediction)
+    print(prediction.shape)
+    predicted_label = tf.argmax(prediction, axis=1)
+    print(predicted_label)
