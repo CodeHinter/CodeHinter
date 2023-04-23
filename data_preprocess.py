@@ -240,5 +240,5 @@ if __name__ == "__main__":
     prediction = model.predict(encoding_pad)
     print(prediction)
     print(prediction.shape)
-    predicted_label = tf.argmax(prediction, axis=1)
+    predicted_label = tf.argmax(prediction, axis=1).numpy()
     print(predicted_label)
