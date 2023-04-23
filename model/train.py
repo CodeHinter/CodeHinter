@@ -48,7 +48,7 @@ if __name__ == "__main__":
             verbose = 1,
         )
     ]
-    history = model.fit(X_train, y_train, epochs = 20, batch_size = 128, callbacks = callbacks,
+    history = model.fit(X_train, y_train, epochs = 15, batch_size = 256, callbacks = callbacks,
                         validation_split = 0.1)
 
     test_loss, top1, top3, top5, top10 = model.evaluate(X_test, y_test)
