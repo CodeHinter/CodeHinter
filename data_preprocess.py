@@ -235,7 +235,7 @@ if __name__ == "__main__":
     print("encoding_pad:", encoding_pad.shape)
 
     # load model
-    model = tf.keras.models.load_model("./model/mymodel_12")
+    model = tf.keras.models.load_model("./model/mymodel_13")
     model.summary()
     prediction = model.predict(encoding_pad)
     print(prediction)
