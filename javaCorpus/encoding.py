@@ -67,6 +67,7 @@ class Encoding:
                     batches.append(temp)
                     corpus.append(temp_corpus)
                     temp = []
+                    temp_corpus = []
         self.vector_size = max((self.max_depth // 16 + 1) * 8, self.vector_size)
         return (batches, corpus)
 
@@ -93,8 +94,7 @@ class Encoding:
         model = Word2Vec(
             corpus, vector_size = self.vector_size, window = 5, min_count = 1, workers = 16
         )
-        with open('word2vec.pkl', 'wb') as f:
-            pkl.dump(model, f)
+        model.save('word2vec.model')
         # Print the most similar words to a given word
         return model
 
@@ -155,10 +155,10 @@ class Encoding:
 
 
 if __name__ == "__main__":
-    enc = Encoding("../javaCorpus_train.txt")
-    # enc.run()
+    enc = Encoding("./javaCorpus_train.txt")
+    enc.run()
     enc.run_with_word2vec()
-    # enc = Encoding("../javaCorpus_test.txt", enc.vector_size)
-    # enc.run()
-    # enc = Encoding("../javaCorpus_dev.txt", enc.vector_size)
-    # enc.run()
+    enc = Encoding("../javaCorpus_test.txt", enc.vector_size)
+    enc.run()
+    enc = Encoding("../javaCorpus_dev.txt", enc.vector_size)
+    enc.run()

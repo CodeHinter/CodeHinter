@@ -137,8 +137,7 @@ class Encoding:
 
     def node2vec(self, corpus):
         # Train the Word2Vec model
-        with open("./word2vec.pkl", "rb") as f:
-            word2vec = pkl.load(f)
+        word2vec = Word2Vec.load("../word2vec.model")
         # Print the most similar words to a given word
         return word2vec
 
@@ -219,7 +218,7 @@ if __name__ == "__main__":
     }
 } 
     """
-    pre1 = Prepossess(editor1_content, 100)
+    pre1 = Prepossess(editor1_content, 5)
     res1 = pre1.run().strip()
     print(res1)
     enc1 = Encoding(res1 + "\n")

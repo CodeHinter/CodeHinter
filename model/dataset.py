@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 import random
 import json
+from gensim.models import Word2Vec
 
 
 def load_ast(path):
@@ -16,10 +17,7 @@ def load_ast(path):
     return data, data_seq
 
 
-def get_onehot(train_path, dev_path):
-    train_data, train_data_seq = load_ast(train_path)
-    dev_data, dev_data_seq = load_ast(dev_path)
-
+def get_onehot(train_data, train_data_seq,dev_data, dev_data_seq):
     vob = {}
     vob_src = "".join(train_data).split() + "".join(dev_data).split()
     for word in vob_src:
@@ -40,10 +38,9 @@ def get_onehot(train_path, dev_path):
 
 
 def get_word2vec():
-    with open("../word2vec.pkl", "rb") as f:
-        word2vec = pkl.load(f)
-        print(word2vec.wv["import"])
-    return []
+    model = Word2Vec.load("../word2vec.model")
+    return model.wv
+
 
 def get_position(train_path, dev_path):
     with open(train_path, "rb") as f:
@@ -51,7 +48,7 @@ def get_position(train_path, dev_path):
     with open(dev_path, "rb") as f:
         dev_position = pkl.load(f)
     position = train_position + dev_position
-    return position
+    return position,train_position, dev_position
 
 
 def get_dataset(encoding, position):
@@ -72,6 +69,39 @@ def get_dataset(encoding, position):
     return X_pad, y
 
 
+def get_dataset_onehot(position,train_data, train_data_seq,dev_data, dev_data_seq):
+    onehot_encoding = get_onehot(train_data, train_data_seq,dev_data, dev_data_seq)
+    for idx, data in enumerate(onehot_encoding):
+        if len(data) != len(position[idx]):
+            print(len(data))
+            print(len(position[idx]))
+            print(idx)
+        assert len(data) == len(position[idx])
+    X, y = get_dataset(onehot_encoding, position)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 42)
+
+    with open('./dataset_train_onehot.pkl', 'wb') as f:
+        pkl.dump([X_train, y_train], f)
+
+    with open('./dataset_test_onehot.pkl', 'wb') as f:
+        pkl.dump([X_test, y_test], f)
+
+
+def get_dataset_word2vec(position, train_data_seq,dev_data_seq):
+    word2vec = get_word2vec()
+    train_word2vec = [[word2vec[word] for word in one] for one in train_data_seq]
+    dev_word2vec = [[vob_map[word] for word in one] for one in dev_data_seq]
+    word2vec = train_word2vec + dev_word2vec
+    X, y = get_dataset(word2vec, position)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 42)
+    with open('./dataset_train_word2vec.pkl', 'wb') as f:
+        pkl.dump([X_train, y_train], f)
+
+    with open('./dataset_test_word2vec.pkl', 'wb') as f:
+        pkl.dump([X_test, y_test], f)
+
+
 if __name__ == "__main__":
     DATA_SET_PATH = '../'
     TRAIN_FILE_NAME = 'javaCorpus_train'
@@ -82,21 +112,11 @@ if __name__ == "__main__":
     DEV_AST_PATH = os.path.join(DATA_SET_PATH, DEV_FILE_NAME + '.txt')
     DEV_POS_PATH = os.path.join(DATA_SET_PATH, DEV_FILE_NAME + '.pkl')
 
-    word2vec_encoding = get_word2vec()
-    # position = get_position(TRAIN_POS_PATH, DEV_POS_PATH)
-    # onehot_encoding = get_onehot(TRAIN_AST_PATH, DEV_AST_PATH)
-    # for idx, data in enumerate(onehot_encoding):
-    #     if len(data) != len(position[idx]):
-    #         print(len(data))
-    #         print(len(position[idx]))
-    #         print(idx)
-    #     assert len(data) == len(position[idx])
-    # X, y = get_dataset(onehot_encoding, position)
-    #
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 42)
-    #
-    # with open('./dataset_train.pkl', 'wb') as f:
-    #     pkl.dump([X_train, y_train], f)
-    #
-    # with open('./dataset_test.pkl', 'wb') as f:
-    #     pkl.dump([X_test, y_test], f)
+    position,train_position, dev_position = get_position(TRAIN_POS_PATH, DEV_POS_PATH)
+    train_data, train_data_seq = load_ast(TRAIN_AST_PATH)
+    dev_data, dev_data_seq = load_ast(DEV_AST_PATH)
+
+    get_dataset_onehot(position,train_data, train_data_seq,dev_data, dev_data_seq)
+
+    get_dataset_word2vec(train_position, train_data_seq,dev_data_seq)
+

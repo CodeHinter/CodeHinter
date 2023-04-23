@@ -8,21 +8,21 @@ import random
 import matplotlib.pyplot as plt
 
 
-def draw(val, history):
+def draw(val, history, loss):
     plt.clf()
     plt.plot(history.history[val])
     plt.plot(history.history['val_' + val])
-    plt.title('Model ' + val)
+    plt.title('Model ' + val + " " + loss)
     plt.ylabel(val)
     plt.xlabel('Epoch')
-    plt.legend(["Train","Test"],loc="best")
-    plt.savefig(val + ".png")
+    plt.legend(["Train", "Test"], loc = "best")
+    plt.savefig(val + "_" + loss + ".png")
 
 
 if __name__ == "__main__":
-    with open('./dataset_train.pkl', "rb") as f:
+    with open('./dataset_train_onehot_without_position.pkl', "rb") as f:
         [X_train, y_train] = pkl.load(f)
-    with open('./dataset_test.pkl', "rb") as f:
+    with open('./dataset_test_onehot_without_position.pkl', "rb") as f:
         [X_test, y_test] = pkl.load(f)
     print(X_train.shape)
     print(y_train.shape)
@@ -33,8 +33,8 @@ if __name__ == "__main__":
     model.add(layers.LSTM(units = 128, input_shape = (X_train.shape[1], X_train.shape[2])))
     model.add(layers.Dense(units = y_test.shape[1], activation = 'softmax'))
     print("model constructed")
-
-    model.compile(optimizer = 'adam', loss = 'mean_squared_error',
+    loss = 'mean_squared_error'
+    model.compile(optimizer = 'adam', loss = loss,
                   metrics = [tf.keras.metrics.TopKCategoricalAccuracy(k = 1, name = "top-1"),
                              tf.keras.metrics.TopKCategoricalAccuracy(k = 3, name = "top-3"),
                              tf.keras.metrics.TopKCategoricalAccuracy(k = 5, name = "top-5"),
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     callbacks = [
         keras.callbacks.ModelCheckpoint(
-            filepath = "mymodel_{epoch}",
+            filepath = loss+"_onehot_without_position_{epoch}",
             save_best_only = True,  # Only save a model if `val_loss` has improved.
             monitor = "val_loss",
             verbose = 1,
@@ -55,8 +55,8 @@ if __name__ == "__main__":
     print('Test loss:', test_loss)
     print('Test accuracy:', top1, top3, top5, top10)
 
-    draw('loss', history)
-    draw('top-1', history)
-    draw('top-3', history)
-    draw('top-5', history)
-    draw('top-10', history)
+    draw('loss', history, loss+"_onehot_without_position")
+    draw('top-1', history, loss+"_onehot_without_position")
+    draw('top-3', history, loss+"_onehot_without_position")
+    draw('top-5', history, loss+"_onehot_without_position")
+    draw('top-10', history, loss+"_onehot_without_position")
