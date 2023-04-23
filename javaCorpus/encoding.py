@@ -120,12 +120,12 @@ class Encoding:
             else:
                 padding = [0] * (self.vector_size - len(encodings[i]))
                 encodings[i].extend(padding)
-            # encodings[i] += node_enc.wv[batch[i][0]].tolist()
-        # print(np.array(encodings).shape)
+            encodings[i] += node_enc.wv[batch[i][0]].tolist()
+        print(np.array(encodings).shape)
         return np.array(encodings)
 
     def run(self):
-        self.batches, self.corpus = self.parseFile()
+        batches, corpus = self.parseFile()
         print("parse file done. max_depth:", self.max_depth, "position size:", self.vector_size)
         # node_enc = self.node2vec(corpus)
         print("node2vec done")
@@ -148,38 +148,17 @@ class Encoding:
             pkl.dump(ret, f)
 
     def run_with_word2vec(self):
-        batches, corpus = self.batches,self.corpus
+        batches, corpus = self.parseFile()
         print("parse file done. max_depth:", self.max_depth, "position size:", self.vector_size)
-        node_enc = self.node2vec(corpus)
+        self.node2vec(corpus)
         print("node2vec done")
-        ret = []
-        for batch in batches:
-            tree = self.constructTree(batch)
-            ret.append(self.encode_tree(tree, batch, node_enc))
-            ret.append(self.encode_tree(tree, batch, 0))
-
-        # padding each batch to the same shape``
-        max_rows = max(arr.shape[0] for arr in ret)
-        for i in range(len(ret)):
-            num_rows = ret[i].shape[0]
-            if num_rows < max_rows:
-                padding = ((0, max_rows - num_rows), (0, 0))
-                if ret[i].shape == (2, 2):  # handle (2, 2) case
-                    padding = ((0, max_rows - num_rows - 1), (0, 0))
-                ret[i] = np.pad(ret[i], padding, mode = "constant")
-        ret = np.array(ret)
-        print("start saving files")
-        with open(self.filename.split('.')[0] + '_word2vec' + '.pkl', 'wb') as f:
-            pkl.dump(ret, f)
 
 
 if __name__ == "__main__":
     enc = Encoding("../javaCorpus_train.txt")
-    enc.run()
+    # enc.run()
     enc.run_with_word2vec()
-    enc = Encoding("../javaCorpus_test.txt", enc.vector_size)
-    enc.run()
-    enc.run_with_word2vec()
-    enc = Encoding("../javaCorpus_dev.txt", enc.vector_size)
-    enc.run()
-    enc.run_with_word2vec()
+    # enc = Encoding("../javaCorpus_test.txt", enc.vector_size)
+    # enc.run()
+    # enc = Encoding("../javaCorpus_dev.txt", enc.vector_size)
+    # enc.run()

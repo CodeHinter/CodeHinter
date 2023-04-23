@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 import random
 import json
 
+
 def load_ast(path):
     with open(path) as f:
         data = f.readlines()
@@ -28,14 +29,21 @@ def get_onehot(train_path, dev_path):
             vob[word] = 1
     vob_map = {word: idx for idx, word in enumerate(vob.keys())}
     print("vob_map", len(vob_map))
-    with open("vob_map.json","w") as m:
-        json.dump(vob_map,m)
+    with open("vob_map.json", "w") as m:
+        json.dump(vob_map, m)
 
     train_onehot_value = [[vob_map[word] for word in one] for one in train_data_seq]
     dev_onehot_value = [[vob_map[word] for word in one] for one in dev_data_seq]
     onehot_value = train_onehot_value + dev_onehot_value
-    return onehot_value, vob
+    onehot_encoding = [tf.one_hot(val, len(vob), on_value = 1.0, off_value = 0.0, axis = -1) for val in onehot_value]
+    return onehot_encoding
 
+
+def get_word2vec():
+    with open("../word2vec.pkl", "rb") as f:
+        word2vec = pkl.load(f)
+        print(word2vec.wv["import"])
+    return []
 
 def get_position(train_path, dev_path):
     with open(train_path, "rb") as f:
@@ -46,22 +54,21 @@ def get_position(train_path, dev_path):
     return position
 
 
-def get_dataset(onehot_value, position, vob):
-    onehot_encoding = [tf.one_hot(val, len(vob), on_value = 1.0, off_value = 0.0, axis = -1) for val in onehot_value]
-    encoding = [np.concatenate(
-        (position[idx], onehot_encoding[idx]),
-        axis = 1) for idx, p in enumerate(onehot_encoding)]
+def get_dataset(encoding, position):
+    concatenated_encoding = [np.concatenate(
+        (position[idx], encoding[idx]),
+        axis = 1) for idx, p in enumerate(encoding)]
     y = []
     X = []
-    for i,e in enumerate(onehot_encoding):
+    for i, e in enumerate(encoding):
         for repeat in range(2):
-            num = random.randint(1,len(e)//2+1)
-            y.append(onehot_encoding[i][-num])
-            X.append(encoding[i][0:-num])
+            num = random.randint(1, len(e) // 2 + 1)
+            y.append(encoding[i][-num])
+            X.append(concatenated_encoding[i][0:-num])
     y = np.array(y)
     X_pad = pad_sequences(X, maxlen = 512, padding = 'pre', truncating = 'pre').astype('float32')
     print("X_pad:", X_pad.shape)
-    print("y:",y.shape)
+    print("y:", y.shape)
     return X_pad, y
 
 
@@ -75,20 +82,21 @@ if __name__ == "__main__":
     DEV_AST_PATH = os.path.join(DATA_SET_PATH, DEV_FILE_NAME + '.txt')
     DEV_POS_PATH = os.path.join(DATA_SET_PATH, DEV_FILE_NAME + '.pkl')
 
-    position = get_position(TRAIN_POS_PATH, DEV_POS_PATH)
-    onehot_value, vob = get_onehot(TRAIN_AST_PATH, DEV_AST_PATH)
-    for idx, data in enumerate(onehot_value):
-        if len(data) != len(position[idx]):
-            print(len(data))
-            print(len(position[idx]))
-            print(idx)
-        assert len(data) == len(position[idx])
-    X, y = get_dataset(onehot_value, position, vob)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 42)
-
-    with open('./dataset_train.pkl', 'wb') as f:
-        pkl.dump([X_train, y_train], f)
-
-    with open('./dataset_test.pkl', 'wb') as f:
-        pkl.dump([X_test, y_test], f)
+    word2vec_encoding = get_word2vec()
+    # position = get_position(TRAIN_POS_PATH, DEV_POS_PATH)
+    # onehot_encoding = get_onehot(TRAIN_AST_PATH, DEV_AST_PATH)
+    # for idx, data in enumerate(onehot_encoding):
+    #     if len(data) != len(position[idx]):
+    #         print(len(data))
+    #         print(len(position[idx]))
+    #         print(idx)
+    #     assert len(data) == len(position[idx])
+    # X, y = get_dataset(onehot_encoding, position)
+    #
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 42)
+    #
+    # with open('./dataset_train.pkl', 'wb') as f:
+    #     pkl.dump([X_train, y_train], f)
+    #
+    # with open('./dataset_test.pkl', 'wb') as f:
+    #     pkl.dump([X_test, y_test], f)
