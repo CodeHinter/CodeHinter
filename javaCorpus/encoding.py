@@ -67,7 +67,7 @@ class Encoding:
                     batches.append(temp)
                     corpus.append(temp_corpus)
                     temp = []
-        self.vector_size = max((self.max_depth // 16 + 1) * 8,self.vector_size)
+        self.vector_size = max((self.max_depth // 16 + 1) * 8, self.vector_size)
         return (batches, corpus)
 
     # A helper function to find the nearest parent of a node in a batch
@@ -77,6 +77,7 @@ class Encoding:
                 return i
         # raise IndexError(f"Parent of {curr_idx} not found in list")
         return None
+
     # Construct a tree from a batch
 
     def constructTree(self, batch: List[List]) -> TreeNode:
@@ -92,6 +93,8 @@ class Encoding:
         model = Word2Vec(
             corpus, vector_size = self.vector_size, window = 5, min_count = 1, workers = 16
         )
+        with open('word2vec.pkl', 'wb') as f:
+            pkl.dump(model, f)
         # Print the most similar words to a given word
         return model
 
@@ -122,7 +125,7 @@ class Encoding:
         return np.array(encodings)
 
     def run(self):
-        batches, corpus = self.parseFile()
+        self.batches, self.corpus = self.parseFile()
         print("parse file done. max_depth:", self.max_depth, "position size:", self.vector_size)
         # node_enc = self.node2vec(corpus)
         print("node2vec done")
@@ -143,18 +146,40 @@ class Encoding:
         print("start saving files")
         with open(self.filename.split('.')[0] + '.pkl', 'wb') as f:
             pkl.dump(ret, f)
-        # save the array to a text file with custom formatting
-        # with open("enc.txt", "w") as f:
-        #     for i in range(ret.shape[0]):
-        #         np.savetxt(f, ret[i], fmt = "%.3f")
-        #         f.write("\n")
+
+    def run_with_word2vec(self):
+        batches, corpus = self.batches,self.corpus
+        print("parse file done. max_depth:", self.max_depth, "position size:", self.vector_size)
+        node_enc = self.node2vec(corpus)
+        print("node2vec done")
+        ret = []
+        for batch in batches:
+            tree = self.constructTree(batch)
+            ret.append(self.encode_tree(tree, batch, node_enc))
+            ret.append(self.encode_tree(tree, batch, 0))
+
+        # padding each batch to the same shape``
+        max_rows = max(arr.shape[0] for arr in ret)
+        for i in range(len(ret)):
+            num_rows = ret[i].shape[0]
+            if num_rows < max_rows:
+                padding = ((0, max_rows - num_rows), (0, 0))
+                if ret[i].shape == (2, 2):  # handle (2, 2) case
+                    padding = ((0, max_rows - num_rows - 1), (0, 0))
+                ret[i] = np.pad(ret[i], padding, mode = "constant")
+        ret = np.array(ret)
+        print("start saving files")
+        with open(self.filename.split('.')[0] + '_word2vec' + '.pkl', 'wb') as f:
+            pkl.dump(ret, f)
 
 
 if __name__ == "__main__":
     enc = Encoding("../javaCorpus_train.txt")
     enc.run()
-    enc = Encoding("../javaCorpus_test.txt",enc.vector_size)
+    enc.run_with_word2vec()
+    enc = Encoding("../javaCorpus_test.txt", enc.vector_size)
     enc.run()
-    enc = Encoding("../javaCorpus_dev.txt",enc.vector_size)
+    enc.run_with_word2vec()
+    enc = Encoding("../javaCorpus_dev.txt", enc.vector_size)
     enc.run()
-
+    enc.run_with_word2vec()

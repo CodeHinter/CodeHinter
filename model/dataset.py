@@ -5,7 +5,7 @@ import os
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 import random
-
+import json
 
 def load_ast(path):
     with open(path) as f:
@@ -28,6 +28,8 @@ def get_onehot(train_path, dev_path):
             vob[word] = 1
     vob_map = {word: idx for idx, word in enumerate(vob.keys())}
     print("vob_map", len(vob_map))
+    with open("vob_map.json","w") as m:
+        json.dump(vob_map,m)
 
     train_onehot_value = [[vob_map[word] for word in one] for one in train_data_seq]
     dev_onehot_value = [[vob_map[word] for word in one] for one in dev_data_seq]
