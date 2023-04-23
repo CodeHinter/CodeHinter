@@ -9,6 +9,7 @@ from typing import List
 import numpy as np
 from gensim.models import Word2Vec
 import pickle as pkl
+import os
 
 
 class TreeNode:
@@ -38,7 +39,7 @@ class TreeNode:
 
 class Encoding:
     def __init__(self, filename, vector_size=0):
-        self.filename = filename
+        self.filename = os.path.abspath(filename)
         # vector_size for node encoding and position encoding
         # total encoding size = 2 * vector_size
         self.vector_size = vector_size
@@ -55,9 +56,6 @@ class Encoding:
             temp = []
             temp_corpus = []
             for line in f:
-                # if count == 100:
-                #     break
-                # line = line.split('(')[0]+'\n'
                 if "=" not in line:
                     # parse the line to get its depth
                     # e.g. '  FieldDeclaration\n' -> ['FieldDeclaration', 2)]
@@ -153,10 +151,10 @@ class Encoding:
 
 
 if __name__ == "__main__":
-    enc = Encoding("javaCorpus_train.txt")
+    enc = Encoding("../javaCorpus_train.txt")
     enc.run()
-    enc = Encoding("javaCorpus_test.txt",enc.vector_size)
+    enc = Encoding("../javaCorpus_test.txt",enc.vector_size)
     enc.run()
-    enc = Encoding("javaCorpus_dev.txt",enc.vector_size)
+    enc = Encoding("../javaCorpus_dev.txt",enc.vector_size)
     enc.run()
 

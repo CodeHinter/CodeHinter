@@ -4,6 +4,7 @@ import tensorflow as tf
 import os
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
+import random
 
 
 def load_ast(path):
@@ -44,15 +45,21 @@ def get_position(train_path, dev_path):
 
 
 def get_dataset(onehot_value, position, vob):
+    onehot_encoding = [tf.one_hot(val, len(vob), on_value = 1.0, off_value = 0.0, axis = -1) for val in onehot_value]
     encoding = [np.concatenate(
-        (position[idx], tf.one_hot(onehot_value[idx], len(vob), on_value = 1.0, off_value = 0.0, axis = -1).numpy()),
-        axis = 1) for idx, p in enumerate(position)]
-    y = np.array([d[-1] for d in encoding])
-    X = [d[0:-1] for d in encoding]
-
+        (position[idx], onehot_encoding[idx]),
+        axis = 1) for idx, p in enumerate(onehot_encoding)]
+    y = []
+    X = []
+    for i,e in enumerate(onehot_encoding):
+        for repeat in range(2):
+            num = random.randint(1,len(e)//2+1)
+            y.append(onehot_encoding[i][-num])
+            X.append(encoding[i][0:-num])
+    y = np.array(y)
     X_pad = pad_sequences(X, maxlen = 512, padding = 'pre', truncating = 'pre').astype('float32')
     print("X_pad:", X_pad.shape)
-
+    print("y:",y.shape)
     return X_pad, y
 
 

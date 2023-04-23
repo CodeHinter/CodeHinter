@@ -5,20 +5,33 @@ import pickle as pkl
 from tensorflow import keras
 from tensorflow.keras import layers
 import random
+import matplotlib.pyplot as plt
+
+
+def draw(val, history):
+    plt.clf()
+    plt.plot(history.history[val])
+    plt.plot(history.history['val_' + val])
+    plt.title('Model ' + val)
+    plt.ylabel(val)
+    plt.xlabel('Epoch')
+    plt.legend(["Train","Test"],loc="best")
+    plt.savefig(val + ".png")
+
 
 if __name__ == "__main__":
     with open('./dataset_train.pkl', "rb") as f:
         [X_train, y_train] = pkl.load(f)
     with open('./dataset_test.pkl', "rb") as f:
         [X_test, y_test] = pkl.load(f)
-    input_dimension = X_train[1].shape[1]
     print(X_train.shape)
     print(y_train.shape)
     print(y_train.shape)
     print(y_test.shape)
 
     model = keras.Sequential()
-    model.add(layers.LSTM(input_dimension))
+    model.add(layers.LSTM(units = 128, input_shape = (X_train.shape[1], X_train.shape[2])))
+    model.add(layers.Dense(units = y_test.shape[1], activation = 'softmax'))
     print("model constructed")
 
     model.compile(optimizer = 'adam', loss = 'mean_squared_error',
@@ -35,9 +48,15 @@ if __name__ == "__main__":
             verbose = 1,
         )
     ]
-    history = model.fit(X_train, y_train, epochs = 25, batch_size = 32, callbacks = callbacks,
+    history = model.fit(X_train, y_train, epochs = 50, batch_size = 32, callbacks = callbacks,
                         validation_split = 0.1)
 
     test_loss, top1, top3, top5, top10 = model.evaluate(X_test, y_test)
     print('Test loss:', test_loss)
     print('Test accuracy:', top1, top3, top5, top10)
+
+    draw('loss', history)
+    draw('top-1', history)
+    draw('top-3', history)
+    draw('top-5', history)
+    draw('top-10', history)
