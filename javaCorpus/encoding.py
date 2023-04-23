@@ -37,7 +37,7 @@ class TreeNode:
 
 
 class Encoding:
-    def __init__(self, filename, vector_size=32):
+    def __init__(self, filename, vector_size=0):
         self.filename = filename
         # vector_size for node encoding and position encoding
         # total encoding size = 2 * vector_size
@@ -69,7 +69,7 @@ class Encoding:
                     batches.append(temp)
                     corpus.append(temp_corpus)
                     temp = []
-        self.vector_size = (self.max_depth // 16 + 1) * 8
+        self.vector_size = max((self.max_depth // 16 + 1) * 8,self.vector_size)
         return (batches, corpus)
 
     # A helper function to find the nearest parent of a node in a batch
@@ -153,9 +153,10 @@ class Encoding:
 
 
 if __name__ == "__main__":
-    enc = Encoding("javaCorpus_test.txt")
-    enc.run()
-    enc = Encoding("javaCorpus_dev.txt")
-    enc.run()
     enc = Encoding("javaCorpus_train.txt")
     enc.run()
+    enc = Encoding("javaCorpus_test.txt",enc.vector_size)
+    enc.run()
+    enc = Encoding("javaCorpus_dev.txt",enc.vector_size)
+    enc.run()
+
