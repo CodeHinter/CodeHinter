@@ -204,8 +204,8 @@ def load_model(PATH):
     return model
 
 
-def predict(model, data):
-    pre1 = Prepossess(data, 5)
+def predict(model, data,line):
+    pre1 = Prepossess(data, line)
     res1 = pre1.run().strip()
     enc1 = Encoding(res1 + "\n")
     # position encoding
@@ -241,4 +241,5 @@ if __name__ == "__main__":
     }
     } 
     """
-    print(predict(model,editor1_content))
+    line = 5
+    print(predict(model,editor1_content,line))
