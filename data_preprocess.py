@@ -137,9 +137,10 @@ class Encoding:
 
     def node2vec(self, corpus):
         # Train the Word2Vec model
-        word2vec = Word2Vec.load("../word2vec.model")
+        # word2vec = Word2Vec.load("./word2vec.model")
         # Print the most similar words to a given word
-        return word2vec
+        # return word2vec
+        pass
 
     # position encoding for a single node
     def encode_node(self, node):
@@ -168,7 +169,7 @@ class Encoding:
 
     def run(self):
         batches, corpus = self.parseFile()
-        node_enc = self.node2vec(corpus)
+        # node_enc = self.node2vec(corpus)
         ret = []
         for batch in batches:
             tree = self.constructTree(batch)
@@ -234,7 +235,7 @@ if __name__ == "__main__":
     print("encoding_pad:", encoding_pad.shape)
 
     # load model
-    model = tf.keras.models.load_model("./model/mymodel_13")
+    model = tf.keras.models.load_model("./model/mymodel_15")
     model.summary()
     prediction = model.predict(encoding_pad)
     print(prediction)
