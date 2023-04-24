@@ -199,9 +199,31 @@ def get_onehot(data):
     return np.array([onehot_encoding])
 
 
+def load_model(PATH):
+    model = tf.keras.models.load_model(PATH)
+    return model
+
+
+def predict(model, data):
+    pre1 = Prepossess(data, 5)
+    res1 = pre1.run().strip()
+    enc1 = Encoding(res1 + "\n")
+    # position encoding
+    position_encoding = enc1.run()
+    # onehot encoding
+    onehot_encoding = get_onehot(res1)
+    # concate onehot and position
+    concatenated_encoding = np.concatenate((position_encoding, onehot_encoding), axis = 2)
+    encoding_pad = pad_sequences(concatenated_encoding, maxlen = 512, padding = 'pre', truncating = 'pre').astype(
+        'float32')
+    prediction = model.predict(encoding_pad)
+    predicted_label = tf.argmax(prediction, axis = 1).numpy()
+    return predicted_label
+
+
 if __name__ == "__main__":
-    editor1_content = """
-    class temp {    public static String encrypt(String plaintext) {
+    model = load_model("./model/mymodel_15")
+    editor1_content = """class temp {    public static String encrypt(String plaintext) {
         MessageDigest md = null;
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -217,28 +239,6 @@ if __name__ == "__main__":
         String hash = (new BASE64Encoder()).encode(raw);
         return hash;
     }
-} 
+    } 
     """
-    pre1 = Prepossess(editor1_content, 5)
-    res1 = pre1.run().strip()
-    print(res1)
-    enc1 = Encoding(res1 + "\n")
-    # position encoding
-    position_encoding = enc1.run()
-    print("position_encoding:", position_encoding.shape)
-    # onehot encoding
-    onehot_encoding = get_onehot(res1)
-    print("onehot_encoding:", onehot_encoding.shape)
-    # concate onehot and position
-    concatenated_encoding = np.concatenate((position_encoding,onehot_encoding),axis=2)
-    encoding_pad = pad_sequences(concatenated_encoding, maxlen = 512, padding = 'pre', truncating = 'pre').astype('float32')
-    print("encoding_pad:", encoding_pad.shape)
-
-    # load model
-    model = tf.keras.models.load_model("./model/mymodel_15")
-    model.summary()
-    prediction = model.predict(encoding_pad)
-    print(prediction)
-    print(prediction.shape)
-    predicted_label = tf.argmax(prediction, axis=1).numpy()
-    print(predicted_label)
+    print(predict(model,editor1_content))
