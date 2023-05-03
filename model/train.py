@@ -30,6 +30,7 @@ if __name__ == "__main__":
     print(y_test.shape)
 
     model = keras.Sequential()
+    # model.add(layers.LSTM(units = 128, input_shape = (X_train.shape[1], X_train.shape[2])))
     model.add(layers.SimpleRNN(units = 128, input_shape = (X_train.shape[1], X_train.shape[2])))
     model.add(layers.Dense(units = y_test.shape[1], activation = 'softmax'))
     print("model constructed")
